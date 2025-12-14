@@ -18,7 +18,15 @@ api.interceptors.request.use((config) => {
 });
 
 export const moviesAPI = {
-  getAll: (params) => api.get('/movies', { params }),
+ getAll: ({ page, pageSize, search }) =>
+    api.get('/movies', {
+      params: {
+        page,
+        pageSize,
+        search
+      }
+    }),
+  getNew: () => api.get('/movies/new'),
   getById: (id) => api.get(`/movies/${id}`),
   getTrending: () => api.get('/movies/trending'),
   getTopRated: () => api.get('/movies/top-rated'),
@@ -30,12 +38,17 @@ export const moviesAPI = {
 export const reviewsAPI = {
   getByMovie: (movieId) => api.get(`/reviews/movie/${movieId}`),
   create: (reviewData) => api.post('/reviews', reviewData), 
+  update: (id, reviewData) => api.put(`/reviews/${id}`, reviewData),
   delete: (id) => api.delete(`/reviews/${id}`),
 };
 
 export const authAPI = {
   login: (credentials) => api.post('/auth/login', credentials),
   register: (data) => api.post('/auth/register', data),
+  getProfile: () => api.get('/auth/me'),
+  updateProfile: (formData) => api.put('/auth/me', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
 };
 
 export default api;

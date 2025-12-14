@@ -8,6 +8,8 @@ import SearchPage from './pages/SearchPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import ProfilePage from './pages/ProfilePage';
+import AllMoviesPage from './pages/AllMoviesPage';
 import './App.css';
 
 function App() {
@@ -22,6 +24,8 @@ function App() {
             <Route path="/search" element={<SearchPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/movies" element={<AllMoviesPage />} />
           </Routes>
         </div>
       </Router>

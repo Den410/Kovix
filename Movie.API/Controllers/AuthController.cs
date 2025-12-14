@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Movie.API.Data;
@@ -92,6 +93,73 @@ namespace Movie.API.Controllers
             );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        [HttpGet("me")]
+        [Authorize] 
+        public async Task<ActionResult<User>> GetProfile()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null) return Unauthorized();
+
+            int userId = int.Parse(userIdClaim.Value);
+
+            var user = await _context.Users
+                .Include(u => u.Reviews!)
+                    .ThenInclude(r => r.Movie)
+                .FirstOrDefaultAsync(u => u.Id == userId);
+
+            if (user == null) return NotFound();
+
+            user.PasswordHash = "";
+
+            return Ok(user);
+        }
+
+        [HttpPut("me")]
+        [Authorize]
+        public async Task<ActionResult<User>> UpdateProfile([FromForm] UserUpdateDto dto)
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var user = await _context.Users.FindAsync(userId);
+
+            if (user == null) return NotFound();
+
+            if (!string.IsNullOrWhiteSpace(dto.Username))
+            {
+                user.Username = dto.Username;
+            }
+
+            if (dto.DeleteAvatar)
+            {
+                user.AvatarUrl = null;
+            }
+
+            if (dto.Avatar != null)
+            {
+                var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+                if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+
+                var uniqueFileName = Guid.NewGuid().ToString() + "_" + dto.Avatar.FileName;
+                var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await dto.Avatar.CopyToAsync(stream);
+                }
+
+                user.AvatarUrl = $"/uploads/{uniqueFileName}";
+            }
+
+            await _context.SaveChangesAsync();
+
+            var fullUser = await _context.Users
+                .Include(u => u.Reviews)
+                    .ThenInclude(r => r.Movie)
+                .FirstOrDefaultAsync(u => u.Id == userId);
+
+            fullUser!.PasswordHash = "";
+            return Ok(fullUser);
         }
     }
 }

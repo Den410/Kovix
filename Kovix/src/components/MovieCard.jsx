@@ -1,32 +1,39 @@
 import React from 'react';
-import { Card } from 'react-bootstrap';
+import { Card, Badge } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import './MovieCard.css';
 
 function MovieCard({ movie }) {
+  const getRatingColor = (rating) => {
+    if (rating >= 8) return "success";
+    if (rating >= 5) return "warning";
+    return "danger";
+  };
+
   return (
-    <Link to={`/movie/${movie.id}`} style={{ textDecoration: 'none' }}>
-      <Card className="movie-card h-100">
-        <div className="movie-poster-wrapper">
-          <Card.Img 
-            variant="top" 
-            src={movie.posterUrl || 'https://via.placeholder.com/300x450?text=No+Image'} 
-            alt={movie.title}
-            className="movie-poster"
+    <Link to={`/movie/${movie.id}`} className="movie-card-link">
+      <Card className="h-100 shadow-sm movie-card">
+        <div className="movie-card-img-wrapper">
+          <Card.Img
+            src={movie.posterUrl || 'https://via.placeholder.com/300x450'}
+            className="movie-card-img"
           />
-          <div className="movie-rating">
-            <span className="rating-value">⭐ {movie.averageRating.toFixed(1)}</span>
-          </div>
+
+          <Badge
+            bg={getRatingColor(movie.averageRating)}
+            className="movie-rating-badge"
+          >
+            ⭐ {movie.averageRating ? movie.averageRating.toFixed(1) : '0.0'}
+          </Badge>
         </div>
-        <Card.Body>
-          <Card.Title className="movie-title">{movie.title}</Card.Title>
-          <Card.Text className="movie-info">
-            <small className="text-muted">
-              {movie.year} • {movie.genre}
-            </small>
-          </Card.Text>
-          <Card.Text className="movie-reviews">
-            <small>{movie.totalReviews} відгуків</small>
+
+        <Card.Body className="d-flex flex-column">
+          <Card.Title className="movie-title">
+            {movie.title}
+          </Card.Title>
+
+          <Card.Text className="movie-meta">
+            {movie.year} • {movie.genre}
           </Card.Text>
         </Card.Body>
       </Card>

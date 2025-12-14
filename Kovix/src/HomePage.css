@@ -1,0 +1,23 @@
+.slick-prev:before, .slick-next:before {
+    color: #333 !important; 
+    font-size: 30px !important;
+    opacity: 0.75 !important;
+}
+
+.slick-prev {
+    left: -35px !important;
+    z-index: 1;
+}
+.slick-next {
+    right: -35px !important;
+    z-index: 1;
+}
+
+.slider-section {
+    padding: 0 30px; 
+}
+
+.slick-prev:hover:before, .slick-next:hover:before {
+    color: #000 !important;
+    opacity: 1 !important;
+}

@@ -1,12 +1,15 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Movie.API.Data;
+using Movie.API.DTOs;
 using Movie.API.Models;
+using System.Security.Claims;
 
 namespace Movie.API.Controllers
 {
-    [ApiController]
     [Route("api/[controller]")]
+    [ApiController]
     public class ReviewsController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
@@ -17,115 +20,132 @@ namespace Movie.API.Controllers
         }
 
         [HttpGet("movie/{movieId}")]
-        public async Task<ActionResult<IEnumerable<Review>>> GetMovieReviews(int movieId)
+        public async Task<ActionResult<IEnumerable<Review>>> GetByMovie(int movieId)
         {
-            var reviews = await _context.Reviews
+            return await _context.Reviews
                 .Include(r => r.User)
                 .Where(r => r.MovieId == movieId)
                 .OrderByDescending(r => r.CreatedAt)
                 .ToListAsync();
-
-            return Ok(reviews);
-        }
-
-        [HttpGet("user/{userId}")]
-        public async Task<ActionResult<IEnumerable<Review>>> GetUserReviews(int userId)
-        {
-            var reviews = await _context.Reviews
-                .Include(r => r.Movie)
-                .Where(r => r.UserId == userId)
-                .OrderByDescending(r => r.CreatedAt)
-                .ToListAsync();
-
-            return Ok(reviews);
         }
 
         [HttpPost]
-        public async Task<ActionResult<Review>> CreateReview(Review review)
+        [Authorize]
+        public async Task<ActionResult<Review>> Create(CreateReviewDto dto)
         {
-            var existingReview = await _context.Reviews
-                .FirstOrDefaultAsync(r => r.UserId == review.UserId && r.MovieId == review.MovieId);
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null) return Unauthorized();
+            int userId = int.Parse(userIdClaim.Value);
 
-            if (existingReview != null)
+            var movie = await _context.Movies
+                .Include(m => m.Reviews)
+                .FirstOrDefaultAsync(m => m.Id == dto.MovieId);
+
+            if (movie == null) return NotFound("Фільм не знайдено");
+
+            bool alreadyReviewed = await _context.Reviews
+                .AnyAsync(r => r.MovieId == dto.MovieId && r.UserId == userId);
+
+            if (alreadyReviewed)
             {
-                return BadRequest("User has already reviewed this movie");
+                return BadRequest("Ви вже залишили відгук до цього фільму.");
             }
 
-            review.CreatedAt = DateTime.UtcNow;
+            var review = new Review
+            {
+                MovieId = dto.MovieId,
+                UserId = userId,
+                Rating = dto.Rating,
+                Comment = dto.Comment,
+                CreatedAt = DateTime.UtcNow
+            };
+
             _context.Reviews.Add(review);
+
+            movie.Reviews ??= new List<Review>();
+            movie.Reviews.Add(review);
+
+            movie.TotalReviews = movie.Reviews.Count;
+            movie.AverageRating = movie.Reviews.Any() ? movie.Reviews.Average(r => r.Rating) : 0;
+
             await _context.SaveChangesAsync();
 
-            await UpdateMovieRating(review.MovieId);
+            await _context.Entry(review).Reference(r => r.User).LoadAsync();
 
-            return CreatedAtAction(nameof(GetMovieReviews), new { movieId = review.MovieId }, review);
-        }
-
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateReview(int id, Review review)
-        {
-            if (id != review.Id)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(review).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-                await UpdateMovieRating(review.MovieId);
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!ReviewExists(id))
-                {
-                    return NotFound();
-                }
-                throw;
-            }
-
-            return NoContent();
+            return CreatedAtAction(nameof(GetByMovie), new { movieId = review.MovieId }, review);
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteReview(int id)
+        [Authorize]
+        public async Task<IActionResult> Delete(int id)
         {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+
             var review = await _context.Reviews.FindAsync(id);
-            if (review == null)
+            if (review == null) return NotFound();
+
+            if (userRole != "Admin" && review.UserId != userId)
             {
-                return NotFound();
+                return Forbid();
             }
 
             var movieId = review.MovieId;
+
             _context.Reviews.Remove(review);
             await _context.SaveChangesAsync();
 
-            await UpdateMovieRating(movieId);
+            var movie = await _context.Movies
+                .Include(m => m.Reviews)
+                .FirstAsync(m => m.Id == movieId);
+
+            if (movie.Reviews != null && movie.Reviews.Any())
+            {
+                movie.TotalReviews = movie.Reviews.Count;
+                movie.AverageRating = movie.Reviews.Average(r => r.Rating);
+            }
+            else
+            {
+                movie.TotalReviews = 0;
+                movie.AverageRating = 0;
+            }
+
+            await _context.SaveChangesAsync();
 
             return NoContent();
         }
 
-        private async Task UpdateMovieRating(int movieId)
+        [HttpPut("{id}")]
+        [Authorize]
+        public async Task<IActionResult> Update(int id, UpdateReviewDto dto)
         {
-            var movie = await _context.Movies.FindAsync(movieId);
-            if (movie != null)
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+
+            var review = await _context.Reviews.FindAsync(id);
+            if (review == null) return NotFound();
+
+            if (review.UserId != userId)
             {
-                var reviews = await _context.Reviews
-                    .Where(r => r.MovieId == movieId)
-                    .ToListAsync();
+                return Forbid();
+            }
 
-                movie.TotalReviews = reviews.Count;
-                movie.AverageRating = reviews.Count > 0
-                    ? Math.Round(reviews.Average(r => r.Rating), 1)
-                    : 0;
+            review.Rating = dto.Rating;
+            review.Comment = dto.Comment;
 
+            await _context.SaveChangesAsync();
+
+            var movie = await _context.Movies
+                .Include(m => m.Reviews)
+                .FirstOrDefaultAsync(m => m.Id == review.MovieId);
+
+            if (movie != null && movie.Reviews != null)
+            {
+                movie.AverageRating = movie.Reviews.Average(r => r.Rating);
                 await _context.SaveChangesAsync();
             }
-        }
 
-        private bool ReviewExists(int id)
-        {
-            return _context.Reviews.Any(e => e.Id == id);
+            return NoContent();
         }
     }
 }

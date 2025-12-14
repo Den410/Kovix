@@ -58,6 +58,8 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseCors("AllowReactApp");
 
+app.UseStaticFiles();
+
 app.UseAuthentication();
 app.UseAuthorization();
 

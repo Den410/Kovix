@@ -1,12 +1,14 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Movie.API.Data;
+using Movie.API.DTOs;
 using Movie.API.Models;
 
 namespace Movie.API.Controllers
 {
-    [ApiController]
     [Route("api/[controller]")]
+    [ApiController]
     public class MoviesController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
@@ -17,93 +19,108 @@ namespace Movie.API.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<MovieEntity>>> GetMovies(
-            [FromQuery] string search = "",
-            [FromQuery] string genre = "",
-            [FromQuery] int page = 1,
-            [FromQuery] int pageSize = 20)
+        public async Task<ActionResult<PagedResult<MovieEntity>>> GetAll(
+              [FromQuery] string? search,
+              [FromQuery] int page = 1,
+              [FromQuery] int pageSize = 8)
         {
             var query = _context.Movies.AsQueryable();
 
-            if (!string.IsNullOrEmpty(search))
+            if (!string.IsNullOrWhiteSpace(search))
             {
-                query = query.Where(m => m.Title.Contains(search) || m.Description.Contains(search));
+                query = query.Where(m => m.Title.Contains(search));
             }
 
-            if (!string.IsNullOrEmpty(genre))
-            {
-                query = query.Where(m => m.Genre.Contains(genre));
-            }
+            int totalCount = await query.CountAsync();
 
-            var movies = await query
-                .OrderByDescending(m => m.AverageRating)
+            var items = await query
+                .OrderByDescending(m => m.CreatedAt)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
 
-            return Ok(movies);
+            var result = new PagedResult<MovieEntity>
+            {
+                Items = items,
+                TotalCount = totalCount,
+                PageNumber = page,
+                PageSize = pageSize
+            };
+
+            return Ok(result);
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<MovieEntity>> GetMovie(int id)
+        public async Task<ActionResult<MovieEntity>> GetById(int id)
         {
-            var movie = await _context.Movies
-                .Include(m => m.Reviews)
-                    .ThenInclude(r => r.User)
-                .FirstOrDefaultAsync(m => m.Id == id);
-
-            if (movie == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(movie);
+            var movie = await _context.Movies.FindAsync(id);
+            if (movie == null) return NotFound();
+            return movie;
         }
 
-        [HttpPost]
-        public async Task<ActionResult<MovieEntity>> CreateMovie(MovieEntity movie)
+        [HttpGet("trending")]
+        public async Task<ActionResult<IEnumerable<MovieEntity>>> GetTrending()
         {
-            movie.CreatedAt = DateTime.UtcNow;
+            return await _context.Movies.OrderByDescending(m => m.TotalReviews).Take(4).ToListAsync();
+        }
+
+        [HttpGet("top-rated")]
+        public async Task<ActionResult<IEnumerable<MovieEntity>>> GetTopRated()
+        {
+            return await _context.Movies.OrderByDescending(m => m.AverageRating).Take(4).ToListAsync();
+        }
+
+
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<MovieEntity>> Create(CreateMovieDto dto)
+        {
+            var movie = new MovieEntity
+            {
+                Title = dto.Title,
+                Description = dto.Description,
+                Year = dto.Year,
+                Genre = dto.Genre,
+                Director = dto.Director,
+                PosterUrl = dto.PosterUrl,
+                TrailerUrl = dto.TrailerUrl,
+                CreatedAt = DateTime.UtcNow,
+                AverageRating = 0,
+                TotalReviews = 0
+            };
+
             _context.Movies.Add(movie);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetMovie), new { id = movie.Id }, movie);
+            return CreatedAtAction(nameof(GetById), new { id = movie.Id }, movie);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateMovie(int id, MovieEntity movie)
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Update(int id, CreateMovieDto dto)
         {
-            if (id != movie.Id)
-            {
-                return BadRequest();
-            }
+            var movie = await _context.Movies.FindAsync(id);
+            if (movie == null) return NotFound();
 
-            _context.Entry(movie).State = EntityState.Modified;
+            movie.Title = dto.Title;
+            movie.Description = dto.Description;
+            movie.Year = dto.Year;
+            movie.Genre = dto.Genre;
+            movie.Director = dto.Director;
+            movie.PosterUrl = dto.PosterUrl;
+            movie.TrailerUrl = dto.TrailerUrl;
 
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!MovieExists(id))
-                {
-                    return NotFound();
-                }
-                throw;
-            }
+            await _context.SaveChangesAsync();
 
             return NoContent();
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteMovie(int id)
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Delete(int id)
         {
             var movie = await _context.Movies.FindAsync(id);
-            if (movie == null)
-            {
-                return NotFound();
-            }
+            if (movie == null) return NotFound();
 
             _context.Movies.Remove(movie);
             await _context.SaveChangesAsync();
@@ -111,33 +128,13 @@ namespace Movie.API.Controllers
             return NoContent();
         }
 
-        [HttpGet("trending")]
-        public async Task<ActionResult<IEnumerable<MovieEntity>>> GetTrending()
+        [HttpGet("new")]
+        public async Task<ActionResult<IEnumerable<MovieEntity>>> GetNew()
         {
-            var movies = await _context.Movies
-                .OrderByDescending(m => m.TotalReviews)
-                .ThenByDescending(m => m.AverageRating)
+            return await _context.Movies
+                .OrderByDescending(m => m.CreatedAt) 
                 .Take(10)
                 .ToListAsync();
-
-            return Ok(movies);
-        }
-
-        [HttpGet("top-rated")]
-        public async Task<ActionResult<IEnumerable<MovieEntity>>> GetTopRated()
-        {
-            var movies = await _context.Movies
-                .Where(m => m.TotalReviews >= 5)
-                .OrderByDescending(m => m.AverageRating)
-                .Take(10)
-                .ToListAsync();
-
-            return Ok(movies);
-        }
-
-        private bool MovieExists(int id)
-        {
-            return _context.Movies.Any(e => e.Id == id);
         }
     }
 }
