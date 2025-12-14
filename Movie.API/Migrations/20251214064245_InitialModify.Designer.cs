@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Movie.API.Data;
 
@@ -11,9 +12,11 @@ using Movie.API.Data;
 namespace Movie.API.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251214064245_InitialModify")]
+    partial class InitialModify
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -68,64 +71,6 @@ namespace Movie.API.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Movies");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            AverageRating = 9.0,
-                            CreatedAt = new DateTime(2023, 5, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Description = "A thief who steals corporate secrets through the use of dream-sharing technology is given the inverse task of planting an idea into the mind of a C.E.O.",
-                            Director = "Christopher Nolan",
-                            Genre = "Sci-Fi",
-                            PosterUrl = "https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_.jpg",
-                            Title = "Inception",
-                            TotalReviews = 2,
-                            TrailerUrl = "https://www.youtube.com/embed/YoHD9XEInc0",
-                            Year = 2010
-                        },
-                        new
-                        {
-                            Id = 2,
-                            AverageRating = 10.0,
-                            CreatedAt = new DateTime(2023, 5, 2, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Description = "Two imprisoned men bond over a number of years, finding solace and eventual redemption through acts of common decency.",
-                            Director = "Frank Darabont",
-                            Genre = "Drama",
-                            PosterUrl = "https://image.tmdb.org/t/p/original/q6y0Go1tsGEsmtFryDOJo3dEmqu.jpg",
-                            Title = "The Shawshank Redemption",
-                            TotalReviews = 1,
-                            TrailerUrl = "https://www.youtube.com/embed/6hB3S9bIaco",
-                            Year = 1994
-                        },
-                        new
-                        {
-                            Id = 3,
-                            AverageRating = 8.0,
-                            CreatedAt = new DateTime(2024, 3, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Description = "Paul Atreides unites with Chani and the Fremen while on a warpath of revenge against the conspirators who destroyed his family.",
-                            Director = "Denis Villeneuve",
-                            Genre = "Sci-Fi",
-                            PosterUrl = "https://image.tmdb.org/t/p/original/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg",
-                            Title = "Dune: Part Two",
-                            TotalReviews = 1,
-                            TrailerUrl = "https://www.youtube.com/embed/Way9Dexny3w",
-                            Year = 2024
-                        },
-                        new
-                        {
-                            Id = 4,
-                            AverageRating = 9.5,
-                            CreatedAt = new DateTime(2023, 6, 15, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Description = "When the menace known as the Joker wreaks havoc and chaos on the people of Gotham, Batman must accept one of the greatest psychological and physical tests of his ability to fight injustice.",
-                            Director = "Christopher Nolan",
-                            Genre = "Action",
-                            PosterUrl = "https://image.tmdb.org/t/p/original/qJ2tW6WMUDux911r6m7haRef0WH.jpg",
-                            Title = "The Dark Knight",
-                            TotalReviews = 0,
-                            TrailerUrl = "https://www.youtube.com/embed/EXeTwQWrcwY",
-                            Year = 2008
-                        });
                 });
 
             modelBuilder.Entity("Movie.API.Models.Review", b =>
@@ -159,44 +104,6 @@ namespace Movie.API.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Reviews");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Comment = "Masterpiece! Nolan is a genius.",
-                            CreatedAt = new DateTime(2023, 6, 1, 14, 30, 0, 0, DateTimeKind.Utc),
-                            MovieId = 1,
-                            Rating = 10,
-                            UserId = 1
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Comment = "Great visuals, but a bit confusing.",
-                            CreatedAt = new DateTime(2023, 6, 2, 10, 0, 0, 0, DateTimeKind.Utc),
-                            MovieId = 1,
-                            Rating = 8,
-                            UserId = 2
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Comment = "The best movie ever made.",
-                            CreatedAt = new DateTime(2023, 6, 5, 9, 15, 0, 0, DateTimeKind.Utc),
-                            MovieId = 2,
-                            Rating = 10,
-                            UserId = 1
-                        },
-                        new
-                        {
-                            Id = 4,
-                            Comment = "Amazing sound design.",
-                            CreatedAt = new DateTime(2024, 3, 5, 18, 20, 0, 0, DateTimeKind.Utc),
-                            MovieId = 3,
-                            Rating = 8,
-                            UserId = 2
-                        });
                 });
 
             modelBuilder.Entity("Movie.API.Models.User", b =>
@@ -218,10 +125,6 @@ namespace Movie.API.Migrations
                     b.Property<string>("PasswordHash")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Role")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Username")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -233,26 +136,6 @@ namespace Movie.API.Migrations
                         .IsUnique();
 
                     b.ToTable("Users");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            CreatedAt = new DateTime(2023, 1, 1, 10, 0, 0, 0, DateTimeKind.Utc),
-                            Email = "fan@example.com",
-                            PasswordHash = "$2a$11$Z5.z5.z5.z5.z5.z5.z5.z5.z5.z5.z5.z5.z5.z5.z5.z5.z5.z5",
-                            Role = "User",
-                            Username = "kino_fan"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            CreatedAt = new DateTime(2023, 1, 5, 12, 0, 0, 0, DateTimeKind.Utc),
-                            Email = "admin@movie.com",
-                            PasswordHash = "$2a$11$a1.a1.a1.a1.a1.a1.a1.a1.a1.a1.a1.a1.a1.a1.a1.a1.a1.a1",
-                            Role = "Admin",
-                            Username = "admin"
-                        });
                 });
 
             modelBuilder.Entity("Movie.API.Models.Watchlist", b =>
@@ -285,17 +168,6 @@ namespace Movie.API.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Watchlists");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            AddedAt = new DateTime(2024, 3, 1, 10, 0, 0, 0, DateTimeKind.Utc),
-                            IsFavorite = true,
-                            IsWatched = false,
-                            MovieId = 3,
-                            UserId = 1
-                        });
                 });
 
             modelBuilder.Entity("Movie.API.Models.Review", b =>

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Movie.API.Data;
 
@@ -11,9 +12,11 @@ using Movie.API.Data;
 namespace Movie.API.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251214070509_AddData")]
+    partial class AddData
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -78,7 +81,7 @@ namespace Movie.API.Migrations
                             Description = "A thief who steals corporate secrets through the use of dream-sharing technology is given the inverse task of planting an idea into the mind of a C.E.O.",
                             Director = "Christopher Nolan",
                             Genre = "Sci-Fi",
-                            PosterUrl = "https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_.jpg",
+                            PosterUrl = "https://image.tmdb.org/t/p/original/9gk7admal4zlWH9O46GGyEBDddp.jpg",
                             Title = "Inception",
                             TotalReviews = 2,
                             TrailerUrl = "https://www.youtube.com/embed/YoHD9XEInc0",
@@ -218,10 +221,6 @@ namespace Movie.API.Migrations
                     b.Property<string>("PasswordHash")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Role")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Username")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -240,8 +239,7 @@ namespace Movie.API.Migrations
                             Id = 1,
                             CreatedAt = new DateTime(2023, 1, 1, 10, 0, 0, 0, DateTimeKind.Utc),
                             Email = "fan@example.com",
-                            PasswordHash = "$2a$11$Z5.z5.z5.z5.z5.z5.z5.z5.z5.z5.z5.z5.z5.z5.z5.z5.z5.z5",
-                            Role = "User",
+                            PasswordHash = "hashed_password_123",
                             Username = "kino_fan"
                         },
                         new
@@ -249,8 +247,7 @@ namespace Movie.API.Migrations
                             Id = 2,
                             CreatedAt = new DateTime(2023, 1, 5, 12, 0, 0, 0, DateTimeKind.Utc),
                             Email = "admin@movie.com",
-                            PasswordHash = "$2a$11$a1.a1.a1.a1.a1.a1.a1.a1.a1.a1.a1.a1.a1.a1.a1.a1.a1.a1",
-                            Role = "Admin",
+                            PasswordHash = "admin_pass_secure",
                             Username = "admin"
                         });
                 });

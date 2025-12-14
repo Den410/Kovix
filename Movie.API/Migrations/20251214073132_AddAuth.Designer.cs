@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Movie.API.Data;
 
@@ -11,9 +12,11 @@ using Movie.API.Data;
 namespace Movie.API.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251214073132_AddAuth")]
+    partial class AddAuth
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -240,7 +243,7 @@ namespace Movie.API.Migrations
                             Id = 1,
                             CreatedAt = new DateTime(2023, 1, 1, 10, 0, 0, 0, DateTimeKind.Utc),
                             Email = "fan@example.com",
-                            PasswordHash = "$2a$11$Z5.z5.z5.z5.z5.z5.z5.z5.z5.z5.z5.z5.z5.z5.z5.z5.z5.z5",
+                            PasswordHash = "hashed_password_123",
                             Role = "User",
                             Username = "kino_fan"
                         },
@@ -249,8 +252,8 @@ namespace Movie.API.Migrations
                             Id = 2,
                             CreatedAt = new DateTime(2023, 1, 5, 12, 0, 0, 0, DateTimeKind.Utc),
                             Email = "admin@movie.com",
-                            PasswordHash = "$2a$11$a1.a1.a1.a1.a1.a1.a1.a1.a1.a1.a1.a1.a1.a1.a1.a1.a1.a1",
-                            Role = "Admin",
+                            PasswordHash = "admin_pass_secure",
+                            Role = "User",
                             Username = "admin"
                         });
                 });
