@@ -21,6 +21,7 @@ namespace Movie.API.Controllers
         [HttpGet]
         public async Task<ActionResult<PagedResult<MovieEntity>>> GetAll(
               [FromQuery] string? search,
+              [FromQuery] string? genres,
               [FromQuery] int page = 1,
               [FromQuery] int pageSize = 8)
         {
@@ -28,7 +29,14 @@ namespace Movie.API.Controllers
 
             if (!string.IsNullOrWhiteSpace(search))
             {
-                query = query.Where(m => m.Title.Contains(search));
+                var searchLower = search.ToLower();
+                query = query.Where(m => m.Title.ToLower().Contains(searchLower));
+            }
+
+            if (!string.IsNullOrWhiteSpace(genres))
+            {
+                var genreList = genres.ToLower().Split(',', StringSplitOptions.RemoveEmptyEntries);
+                query = query.Where(m => genreList.Any(g => m.Genre != null && m.Genre.ToLower().Contains(g.Trim())));
             }
 
             int totalCount = await query.CountAsync();

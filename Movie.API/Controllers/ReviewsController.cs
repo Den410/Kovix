@@ -20,13 +20,82 @@ namespace Movie.API.Controllers
         }
 
         [HttpGet("movie/{movieId}")]
-        public async Task<ActionResult<IEnumerable<Review>>> GetByMovie(int movieId)
+        public async Task<ActionResult<IEnumerable<ReviewWithVotesDto>>> GetByMovie(int movieId)
         {
-            return await _context.Reviews
-                .Include(r => r.User)
+            int? currentUserId = null;
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim != null)
+            {
+                currentUserId = int.Parse(userIdClaim.Value);
+            }
+
+            var reviews = await _context.Reviews
                 .Where(r => r.MovieId == movieId)
+                .Include(r => r.User)
+                .Include(r => r.Votes)
                 .OrderByDescending(r => r.CreatedAt)
                 .ToListAsync();
+
+            var result = reviews.Select(r => new ReviewWithVotesDto
+            {
+                Id = r.Id,
+                Comment = r.Comment,
+                Rating = r.Rating,
+                CreatedAt = r.CreatedAt,
+                MovieId = r.MovieId,
+                UserId = r.UserId,
+                UserName = r.User?.Username ?? "Unknown",
+                UserAvatar = r.User?.AvatarUrl ?? "",
+
+                LikesCount = r.Votes?.Count(v => v.IsLike) ?? 0,
+                DislikesCount = r.Votes?.Count(v => !v.IsLike) ?? 0,
+
+                CurrentUserVote = currentUserId.HasValue
+                    ? (r.Votes?.FirstOrDefault(v => v.UserId == currentUserId.Value)?.IsLike == true ? 1
+                       : r.Votes?.FirstOrDefault(v => v.UserId == currentUserId.Value)?.IsLike == false ? -1
+                       : 0)
+                    : 0
+            });
+
+            return Ok(result);
+        }
+
+        [HttpPost("{id}/vote")]
+        [Authorize]
+        public async Task<IActionResult> Vote(int id, [FromQuery] bool isLike)
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+
+            var review = await _context.Reviews.FindAsync(id);
+            if (review == null) return NotFound();
+
+            var existingVote = await _context.ReviewVotes
+                .FirstOrDefaultAsync(v => v.ReviewId == id && v.UserId == userId);
+
+            if (existingVote != null)
+            {
+                if (existingVote.IsLike == isLike)
+                {
+                    _context.ReviewVotes.Remove(existingVote);
+                }
+                else
+                {
+                    existingVote.IsLike = isLike;
+                }
+            }
+            else
+            {
+                var newVote = new ReviewVote
+                {
+                    ReviewId = id,
+                    UserId = userId,
+                    IsLike = isLike
+                };
+                _context.ReviewVotes.Add(newVote);
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok();
         }
 
         [HttpPost]

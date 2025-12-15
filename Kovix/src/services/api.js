@@ -18,14 +18,8 @@ api.interceptors.request.use((config) => {
 });
 
 export const moviesAPI = {
- getAll: ({ page, pageSize, search }) =>
-    api.get('/movies', {
-      params: {
-        page,
-        pageSize,
-        search
-      }
-    }),
+  getAll: (page = 1, pageSize = 8, search = '', genres = '') => 
+      api.get('/movies', { params: { page, pageSize, search, genres } }),
   getNew: () => api.get('/movies/new'),
   getById: (id) => api.get(`/movies/${id}`),
   getTrending: () => api.get('/movies/trending'),
@@ -40,6 +34,7 @@ export const reviewsAPI = {
   create: (reviewData) => api.post('/reviews', reviewData), 
   update: (id, reviewData) => api.put(`/reviews/${id}`, reviewData),
   delete: (id) => api.delete(`/reviews/${id}`),
+  vote: (reviewId, isLike) => api.post(`/reviews/${reviewId}/vote?isLike=${isLike}`),
 };
 
 export const authAPI = {

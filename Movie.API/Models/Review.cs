@@ -1,3 +1,5 @@
+using Movie.API.DTOs;
+
 namespace Movie.API.Models
 {
     public class Review
@@ -11,5 +13,6 @@ namespace Movie.API.Models
 
         public User? User { get; set; }
         public MovieEntity? Movie { get; set; }
+        public ICollection<ReviewVote> Votes { get; set; } = new List<ReviewVote>();
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Movie.API.DTOs;
 using Movie.API.Models;
 
 namespace Movie.API.Data
@@ -13,11 +14,18 @@ namespace Movie.API.Data
         public DbSet<MovieEntity> Movies { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<Review> Reviews { get; set; }
+        public DbSet<ReviewVote> ReviewVotes { get; set; }
         public DbSet<Watchlist> Watchlists { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<ReviewVote>()
+                .HasOne(v => v.User)
+                .WithMany() 
+                .HasForeignKey(v => v.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<MovieEntity>(entity =>
             {

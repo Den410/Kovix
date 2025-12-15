@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Movie.API.Data;
 
@@ -11,9 +12,11 @@ using Movie.API.Data;
 namespace Movie.API.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251215132345_AddReviewVotesFixed")]
+    partial class AddReviewVotesFixed
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -310,7 +313,7 @@ namespace Movie.API.Migrations
             modelBuilder.Entity("Movie.API.DTOs.ReviewVote", b =>
                 {
                     b.HasOne("Movie.API.Models.Review", "Review")
-                        .WithMany("Votes")
+                        .WithMany()
                         .HasForeignKey("ReviewId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -369,11 +372,6 @@ namespace Movie.API.Migrations
                     b.Navigation("Reviews");
 
                     b.Navigation("Watchlists");
-                });
-
-            modelBuilder.Entity("Movie.API.Models.Review", b =>
-                {
-                    b.Navigation("Votes");
                 });
 
             modelBuilder.Entity("Movie.API.Models.User", b =>
