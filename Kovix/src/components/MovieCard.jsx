@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, Badge } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
-import './MovieCard.css';
+import '../style/MovieCard.css';
 
 function MovieCard({ movie }) {
   const getRatingColor = (rating) => {
@@ -32,7 +32,7 @@ function MovieCard({ movie }) {
             {movie.title}
           </Card.Title>
 
-          <Card.Text className="movie-meta">
+         <Card.Text className="movie-meta" title={`${movie.year} • ${movie.genre}`}>
             {movie.year} • {movie.genre}
           </Card.Text>
         </Card.Body>

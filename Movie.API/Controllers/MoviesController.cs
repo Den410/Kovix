@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Movie.API.Data;
 using Movie.API.DTOs;
 using Movie.API.Models;
+using System.Security.Claims;
 
 namespace Movie.API.Controllers
 {
@@ -59,11 +60,93 @@ namespace Movie.API.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<MovieEntity>> GetById(int id)
+        public async Task<ActionResult<MovieDetailDto>> GetById(int id)
         {
-            var movie = await _context.Movies.FindAsync(id);
+            int? currentUserId = null;
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim != null) currentUserId = int.Parse(userIdClaim.Value);
+
+            var movie = await _context.Movies
+                .Include(m => m.Reviews)
+                .FirstOrDefaultAsync(m => m.Id == id);
+
             if (movie == null) return NotFound();
-            return movie;
+
+            var reactions = await _context.MovieReactions
+                .Where(r => r.MovieId == id)
+                .ToListAsync();
+
+            var myReactions = currentUserId.HasValue
+                ? reactions.Where(r => r.UserId == currentUserId.Value).ToList()
+                : new List<MovieReaction>();
+
+            var dto = new MovieDetailDto
+            {
+                Id = movie.Id,
+                Title = movie.Title,
+                Description = movie.Description,
+                Year = movie.Year,
+                Genre = movie.Genre,
+                Director = movie.Director,
+                PosterUrl = movie.PosterUrl,
+                TrailerUrl = movie.TrailerUrl,
+                AverageRating = movie.AverageRating,
+                TotalReviews = movie.Reviews?.Count ?? 0,
+
+                ReactionCounts = reactions
+                    .GroupBy(r => r.Type)
+                    .ToDictionary(g => g.Key.ToString(), g => g.Count()),
+
+                CurrentUserVote = (int?)myReactions
+                    .FirstOrDefault(r => r.Type == ReactionType.Like || r.Type == ReactionType.Dislike)?.Type,
+
+                CurrentUserEmotion = (int?)myReactions
+                    .FirstOrDefault(r => r.Type != ReactionType.Like && r.Type != ReactionType.Dislike)?.Type
+            };
+
+            return Ok(dto);
+        }
+
+        [HttpPost("{id}/react")]
+        [Authorize]
+        public async Task<IActionResult> ReactToMovie(int id, [FromQuery] ReactionType type)
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+
+            bool isVoteGroup = (type == ReactionType.Like || type == ReactionType.Dislike);
+
+            var existingReaction = await _context.MovieReactions
+                .FirstOrDefaultAsync(r =>
+                    r.MovieId == id &&
+                    r.UserId == userId &&
+                    (isVoteGroup
+                        ? (r.Type == ReactionType.Like || r.Type == ReactionType.Dislike)
+                        : (r.Type != ReactionType.Like && r.Type != ReactionType.Dislike))
+                );
+
+            if (existingReaction != null)
+            {
+                if (existingReaction.Type == type)
+                {
+                    _context.MovieReactions.Remove(existingReaction);
+                }
+                else
+                {
+                    existingReaction.Type = type;
+                }
+            }
+            else
+            {
+                _context.MovieReactions.Add(new MovieReaction
+                {
+                    MovieId = id,
+                    UserId = userId,
+                    Type = type
+                });
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok();
         }
 
         [HttpGet("trending")]

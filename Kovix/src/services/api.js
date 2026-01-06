@@ -22,11 +22,13 @@ export const moviesAPI = {
       api.get('/movies', { params: { page, pageSize, search, genres } }),
   getNew: () => api.get('/movies/new'),
   getById: (id) => api.get(`/movies/${id}`),
+  getById: (id) => api.get(`/movies/${id}`),
   getTrending: () => api.get('/movies/trending'),
   getTopRated: () => api.get('/movies/top-rated'),
   create: (movieData) => api.post('/movies', movieData),
   update: (id, movieData) => api.put(`/movies/${id}`, movieData),
   delete: (id) => api.delete(`/movies/${id}`),
+  react: (movieId, type) => api.post(`/movies/${movieId}/react?type=${type}`),
 };
 
 export const reviewsAPI = {

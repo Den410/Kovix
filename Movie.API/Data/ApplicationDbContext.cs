@@ -16,7 +16,7 @@ namespace Movie.API.Data
         public DbSet<Review> Reviews { get; set; }
         public DbSet<ReviewVote> ReviewVotes { get; set; }
         public DbSet<Watchlist> Watchlists { get; set; }
-
+        public DbSet<MovieReaction> MovieReactions { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -25,6 +25,12 @@ namespace Movie.API.Data
                 .HasOne(v => v.User)
                 .WithMany() 
                 .HasForeignKey(v => v.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<MovieReaction>()
+                .HasOne(r => r.User)
+                .WithMany()
+                .HasForeignKey(r => r.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<MovieEntity>(entity =>

@@ -1,0 +1,233 @@
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f8f9fa;
+}
+
+.App {
+  min-height: 100vh;
+}
+
+h1, h2, h3, h4, h5 {
+  color: #2c3e50;
+}
+
+/* --- СКРОЛБАР --- */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* --- ЗАГАЛЬНІ СТИЛІ --- */
+.btn-primary {
+  background-color: #3498db;
+  border-color: #3498db;
+}
+
+.btn-primary:hover {
+  background-color: #2980b9;
+  border-color: #2980b9;
+}
+
+.card {
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.alert {
+  border-radius: 8px;
+}
+
+.form-control:focus {
+  border-color: #3498db;
+  box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+}
+
+.navbar-dark {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.spinner-border {
+  color: #3498db;
+}
+
+/* =========================================
+   СТИЛІ ДЛЯ ПАНЕЛІ РЕАКЦІЙ (НОВЕ)
+   ========================================= */
+
+/* Основна панель під трейлером */
+.movie-actions-bar {
+  display: flex;
+  align-items: center;
+  background: #f0f2f5; /* Світло-сірий фон */
+  padding: 8px 16px;
+  border-radius: 24px; /* Закруглені краї */
+  gap: 12px;
+  flex-wrap: wrap; /* Щоб на мобільних переносилось */
+}
+
+/* --- ГРУПА ЛАЙК / ДИЗЛАЙК --- */
+.like-dislike-group {
+  display: flex;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.05); /* Трохи темніший за фон */
+  border-radius: 18px;
+  overflow: hidden; /* Щоб кнопки не вилазили за радіус */
+}
+
+.action-btn {
+  border: none;
+  background: transparent;
+  padding: 8px 16px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.2s, color 0.2s;
+  color: #0f0f0f;
+  cursor: pointer;
+}
+
+.action-btn:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+/* Активний стан лайка (синій) */
+.action-btn.active {
+  color: #065fd4;
+  background: rgba(6, 95, 212, 0.1);
+  position: relative;
+}
+
+/* Активний стан дизлайка (червоний) */
+.action-btn.active-dislike {
+  color: #cc0000;
+  background: rgba(204, 0, 0, 0.1);
+}
+
+.vertical-divider {
+  width: 1px;
+  height: 24px;
+  background: #ccc;
+}
+
+/* --- КНОПКА ВИКЛИКУ ЕМОЦІЙ --- */
+.reaction-btn-wrapper {
+  position: relative; /* Щоб меню позиціонувалось відносно кнопки */
+}
+
+.reaction-toggle-btn {
+  background: rgba(0, 0, 0, 0.05);
+  border: none;
+  border-radius: 18px;
+  padding: 8px 16px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.2s;
+  cursor: pointer;
+  color: #0f0f0f;
+}
+
+.reaction-toggle-btn:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+/* --- СПЛИВАЮЧЕ МЕНЮ ЕМОЦІЙ --- */
+.reaction-popup {
+  position: absolute;
+  bottom: calc(100% + 10px); /* Показувати над кнопкою */
+  left: 0;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  padding: 8px;
+  display: flex;
+  gap: 4px;
+  z-index: 1000;
+  animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Пружинна анімація */
+}
+
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.reaction-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+  min-width: 60px;
+}
+
+.reaction-option:hover {
+  background-color: #f0f2f5;
+}
+
+.reaction-option-icon {
+  font-size: 28px;
+  margin-bottom: 4px;
+  transition: transform 0.2s;
+}
+
+.reaction-option:hover .reaction-option-icon {
+  transform: scale(1.25);
+}
+
+.reaction-option-label {
+  font-size: 11px;
+  color: #65676b;
+  font-weight: 600;
+}
+.reaction-badge {
+  display: flex;
+  align-items: center;
+  background-color: #fff;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid #e4e6eb;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+}
+
+.reaction-badge:hover {
+  background-color: #f0f2f5;
+  transform: translateY(-1px);
+}
+
+.reaction-badge.active {
+  background-color: rgba(226, 38, 77, 0.1);
+  border-color: rgba(226, 38, 77, 0.3);
+  color: #e2264d;
+}
+
+.reaction-count {
+  font-weight: 700;
+  font-size: 13px;
+  margin-left: 6px;
+  color: inherit;
+}

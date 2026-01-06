@@ -10,7 +10,7 @@ import RegisterPage from './pages/RegisterPage';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import ProfilePage from './pages/ProfilePage';
 import AllMoviesPage from './pages/AllMoviesPage';
-import './App.css';
+import './style/App.css';
 
 function App() {
   return (
