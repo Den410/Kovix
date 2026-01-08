@@ -1,0 +1,33 @@
+.status-badge {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 4px 6px;
+  border-radius: 6px;
+  line-height: 1;
+}
+
+.status-planned {
+  background-color: #e0f2fe; 
+  color: #075985;            
+  border: 1px solid #38bdf8;
+}
+
+.status-watching {
+  background-color: #fef3c7; 
+  color: #92400e;            
+  border: 1px solid #fbbf24;
+}
+
+.status-watched {
+  background-color: #d1fae5; 
+  color: #065f46;
+  border: 1px solid #34d399;
+}
+
+.status-dropped {
+  background-color: #fee2e2; 
+  color: #991b1b;
+  border: 1px solid #f87171;
+}

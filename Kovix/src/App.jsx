@@ -12,6 +12,7 @@ import ProfilePage from './pages/ProfilePage';
 import AllMoviesPage from './pages/AllMoviesPage';
 import './style/App.css';
 import MyListsPage from './pages/MyListsPage';
+import UserPublicProfilePage from './pages/UserPublicProfilePage';
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/movies" element={<AllMoviesPage />} />
             <Route path="/my-lists" element={<MyListsPage />} />
+            <Route path="/users/:id" element={<UserPublicProfilePage />} />
           </Routes>
         </div>
       </Router>

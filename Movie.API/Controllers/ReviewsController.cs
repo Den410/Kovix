@@ -216,5 +216,43 @@ namespace Movie.API.Controllers
 
             return NoContent();
         }
+
+        [HttpGet("user/{userId}")]
+        public async Task<ActionResult<IEnumerable<ReviewWithVotesDto>>> GetByUser(int userId)
+        {
+            int? currentViewerId = null;
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim != null) currentViewerId = int.Parse(userIdClaim.Value);
+
+            var reviews = await _context.Reviews
+                .Where(r => r.UserId == userId)
+                .Include(r => r.User)
+                .Include(r => r.Movie) 
+                .Include(r => r.Votes)
+                .OrderByDescending(r => r.CreatedAt)
+                .ToListAsync();
+
+            var result = reviews.Select(r => new ReviewWithVotesDto
+            {
+                Id = r.Id,
+                Comment = r.Comment,
+                Rating = r.Rating,
+                CreatedAt = r.CreatedAt,
+                UserName = r.User.Username,
+                UserAvatar = r.User.AvatarUrl,
+                MovieId = r.MovieId,
+                MovieTitle = r.Movie.Title,
+                MoviePosterUrl = r.Movie.PosterUrl,
+                UserId = r.UserId,
+                LikesCount = r.Votes.Count(v => v.IsLike),
+                DislikesCount = r.Votes.Count(v => !v.IsLike),
+                CurrentUserVote = currentViewerId.HasValue
+                    ? (r.Votes.FirstOrDefault(v => v.UserId == currentViewerId)?.IsLike == true ? 1
+                       : r.Votes.FirstOrDefault(v => v.UserId == currentViewerId)?.IsLike == false ? -1 : 0)
+                    : 0
+            });
+
+            return Ok(result);
+        }
     }
 }

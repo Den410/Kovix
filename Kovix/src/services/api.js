@@ -37,6 +37,7 @@ export const reviewsAPI = {
   update: (id, reviewData) => api.put(`/reviews/${id}`, reviewData),
   delete: (id) => api.delete(`/reviews/${id}`),
   vote: (reviewId, isLike) => api.post(`/reviews/${reviewId}/vote?isLike=${isLike}`),
+  getByUser: (userId) => api.get(`/reviews/user/${userId}`),
 };
 
 export const authAPI = {
@@ -52,6 +53,11 @@ export const watchlistAPI = {
     getStatus: (movieId) => api.get(`/watchlist/movie/${movieId}`),
     update: (movieId, data) => api.post(`/watchlist/movie/${movieId}`, data),
     getMyList: () => api.get('/watchlist/my-list'),
+};
+
+export const usersAPI = {
+  getPublicProfile: (id) =>
+    api.get(`/users/${id}/profile`)
 };
 
 export default api;

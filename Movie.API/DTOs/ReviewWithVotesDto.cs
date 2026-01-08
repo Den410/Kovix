@@ -14,5 +14,8 @@
         public int LikesCount { get; set; }
         public int DislikesCount { get; set; }
         public int CurrentUserVote { get; set; }
+
+        public string? MovieTitle { get; set; }
+        public string? MoviePosterUrl { get; set; }
     }
 }

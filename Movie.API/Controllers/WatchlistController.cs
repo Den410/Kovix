@@ -81,11 +81,11 @@ namespace Movie.API.Controllers
                 .Include(w => w.Movie)
                 .Select(w => new
                 {
-                    MovieId = w.MovieId,
-                    Title = w.Movie.Title,
-                    PosterUrl = w.Movie.PosterUrl,
-                    Status = w.Status,
-                    IsFavorite = w.IsFavorite
+                    w.MovieId,
+                    w.Movie.Title,
+                    w.Movie.PosterUrl,
+                    w.Status,
+                    w.IsFavorite
                 })
                 .ToListAsync();
 

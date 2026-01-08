@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Spinner, Nav, Badge, Button } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { watchlistAPI } from '../services/api';
+import '../style/MyListsPage.css';
 
 const TABS = [
   { eventKey: 'favorite', label: '❤️ Улюблені' },
@@ -10,6 +11,13 @@ const TABS = [
   { eventKey: '3', label: '✅ Переглянуто' },
   { eventKey: '4', label: '❌ Закинуто' },
 ];
+
+const STATUS_MAP = {
+  1: { label: 'Заплановано', className: 'status-planned' },
+  2: { label: 'Переглядаю', className: 'status-watching' },
+  3: { label: 'Переглянуто', className: 'status-watched' },
+  4: { label: 'Закинуто', className: 'status-dropped' },
+};
 
 function MyListsPage() {
   const [items, setItems] = useState([]);
@@ -71,23 +79,31 @@ function MyListsPage() {
         <Row>
           {filteredItems.map(item => (
             <Col key={item.movieId} xs={6} sm={4} md={3} lg={2} className="mb-4">
-              <Card className="h-100 shadow-sm border-0 movie-card-hover">
-                <Link to={`/movie/${item.movieId}`} className="text-decoration-none text-dark">
-                  <div className="ratio ratio-2x3 overflow-hidden rounded-top">
-                    <Card.Img 
-                        variant="top" 
-                        src={item.posterUrl || 'https://via.placeholder.com/200x300'} 
-                        style={{objectFit: 'cover'}}
+            <Card className="h-100 shadow-sm border-0 position-relative movie-card-hover">
+               <Link to={`/movie/${item.movieId}`} className="text-decoration-none text-dark h-100 d-flex flex-column">
+                  <div
+                    className="overflow-hidden rounded-top"
+                    style={{ aspectRatio: '2 / 3' }}
+                  >
+                    <Card.Img
+                      src={item.posterUrl || 'https://tse1.mm.bing.net/th/id/OIP.Lr_j_PgqTGzKxJTeIwajVwHaLH'}
+                      alt={item.title}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />
                   </div>
+
                   <Card.Body className="p-2">
-                    <h6 className="text-truncate mb-1" title={item.title}>{item.title}</h6>
+                   <h6 className="text-truncate mb-1" title={item.title} style={{fontSize: '0.9rem', fontWeight: 'bold'}}>
+                      {item.title}
+                   </h6>
                     
-                    {activeTab === 'favorite' && item.status > 0 && (
-                        <Badge bg="secondary" style={{fontSize: '0.7rem'}}>
-                            {TABS.find(t => t.eventKey == item.status)?.label.split(' ')[1]}
-                        </Badge>
+                    {activeTab === 'favorite' && item.status > 0 && STATUS_MAP[item.status] && (
+                      <span className={`status-badge ${STATUS_MAP[item.status].className}`}>
+                        {STATUS_MAP[item.status].label}
+                      </span>
                     )}
+
+
                   </Card.Body>
                 </Link>
               </Card>

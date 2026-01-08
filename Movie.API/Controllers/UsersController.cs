@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Movie.API.Data;
+using Movie.API.DTOs;
 using Movie.API.Models;
 
 namespace Movie.API.Controllers
@@ -84,6 +85,26 @@ namespace Movie.API.Controllers
             await _context.SaveChangesAsync();
 
             return NoContent();
+        }
+       
+        [HttpGet("{id}/profile")]
+        public async Task<ActionResult<UserProfileDto>> GetUserProfile(int id)
+        {
+            var user = await _context.Users
+                .Where(u => u.Id == id)
+                .Select(u => new UserProfileDto
+                {
+                    Id = u.Id,
+                    Username = u.Username,
+                    AvatarUrl = u.AvatarUrl,
+                    CreatedAt = u.CreatedAt
+                })
+                .FirstOrDefaultAsync();
+
+            if (user == null)
+                return NotFound();
+
+            return Ok(user);
         }
 
         private bool UserExists(int id)

@@ -186,7 +186,7 @@ function MovieDetailPage() {
                 >
                     👍 <span className="ms-1">{likesCount > 0 ? likesCount : 'Лайк'}</span>
                 </button>
-                <div className="vertical-divider"></div>
+                <div style={{width: 1, height: 20, background: '#ccc'}}></div> 
                 <button 
                     className={`action-btn ${movie.currentUserVote === DISLIKE_ID ? 'active-dislike' : ''}`}
                     onClick={() => handleReaction(DISLIKE_ID)}
@@ -198,16 +198,11 @@ function MovieDetailPage() {
 
             <div className="vertical-divider"></div>
 
-            <div className="d-flex align-items-center gap-2">
+            <div className="watchlist-group">
                 <select 
                   className="status-select"
                   value={watchStatus}
                   onChange={(e) => handleWatchlistUpdate(e.target.value, isFavorite)}
-                  style={{
-                     borderColor: watchStatus > 0 ? '#3498db' : '#ddd',
-                     color: watchStatus > 0 ? '#3498db' : 'inherit',
-                     maxWidth: '160px'
-                  }}
                 >
                   {WATCH_STATUSES.map(s => (
                     <option key={s.id} value={s.id}>{s.label}</option>
@@ -254,7 +249,7 @@ function MovieDetailPage() {
                )}
             </div>
 
-            <div className="ms-auto d-flex align-items-center gap-2 flex-wrap justify-content-end">
+            <div className="reactions-list">
                 {Object.entries(movie.reactionCounts).map(([key, count]) => {
                     if (key === 'Like' || key === 'Dislike' || count === 0) return null;
                     const emo = EMOTIONS.find(e => e.key === key);
