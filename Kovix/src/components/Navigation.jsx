@@ -19,13 +19,18 @@ function Navigation() {
       <Navbar bg="dark" variant="dark" expand="lg" className="mb-4 sticky-top shadow-sm">
         <Container>
           <Navbar.Brand as={Link} to="/" className="fw-bold text-warning">
-             🎬 Kovix
+              🎬 Kovix
           </Navbar.Brand>
           <Navbar.Toggle aria-controls="basic-navbar-nav" />
           <Navbar.Collapse id="basic-navbar-nav">
-            <Nav className="me-auto">
-            </Nav>
             
+            <Nav className="me-auto">
+              {user && (
+                <Nav.Link as={Link} to="/my-lists" className="fw-bold text-white">
+                  🗂️ Мої списки
+                </Nav.Link>
+              )}
+            </Nav>
 
             <Nav className="align-items-center">
               {user ? (
@@ -43,7 +48,7 @@ function Navigation() {
 
                   <Nav.Link as={Link} to="/profile" className="fw-bold text-light me-2 d-flex align-items-center gap-2">
                     <div className="bg-secondary rounded-circle d-flex align-items-center justify-content-center" style={{width: 30, height: 30, fontSize: '0.8rem'}}>
-                       {user.username.charAt(0).toUpperCase()}
+                        {user.username.charAt(0).toUpperCase()}
                     </div>
                     {user.username}
                   </Nav.Link>

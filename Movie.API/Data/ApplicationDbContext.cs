@@ -187,7 +187,7 @@ namespace Movie.API.Data
                     UserId = 1,
                     MovieId = 3,
                     IsFavorite = true,
-                    IsWatched = false,
+                    Status = WatchStatus.None,
                     AddedAt = new DateTime(2024, 3, 1, 10, 0, 0, DateTimeKind.Utc)
                 }
             );

@@ -6,7 +6,7 @@ namespace Movie.API.Models
         public int UserId { get; set; }
         public int MovieId { get; set; }
         public bool IsFavorite { get; set; }
-        public bool IsWatched { get; set; }
+        public WatchStatus Status { get; set; } = WatchStatus.None;
         public DateTime AddedAt { get; set; }
 
         public User? User { get; set; }

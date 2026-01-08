@@ -231,3 +231,51 @@ h1, h2, h3, h4, h5 {
   margin-left: 6px;
   color: inherit;
 }
+
+.favorite-btn {
+  background: transparent;
+  border: 1px solid #ddd;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #ccc;
+}
+
+.favorite-btn:hover {
+  background: #fff0f5;
+  color: #e2264d;
+  border-color: #e2264d;
+}
+
+.favorite-btn.active {
+  background: #e2264d;
+  color: white;
+  border-color: #e2264d;
+}
+
+.status-select {
+  border-radius: 20px;
+  padding: 6px 12px;
+  border: 1px solid #ddd;
+  background-color: white;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.status-select:hover {
+  border-color: #3498db;
+}
+
+.status-badge-1 { background-color: #3498db; color: white; }
+.status-badge-2 { background-color: #f1c40f; color: black; }
+.status-badge-3 { background-color: #2ecc71; color: white; }
+.status-badge-4 { background-color: #95a5a6; color: white; }

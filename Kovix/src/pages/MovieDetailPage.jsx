@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Container, Row, Col, Card, Badge, Spinner, Button } from 'react-bootstrap';
-import { moviesAPI, reviewsAPI } from '../services/api';
+import { moviesAPI, reviewsAPI, watchlistAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import ReviewForm from '../components/ReviewForm';
 import ReviewList from '../components/ReviewList';
@@ -16,7 +16,15 @@ const EMOTIONS = [
   { id: 2, label: 'Смішно', icon: '😂', key: 'Funny' },
   { id: 3, label: 'Вау', icon: '😲', key: 'Wow' },
   { id: 4, label: 'Сумно', icon: '😢', key: 'Sad' },
-  { id: 5, label: 'Злість', icon: '😡', key: 'Angry' },
+  { id: 5, label: 'Злить', icon: '😡', key: 'Angry' },
+];
+
+const WATCH_STATUSES = [
+  { id: 0, label: '+ Додати в список' },
+  { id: 1, label: '📅 Заплановано' },
+  { id: 2, label: '👀 Переглядаю' },
+  { id: 3, label: '✅ Переглянуто' },
+  { id: 4, label: '❌ Закинуто' },
 ];
 
 function MovieDetailPage() {
@@ -27,6 +35,10 @@ function MovieDetailPage() {
   const [movie, setMovie] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  const [watchStatus, setWatchStatus] = useState(0);
+  const [isFavorite, setIsFavorite] = useState(false);
+
   const [showEditModal, setShowEditModal] = useState(false);
   const [showReactionPopup, setShowReactionPopup] = useState(false);
   const popupRef = useRef(null);
@@ -53,6 +65,16 @@ function MovieDetailPage() {
       ]);
       setMovie(movieRes.data);
       setReviews(reviewsRes.data);
+
+      if (user) {
+        try {
+          const watchlistRes = await watchlistAPI.getStatus(id);
+          setWatchStatus(watchlistRes.data.status);
+          setIsFavorite(watchlistRes.data.isFavorite);
+        } catch (err) {
+          console.error("Помилка завантаження списку", err);
+        }
+      }
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -67,7 +89,6 @@ function MovieDetailPage() {
 
   const handleReaction = async (typeId) => {
     if (!user) return alert("Будь ласка, увійдіть, щоб оцінити фільм!");
-    
     try {
       setShowReactionPopup(false);
       await moviesAPI.react(id, typeId);
@@ -75,6 +96,27 @@ function MovieDetailPage() {
       setMovie(movieRes.data);
     } catch (error) {
       console.error("Помилка реакції:", error);
+    }
+  };
+
+  const handleWatchlistUpdate = async (newStatus, newFavorite) => {
+    if (!user) return alert("Будь ласка, увійдіть!");
+
+    const prevStatus = watchStatus;
+    const prevFav = isFavorite;
+
+    setWatchStatus(parseInt(newStatus));
+    setIsFavorite(newFavorite);
+
+    try {
+      await watchlistAPI.update(id, {
+        status: parseInt(newStatus),
+        isFavorite: newFavorite
+      });
+    } catch (error) {
+      setWatchStatus(prevStatus);
+      setIsFavorite(prevFav);
+      console.error(error);
     }
   };
 
@@ -98,7 +140,7 @@ function MovieDetailPage() {
 
   const likesCount = movie.reactionCounts['Like'] || 0;
   const dislikesCount = movie.reactionCounts['Dislike'] || 0; 
-  
+
   return (
     <Container className="mt-4">
       {user && isAdmin() && (
@@ -144,9 +186,7 @@ function MovieDetailPage() {
                 >
                     👍 <span className="ms-1">{likesCount > 0 ? likesCount : 'Лайк'}</span>
                 </button>
-                
                 <div className="vertical-divider"></div>
-
                 <button 
                     className={`action-btn ${movie.currentUserVote === DISLIKE_ID ? 'active-dislike' : ''}`}
                     onClick={() => handleReaction(DISLIKE_ID)}
@@ -155,6 +195,35 @@ function MovieDetailPage() {
                     👎 <span className="ms-1">{dislikesCount > 0 ? dislikesCount : ''}</span>
                 </button>
             </div>
+
+            <div className="vertical-divider"></div>
+
+            <div className="d-flex align-items-center gap-2">
+                <select 
+                  className="status-select"
+                  value={watchStatus}
+                  onChange={(e) => handleWatchlistUpdate(e.target.value, isFavorite)}
+                  style={{
+                     borderColor: watchStatus > 0 ? '#3498db' : '#ddd',
+                     color: watchStatus > 0 ? '#3498db' : 'inherit',
+                     maxWidth: '160px'
+                  }}
+                >
+                  {WATCH_STATUSES.map(s => (
+                    <option key={s.id} value={s.id}>{s.label}</option>
+                  ))}
+                </select>
+
+                <button 
+                  className={`favorite-btn ${isFavorite ? 'active' : ''}`}
+                  onClick={() => handleWatchlistUpdate(watchStatus, !isFavorite)}
+                  title={isFavorite ? "Видалити з улюблених" : "Додати в улюблене"}
+                >
+                  ★
+                </button>
+            </div>
+
+            <div className="vertical-divider"></div>
 
             <div className="reaction-btn-wrapper" ref={popupRef}>
                {(() => {
@@ -188,10 +257,8 @@ function MovieDetailPage() {
             <div className="ms-auto d-flex align-items-center gap-2 flex-wrap justify-content-end">
                 {Object.entries(movie.reactionCounts).map(([key, count]) => {
                     if (key === 'Like' || key === 'Dislike' || count === 0) return null;
-                    
                     const emo = EMOTIONS.find(e => e.key === key);
                     if (!emo) return null;
-
                     const isActive = movie.currentUserEmotion === emo.id;
 
                     return (

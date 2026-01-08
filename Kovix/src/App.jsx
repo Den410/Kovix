@@ -11,6 +11,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import ProfilePage from './pages/ProfilePage';
 import AllMoviesPage from './pages/AllMoviesPage';
 import './style/App.css';
+import MyListsPage from './pages/MyListsPage';
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/movies" element={<AllMoviesPage />} />
+            <Route path="/my-lists" element={<MyListsPage />} />
           </Routes>
         </div>
       </Router>

@@ -48,4 +48,10 @@ export const authAPI = {
   }),
 };
 
+export const watchlistAPI = {
+    getStatus: (movieId) => api.get(`/watchlist/movie/${movieId}`),
+    update: (movieId, data) => api.post(`/watchlist/movie/${movieId}`, data),
+    getMyList: () => api.get('/watchlist/my-list'),
+};
+
 export default api;
