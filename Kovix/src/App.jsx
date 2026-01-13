@@ -13,10 +13,12 @@ import AllMoviesPage from './pages/AllMoviesPage';
 import './style/App.css';
 import MyListsPage from './pages/MyListsPage';
 import UserPublicProfilePage from './pages/UserPublicProfilePage';
+import { ThemeProvider } from './contexts/ThemeContext';
 
 function App() {
   return (
     <AuthProvider>
+      <ThemeProvider> 
       <Router>
         <div className="App">
           <Navigation />
@@ -33,6 +35,7 @@ function App() {
           </Routes>
         </div>
       </Router>
+      </ThemeProvider>
     </AuthProvider>
   );
 }

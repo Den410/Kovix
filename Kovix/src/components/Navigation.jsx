@@ -3,11 +3,13 @@ import { Navbar, Nav, Container, Button } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import AdminMovieModal from './AdminMovieModal';
+import ThemeSettings from './ThemeSettings';
 
 function Navigation() {
   const { user, logout, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showThemeModal, setShowThemeModal] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -45,6 +47,15 @@ function Navigation() {
                       <span>➕</span> Додати фільм
                     </Button>
                   )}
+                  <Button 
+                    variant="link" 
+                    className="text-decoration-none me-3" 
+                    style={{ fontSize: '1.2rem' }}
+                    onClick={() => setShowThemeModal(true)}
+                    title="Змінити тему"
+                  >
+                    🎨
+                  </Button>
 
                   <Nav.Link as={Link} to="/profile" className="fw-bold text-light me-2 d-flex align-items-center gap-2">
                     <div className="bg-secondary rounded-circle d-flex align-items-center justify-content-center" style={{width: 30, height: 30, fontSize: '0.8rem'}}>
@@ -69,6 +80,11 @@ function Navigation() {
         show={showAddModal} 
         onHide={() => setShowAddModal(false)} 
         onSuccess={() => window.location.reload()} 
+      />
+      
+      <ThemeSettings 
+        show={showThemeModal} 
+        onHide={() => setShowThemeModal(false)} 
       />
     </>
   );

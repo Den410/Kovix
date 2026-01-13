@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Container, Card, Spinner, Row, Col, Badge, Button } from 'react-bootstrap';
+import { Container, Card, Spinner, Row, Col, Badge } from 'react-bootstrap';
 import { usersAPI, reviewsAPI } from '../services/api';
 
 const API_BASE_URL = 'http://localhost:5096';
@@ -44,7 +44,7 @@ function UserPublicProfilePage() {
 
   return (
     <Container className="mt-4 mb-5">
-      <Card className="shadow-sm border-0 mb-4 p-5 text-center bg-white">
+      <Card className="shadow-sm border-0 mb-4 p-5 text-center">
         <div className="d-flex justify-content-center mb-3">
           {userProfile.avatarUrl ? (
             <img
@@ -64,7 +64,8 @@ function UserPublicProfilePage() {
         </div>
 
         <h2 className="fw-bold mb-1">{userProfile.username}</h2>
-        <p className="text-muted mb-0">
+        
+        <p className="mb-0" style={{ opacity: 0.7 }}>
           На сайті з {new Date(userProfile.createdAt).toLocaleDateString('uk-UA')}
         </p>
       </Card>
@@ -72,7 +73,7 @@ function UserPublicProfilePage() {
       <h4 className="mb-4 ps-2 border-start border-4 border-primary">Відгуки користувача ({reviews.length})</h4>
 
       {reviews.length === 0 ? (
-        <p className="text-muted">Цей користувач ще не залишив жодного відгуку.</p>
+        <p style={{ opacity: 0.7 }}>Цей користувач ще не залишив жодного відгуку.</p>
       ) : (
         <Row>
             {reviews.map(review => (
@@ -93,22 +94,22 @@ function UserPublicProfilePage() {
                                     <div className="d-flex justify-content-between align-items-start">
                                         <div>
                                             <h6 className="mb-1">
-                                                <Link to={`/movie/${review.movieId}`} className="text-decoration-none text-dark fw-bold">
+                                                <Link to={`/movie/${review.movieId}`} className="text-decoration-none fw-bold" style={{ color: 'var(--text-main)' }}>
                                                     {review.movieTitle || 'Фільм'}
                                                 </Link>
                                             </h6>
-                                            <small className="text-muted">{formatDate(review.createdAt)}</small>
+                                            <small style={{ opacity: 0.6 }}>{formatDate(review.createdAt)}</small>
                                         </div>
                                         <Badge bg={review.rating >= 8 ? 'success' : review.rating >= 5 ? 'warning' : 'danger'}>
                                             ⭐ {review.rating}/10
                                         </Badge>
                                     </div>
                                     
-                                    <p className="mt-2 mb-2 text-secondary" style={{whiteSpace: 'pre-wrap'}}>
+                                    <p className="mt-2 mb-2" style={{whiteSpace: 'pre-wrap', opacity: 0.9}}>
                                         {review.comment}
                                     </p>
 
-                                    <div className="d-flex gap-2 text-muted small">
+                                    <div className="d-flex gap-2 small" style={{ opacity: 0.7 }}>
                                         <span>👍 {review.likesCount}</span>
                                         <span>👎 {review.dislikesCount}</span>
                                     </div>
