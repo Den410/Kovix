@@ -60,4 +60,23 @@ export const usersAPI = {
     api.get(`/users/${id}/profile`)
 };
 
+export const friendsAPI = {
+    add: (userId) => api.post(`/friends/add/${userId}`),
+    accept: (userId) => api.post(`/friends/accept/${userId}`),
+    remove: (userId) => api.delete(`/friends/remove/${userId}`),
+    getMyFriends: () => api.get('/friends/my-friends'),
+    checkStatus: (userId) => api.get(`/friends/status/${userId}`),
+};
+
+export const blocksAPI = {
+    block: (userId) => api.post(`/blocks/${userId}`),
+    unblock: (userId) => api.delete(`/blocks/${userId}`),
+    check: (userId) => api.get(`/blocks/check/${userId}`),
+};
+
+export const chatAPI = {
+    getGeneralHistory: () => api.get('/chat/general'),
+    getPrivateHistory: (userId) => api.get(`/chat/private/${userId}`),
+};
+
 export default api;

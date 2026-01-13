@@ -14,11 +14,14 @@ import './style/App.css';
 import MyListsPage from './pages/MyListsPage';
 import UserPublicProfilePage from './pages/UserPublicProfilePage';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { FriendsProvider } from './contexts/FriendsContext';
+import ChatPage from './pages/ChatPage';
 
 function App() {
   return (
     <AuthProvider>
-      <ThemeProvider> 
+      <ThemeProvider>
+      <FriendsProvider>
       <Router>
         <div className="App">
           <Navigation />
@@ -32,9 +35,11 @@ function App() {
             <Route path="/movies" element={<AllMoviesPage />} />
             <Route path="/my-lists" element={<MyListsPage />} />
             <Route path="/users/:id" element={<UserPublicProfilePage />} />
+            <Route path="/chat" element={<ChatPage />} />
           </Routes>
         </div>
       </Router>
+      </FriendsProvider> 
       </ThemeProvider>
     </AuthProvider>
   );

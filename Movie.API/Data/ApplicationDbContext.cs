@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Movie.API.DTOs;
 using Movie.API.Models;
+using Movie.API.Models.Enums;
 
 namespace Movie.API.Data
 {
@@ -17,6 +18,10 @@ namespace Movie.API.Data
         public DbSet<ReviewVote> ReviewVotes { get; set; }
         public DbSet<Watchlist> Watchlists { get; set; }
         public DbSet<MovieReaction> MovieReactions { get; set; }
+        public DbSet<Friendship> Friendships { get; set; }
+        public DbSet<UserBlock> UserBlocks { get; set; }
+        public DbSet<Message> Messages { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -81,6 +86,42 @@ namespace Movie.API.Data
                     .HasForeignKey(e => e.MovieId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
+
+            modelBuilder.Entity<Friendship>()
+            .HasOne(f => f.Requester)
+            .WithMany()
+            .HasForeignKey(f => f.RequesterId)
+            .OnDelete(DeleteBehavior.Restrict); 
+
+            modelBuilder.Entity<Friendship>()
+                .HasOne(f => f.Receiver)
+                .WithMany()
+                .HasForeignKey(f => f.ReceiverId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<UserBlock>()
+            .HasOne(b => b.Blocker)
+            .WithMany()
+            .HasForeignKey(b => b.BlockerId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<UserBlock>()
+                .HasOne(b => b.Blocked)
+                .WithMany()
+                .HasForeignKey(b => b.BlockedId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Message>()
+            .HasOne(m => m.Sender)
+            .WithMany()
+            .HasForeignKey(m => m.SenderId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Message>()
+                .HasOne(m => m.Receiver)
+                .WithMany()
+                .HasForeignKey(m => m.ReceiverId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<MovieEntity>().HasData(
                 new MovieEntity

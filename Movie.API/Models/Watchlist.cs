@@ -1,3 +1,5 @@
+using Movie.API.Models.Enums;
+
 namespace Movie.API.Models
 {
     public class Watchlist

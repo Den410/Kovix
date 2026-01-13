@@ -1,4 +1,6 @@
-﻿namespace Movie.API.Models
+﻿using Movie.API.Models.Enums;
+
+namespace Movie.API.Models
 {
     public class MovieReaction
     {

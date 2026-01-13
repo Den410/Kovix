@@ -1,15 +1,22 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Container, Card, Spinner, Row, Col, Badge } from 'react-bootstrap';
-import { usersAPI, reviewsAPI } from '../services/api';
+import { Container, Card, Spinner, Row, Col, Badge, Button } from 'react-bootstrap';
+import { useAuth } from '../contexts/AuthContext';
+import { usersAPI, reviewsAPI, friendsAPI, blocksAPI } from '../services/api';
+import { useFriends } from '../contexts/FriendsContext';
 
 const API_BASE_URL = 'http://localhost:5096';
 
 function UserPublicProfilePage() {
   const { id } = useParams();
+  const { user } = useAuth();
   const [userProfile, setUserProfile] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const { updateRequestsCount } = useFriends();
+  const [friendStatus, setFriendStatus] = useState('None');
+  const [isBlocked, setIsBlocked] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -25,12 +32,62 @@ function UserPublicProfilePage() {
       
       setUserProfile(profileRes.data);
       setReviews(reviewsRes.data);
+
+      if (user && user.id !== parseInt(id)) {
+         const statusRes = await friendsAPI.checkStatus(id);
+         setFriendStatus(statusRes.data.status);
+
+         const blockRes = await blocksAPI.check(id);
+         setIsBlocked(blockRes.data.isBlocked);
+      }
+
     } catch (error) {
       console.error("Помилка:", error);
       setUserProfile(null);
     } finally {
       setLoading(false);
     }
+  };
+
+const handleFriendAction = async () => {
+    try {
+        if (friendStatus === 'None') {
+            await friendsAPI.add(id);
+            setFriendStatus('PendingOutgoing');
+        } else if (friendStatus === 'PendingOutgoing') {
+            await friendsAPI.remove(id);
+            setFriendStatus('None');
+        } else if (friendStatus === 'Friend') {
+            if(!window.confirm("Видалити з друзів?")) return;
+            await friendsAPI.remove(id);
+            setFriendStatus('None');
+        }
+        updateRequestsCount();
+    } catch (error) {
+        if (error.response && error.response.status === 400) {
+            alert(error.response.data);
+        } else {
+            alert("Помилка дії з друзями");
+        }
+        loadData();
+    }
+  };
+
+  const handleBlockAction = async () => {
+      if (isBlocked) {
+          if (!window.confirm("Розблокувати цього користувача?")) return;
+          try {
+              await blocksAPI.unblock(id);
+              setIsBlocked(false);
+          } catch (e) { alert("Помилка розблокування"); }
+      } else {
+          if (!window.confirm("Заблокувати користувача? Ви більше не будете бачити його активність, а він буде видалений з друзів.")) return;
+          try {
+              await blocksAPI.block(id);
+              setIsBlocked(true);
+              setFriendStatus('None');
+          } catch (e) { alert("Помилка блокування"); }
+      }
   };
 
   const formatDate = (dateString) => {
@@ -65,61 +122,106 @@ function UserPublicProfilePage() {
 
         <h2 className="fw-bold mb-1">{userProfile.username}</h2>
         
-        <p className="mb-0" style={{ opacity: 0.7 }}>
+        {user && user.id !== parseInt(id) && (
+            <div className="mt-3 d-flex flex-column align-items-center gap-2">
+                
+                {isBlocked ? (
+                    <Button variant="dark" onClick={handleBlockAction}>🔓 Розблокувати</Button>
+                ) : (
+                    <>
+                        {friendStatus === 'None' && (
+                            <Button variant="primary" onClick={handleFriendAction}>➕ Додати в друзі</Button>
+                        )}
+                        {friendStatus === 'PendingOutgoing' && (
+                            <Button variant="secondary" onClick={handleFriendAction}>🕒 Запит надіслано (Скасувати)</Button>
+                        )}
+                        {friendStatus === 'PendingIncoming' && (
+                            <Badge bg="info" className="p-2 fs-6">
+                                📩 Вам надіслано запит (Перевірте сповіщення 🔔)
+                            </Badge>
+                        )}
+                        {friendStatus === 'Friend' && (
+                            <Button variant="outline-danger" onClick={handleFriendAction}>🗑️ Видалити з друзів</Button>
+                        )}
+
+                        <Button 
+                            variant="link" 
+                            className="text-danger text-decoration-none mt-1" 
+                            size="sm"
+                            onClick={handleBlockAction}
+                            style={{ fontSize: '0.9rem' }}
+                        >
+                            🚫 Заблокувати
+                        </Button>
+                    </>
+                )}
+            </div>
+        )}
+
+        <p className="mb-0 mt-3" style={{ opacity: 0.7 }}>
           На сайті з {new Date(userProfile.createdAt).toLocaleDateString('uk-UA')}
         </p>
       </Card>
 
-      <h4 className="mb-4 ps-2 border-start border-4 border-primary">Відгуки користувача ({reviews.length})</h4>
-
-      {reviews.length === 0 ? (
-        <p style={{ opacity: 0.7 }}>Цей користувач ще не залишив жодного відгуку.</p>
+      {isBlocked ? (
+          <div className="text-center p-5 text-muted border rounded" style={{ backgroundColor: 'var(--bg-card)' }}>
+              <h4>🚫 Користувач заблокований</h4>
+              <p>Ви обмежили доступ до контенту цього користувача.</p>
+          </div>
       ) : (
-        <Row>
-            {reviews.map(review => (
-                <Col md={12} key={review.id} className="mb-3">
-                    <Card className="shadow-sm border-0">
-                        <Card.Body>
-                            <div className="d-flex gap-3">
-                                <Link to={`/movie/${review.movieId}`} className="flex-shrink-0">
-                                   <img 
-                                     src={review.moviePosterUrl || 'https://via.placeholder.com/60x90'} 
-                                     alt="Poster" 
-                                     className="rounded"
-                                     style={{width: 60, height: 90, objectFit: 'cover'}}
-                                   />
-                                </Link>
+          <>
+            <h4 className="mb-4 ps-2 border-start border-4 border-primary">Відгуки користувача ({reviews.length})</h4>
 
-                                <div className="flex-grow-1">
-                                    <div className="d-flex justify-content-between align-items-start">
-                                        <div>
-                                            <h6 className="mb-1">
-                                                <Link to={`/movie/${review.movieId}`} className="text-decoration-none fw-bold" style={{ color: 'var(--text-main)' }}>
-                                                    {review.movieTitle || 'Фільм'}
-                                                </Link>
-                                            </h6>
-                                            <small style={{ opacity: 0.6 }}>{formatDate(review.createdAt)}</small>
+            {reviews.length === 0 ? (
+                <p style={{ opacity: 0.7 }}>Цей користувач ще не залишив жодного відгуку.</p>
+            ) : (
+                <Row>
+                    {reviews.map(review => (
+                        <Col md={12} key={review.id} className="mb-3">
+                            <Card className="shadow-sm border-0">
+                                <Card.Body>
+                                    <div className="d-flex gap-3">
+                                        <Link to={`/movie/${review.movieId}`} className="flex-shrink-0">
+                                        <img 
+                                            src={review.moviePosterUrl || 'https://via.placeholder.com/60x90'} 
+                                            alt="Poster" 
+                                            className="rounded"
+                                            style={{width: 60, height: 90, objectFit: 'cover'}}
+                                        />
+                                        </Link>
+
+                                        <div className="flex-grow-1">
+                                            <div className="d-flex justify-content-between align-items-start">
+                                                <div>
+                                                    <h6 className="mb-1">
+                                                        <Link to={`/movie/${review.movieId}`} className="text-decoration-none fw-bold" style={{ color: 'var(--text-main)' }}>
+                                                            {review.movieTitle || 'Фільм'}
+                                                        </Link>
+                                                    </h6>
+                                                    <small style={{ opacity: 0.6 }}>{formatDate(review.createdAt)}</small>
+                                                </div>
+                                                <Badge bg={review.rating >= 8 ? 'success' : review.rating >= 5 ? 'warning' : 'danger'}>
+                                                    ⭐ {review.rating}/10
+                                                </Badge>
+                                            </div>
+                                            
+                                            <p className="mt-2 mb-2" style={{whiteSpace: 'pre-wrap', opacity: 0.9}}>
+                                                {review.comment}
+                                            </p>
+
+                                            <div className="d-flex gap-2 small" style={{ opacity: 0.7 }}>
+                                                <span>👍 {review.likesCount}</span>
+                                                <span>👎 {review.dislikesCount}</span>
+                                            </div>
                                         </div>
-                                        <Badge bg={review.rating >= 8 ? 'success' : review.rating >= 5 ? 'warning' : 'danger'}>
-                                            ⭐ {review.rating}/10
-                                        </Badge>
                                     </div>
-                                    
-                                    <p className="mt-2 mb-2" style={{whiteSpace: 'pre-wrap', opacity: 0.9}}>
-                                        {review.comment}
-                                    </p>
-
-                                    <div className="d-flex gap-2 small" style={{ opacity: 0.7 }}>
-                                        <span>👍 {review.likesCount}</span>
-                                        <span>👎 {review.dislikesCount}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </Card.Body>
-                    </Card>
-                </Col>
-            ))}
-        </Row>
+                                </Card.Body>
+                            </Card>
+                        </Col>
+                    ))}
+                </Row>
+            )}
+          </>
       )}
     </Container>
   );

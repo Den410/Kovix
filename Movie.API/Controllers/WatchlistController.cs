@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Movie.API.Data;
 using Movie.API.DTOs;
 using Movie.API.Models;
+using Movie.API.Models.Enums;
 using System.Security.Claims;
 
 namespace Movie.API.Controllers

@@ -1,4 +1,4 @@
-﻿namespace Movie.API.Models
+﻿namespace Movie.API.Models.Enums
 {
     public enum WatchStatus
     {
