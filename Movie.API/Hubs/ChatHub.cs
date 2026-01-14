@@ -1,8 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 using Movie.API.Data;
 using Movie.API.Models;
-
+using System.Security.Claims;
 
 namespace Movie.API.Hubs
 {
@@ -16,30 +17,88 @@ namespace Movie.API.Hubs
             _context = context;
         }
 
-        public async Task SendMessage(string message, int? receiverId)
+        private int GetUserId()
         {
-            var senderId = int.Parse(Context.UserIdentifier!);
-            var senderName = Context.User.Identity!.Name;
+            return int.Parse(Context.User!.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+        }
 
-            var msg = new Message
+        public async Task SendMessage(string content, int? receiverId)
+        {
+            var userId = int.Parse(Context.User.FindFirst(ClaimTypes.NameIdentifier).Value);
+            var userName = Context.User.Identity.Name;
+
+            var message = new Message
             {
-                SenderId = senderId,
-                ReceiverId = receiverId,
-                Content = message,
+                SenderId = userId,
+                ReceiverId = receiverId, 
+                Content = content,
                 Timestamp = DateTime.UtcNow
             };
-            _context.Messages.Add(msg);
+
+            _context.Messages.Add(message);
             await _context.SaveChangesAsync();
 
             if (receiverId == null)
             {
-                await Clients.All.SendAsync("ReceiveMessage", senderId, senderName, message, null, msg.Timestamp);
+                await Clients.All.SendAsync("ReceiveMessage", userId, userName, content, null, message.Timestamp, message.Id);
             }
             else
             {
-                await Clients.User(receiverId.ToString()!).SendAsync("ReceiveMessage", senderId, senderName, message, receiverId, msg.Timestamp);
-                await Clients.User(senderId.ToString()).SendAsync("ReceiveMessage", senderId, senderName, message, receiverId, msg.Timestamp);
+                await Clients.User(receiverId.ToString()).SendAsync("ReceiveMessage", userId, userName, content, receiverId, message.Timestamp, message.Id);
+                await Clients.Caller.SendAsync("ReceiveMessage", userId, userName, content, receiverId, message.Timestamp, message.Id);
             }
+        }
+
+
+        public async Task EditMessage(int messageId, string newContent)
+        {
+            var userId = GetUserId();
+            var msg = await _context.Messages.FindAsync(messageId);
+
+            if (msg == null || msg.SenderId != userId) return;
+
+            msg.Content = newContent;
+            msg.IsEdited = true;
+            await _context.SaveChangesAsync();
+
+            await Clients.All.SendAsync("MessageEdited", msg.Id, msg.Content);
+        }
+
+        public async Task DeleteMessageForEveryone(int messageId)
+        {
+            var userId = GetUserId();
+            var msg = await _context.Messages.FindAsync(messageId);
+
+            if (msg == null) return;
+
+            bool isAdmin = Context.User!.IsInRole("Admin");
+
+            if (msg.SenderId == userId || isAdmin)
+            {
+                msg.IsDeleted = true;
+                await _context.SaveChangesAsync();
+                await Clients.All.SendAsync("MessageDeleted", msg.Id);
+            }
+        }
+
+        public async Task DeleteMessageForMe(int messageId)
+        {
+            var userId = GetUserId();
+
+            var exists = await _context.MessageDelete
+                .AnyAsync(md => md.MessageId == messageId && md.UserId == userId);
+
+            if (!exists)
+            {
+                _context.MessageDelete.Add(new MessageDelete
+                {
+                    MessageId = messageId,
+                    UserId = userId
+                });
+                await _context.SaveChangesAsync();
+            }
+
+            await Clients.Caller.SendAsync("MessageDeletedForMe", messageId);
         }
     }
 }

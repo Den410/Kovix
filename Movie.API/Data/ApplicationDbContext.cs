@@ -21,6 +21,7 @@ namespace Movie.API.Data
         public DbSet<Friendship> Friendships { get; set; }
         public DbSet<UserBlock> UserBlocks { get; set; }
         public DbSet<Message> Messages { get; set; }
+        public DbSet<MessageDelete> MessageDelete { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -112,16 +113,32 @@ namespace Movie.API.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Message>()
-            .HasOne(m => m.Sender)
-            .WithMany()
-            .HasForeignKey(m => m.SenderId)
-            .OnDelete(DeleteBehavior.Restrict);
+                .HasOne(m => m.Sender)
+                .WithMany()
+                .HasForeignKey(m => m.SenderId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Message>()
                 .HasOne(m => m.Receiver)
                 .WithMany()
                 .HasForeignKey(m => m.ReceiverId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<MessageDelete>()
+               .HasOne(md => md.Message)
+               .WithMany(m => m.DeletedFor)
+               .HasForeignKey(md => md.MessageId)
+               .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<MessageDelete>()
+                .HasOne(md => md.User)
+                .WithMany()
+                .HasForeignKey(md => md.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<MessageDelete>()
+                .HasIndex(md => new { md.MessageId, md.UserId })
+                .IsUnique();
 
             modelBuilder.Entity<MovieEntity>().HasData(
                 new MovieEntity

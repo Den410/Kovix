@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Movie.API.Data;
+using Movie.API.DTOs;
+using Movie.API.Models;
 using System.Security.Claims;
 
 namespace Movie.API.Controllers
@@ -18,22 +20,36 @@ namespace Movie.API.Controllers
             _context = context;
         }
 
+        private int GetUserId()
+        {
+            return int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+        }
+
         [HttpGet("general")]
         public async Task<IActionResult> GetGeneralHistory()
         {
+            var userId = GetUserId();
+
             var msgs = await _context.Messages
-                .Where(m => m.ReceiverId == null)
+                .AsNoTracking()
+                .Where(m =>
+                    m.ReceiverId == null &&
+                    !m.IsDeleted &&
+                    !m.DeletedFor.Any(d => d.UserId == userId)
+                )
                 .Include(m => m.Sender)
                 .OrderByDescending(m => m.Timestamp)
                 .Take(50)
                 .OrderBy(m => m.Timestamp)
-                .Select(m => new {
+                .Select(m => new
+                {
                     m.Id,
                     m.Content,
                     m.Timestamp,
                     m.SenderId,
                     SenderName = m.Sender.Username,
-                    m.ReceiverId
+                    m.ReceiverId,
+                    m.IsEdited
                 })
                 .ToListAsync();
 
@@ -43,26 +59,97 @@ namespace Movie.API.Controllers
         [HttpGet("private/{userId}")]
         public async Task<IActionResult> GetPrivateHistory(int userId)
         {
-            var currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var currentUserId = GetUserId();
 
             var msgs = await _context.Messages
-                .Where(m => (m.SenderId == currentUserId && m.ReceiverId == userId) ||
-                            (m.SenderId == userId && m.ReceiverId == currentUserId))
+                .AsNoTracking()
+                .Where(m =>
+                    !m.IsDeleted &&
+                    !m.DeletedFor.Any(d => d.UserId == currentUserId) &&
+                    (
+                        (m.SenderId == currentUserId && m.ReceiverId == userId) ||
+                        (m.SenderId == userId && m.ReceiverId == currentUserId)
+                    )
+                )
                 .Include(m => m.Sender)
                 .OrderByDescending(m => m.Timestamp)
                 .Take(50)
                 .OrderBy(m => m.Timestamp)
-                .Select(m => new {
+                .Select(m => new
+                {
                     m.Id,
                     m.Content,
                     m.Timestamp,
                     m.SenderId,
                     SenderName = m.Sender.Username,
-                    m.ReceiverId
+                    ReceiverId = m.ReceiverId,
+                    m.IsEdited
                 })
                 .ToListAsync();
 
             return Ok(msgs);
+        }
+
+        [HttpDelete("messages/{id}/me")]
+        public async Task<IActionResult> DeleteForMe(int id)
+        {
+            var userId = GetUserId();
+
+            var messageExists = await _context.Messages
+                .AnyAsync(m => m.Id == id);
+
+            if (!messageExists)
+                return NotFound();
+
+            var exists = await _context.MessageDelete
+                .AnyAsync(x => x.MessageId == id && x.UserId == userId);
+
+            if (!exists)
+            {
+                _context.MessageDelete.Add(new MessageDelete
+                {
+                    MessageId = id,
+                    UserId = userId
+                });
+
+                await _context.SaveChangesAsync();
+            }
+
+            return Ok();
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpDelete("messages/{id}")]
+        public async Task<IActionResult> DeleteMessage(int id)
+        {
+            var msg = await _context.Messages.FindAsync(id);
+            if (msg == null) return NotFound();
+
+            msg.IsDeleted = true;
+            await _context.SaveChangesAsync();
+
+            return Ok();
+        }
+
+        [HttpPut("messages/{id}")]
+        public async Task<IActionResult> EditMessage(int id, [FromBody] EditMessageDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var userId = GetUserId();
+
+            var msg = await _context.Messages.FindAsync(id);
+            if (msg == null) return NotFound();
+
+            if (msg.SenderId != userId)
+                return Forbid();
+
+            msg.Content = dto.Content.Trim();
+            msg.IsEdited = true;
+
+            await _context.SaveChangesAsync();
+            return Ok();
         }
     }
 }

@@ -3,7 +3,7 @@ import { Container, Row, Col, Card, Form, Button, ListGroup } from 'react-bootst
 import { useAuth } from '../contexts/AuthContext';
 import { chatAPI, friendsAPI } from '../services/api';
 import { HubConnectionBuilder, HubConnectionState } from '@microsoft/signalr';
-import '../style/App.css'; 
+import '../style/App.css';
 
 const API_BASE_URL = 'http://localhost:5096';
 
@@ -15,6 +15,9 @@ function ChatPage() {
   const [messageInput, setMessageInput] = useState('');
   const [activeChat, setActiveChat] = useState(null);
   const [friends, setFriends] = useState([]);
+  
+  const [editingId, setEditingId] = useState(null);
+  const [contextMenu, setContextMenu] = useState(null); 
 
   const messagesEndRef = useRef(null);
 
@@ -23,6 +26,12 @@ function ChatPage() {
   };
 
   useEffect(scrollToBottom, [messages]);
+
+  useEffect(() => {
+    const handleClick = () => setContextMenu(null);
+    window.addEventListener('click', handleClick);
+    return () => window.removeEventListener('click', handleClick);
+  }, []);
 
   useEffect(() => {
     friendsAPI.getMyFriends()
@@ -51,17 +60,36 @@ function ChatPage() {
     }
 
     connection.off('ReceiveMessage');
-    connection.on('ReceiveMessage', (senderId, senderName, message, receiverId, timestamp) => {
+    connection.on('ReceiveMessage', (senderId, senderName, message, receiverId, timestamp, id) => {
       setMessages(prev => [
         ...prev,
-        { senderId, senderName, content: message, receiverId, timestamp }
+        { id, senderId, senderName, content: message, receiverId, timestamp }
       ]);
+    });
+
+    connection.off('MessageEdited');
+    connection.on('MessageEdited', (id, newContent) => {
+        setMessages(prev => prev.map(m => 
+            m.id === id ? { ...m, content: newContent, isEdited: true } : m
+        ));
+    });
+
+    connection.off('MessageDeleted');
+    connection.on('MessageDeleted', (id) => {
+        setMessages(prev => prev.filter(m => m.id !== id));
+    });
+
+    connection.off('MessageDeletedForMe');
+    connection.on('MessageDeletedForMe', (id) => {
+        setMessages(prev => prev.filter(m => m.id !== id));
     });
 
   }, [connection]);
 
   useEffect(() => {
     setMessages([]);
+    setEditingId(null);
+    setMessageInput('');
 
     if (activeChat === null) {
       chatAPI.getGeneralHistory()
@@ -74,40 +102,82 @@ function ChatPage() {
     }
   }, [activeChat]);
 
-  const sendMessage = async (e) => {
+  const handleSendOrSave = async (e) => {
     e.preventDefault();
     if (!messageInput.trim()) return;
-
     if (!connection || connection.state !== HubConnectionState.Connected) return;
 
     try {
-      await connection.invoke('SendMessage', messageInput, activeChat);
+      if (editingId) {
+          await connection.invoke('EditMessage', editingId, messageInput);
+          setEditingId(null);
+      } else {
+          await connection.invoke('SendMessage', messageInput, activeChat);
+      }
       setMessageInput('');
     } catch (err) {
       console.error(err);
-      alert('Не вдалося відправити повідомлення');
+      alert('Помилка відправки/редагування');
     }
+  };
+
+  const handleContextMenu = (e, msg) => {
+      e.preventDefault();
+      setContextMenu({
+          x: e.pageX,
+          y: e.pageY,
+          message: msg
+      });
+  };
+
+  const startEditing = (msg) => {
+      setEditingId(msg.id);
+      setMessageInput(msg.content);
+  };
+
+  const cancelEditing = () => {
+      setEditingId(null);
+      setMessageInput('');
+  };
+
+  const deleteForEveryone = async (id) => {
+      if(window.confirm("Видалити це повідомлення для всіх?")) {
+          try {
+              await connection.invoke('DeleteMessageForEveryone', id);
+          } catch(e) { console.error(e); }
+      }
+  };
+
+  const deleteForMe = async (id) => {
+      try {
+          await connection.invoke('DeleteMessageForMe', id);
+      } catch(e) { console.error(e); }
   };
 
   const filteredMessages = messages.filter(m => {
     if (activeChat === null) return m.receiverId === null;
+
+    const myId = String(user?.id || ''); 
+    const chatId = String(activeChat || '');
+    const msgSender = String(m.senderId || '');
+    const msgReceiver = m.receiverId ? String(m.receiverId) : '';
+
     return (
-      (m.senderId === user.id && m.receiverId === activeChat) ||
-      (m.senderId === activeChat && m.receiverId === user.id)
+      (msgSender === myId && msgReceiver === chatId) || 
+      (msgSender === chatId && msgReceiver === myId)    
     );
   });
 
-return (
+  return (
     <Container
       className="mt-4 mb-5"
       style={{
-        height: 'calc(100vh - 100px)', 
+        height: 'calc(100vh - 100px)',
         backgroundColor: 'var(--bg-main)',
         color: 'var(--text-main)'
       }}
     >
       <Row className="h-100">
-
         <Col md={4} className="h-100 d-flex flex-column">
           <ListGroup
             className="flex-grow-1 overflow-auto shadow-sm"
@@ -124,9 +194,7 @@ return (
               onClick={() => setActiveChat(null)}
               className="d-flex align-items-center gap-2 py-3"
             >
-              <div className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style={{ width: 40, height: 40 }}>
-                #
-              </div>
+              <div className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style={{ width: 40, height: 40 }}>#</div>
               <strong>🌍 Загальний чат</strong>
             </ListGroup.Item>
 
@@ -157,8 +225,9 @@ return (
             style={{
               backgroundColor: 'var(--bg-chat)',
               borderColor: 'var(--border-color)',
-              display: 'flex',   
-              flexDirection: 'column' 
+              display: 'flex',
+              flexDirection: 'column',
+              position: 'relative'
             }}
           >
             <Card.Header
@@ -167,47 +236,48 @@ return (
                 backgroundColor: 'var(--bg-panel)',
                 borderBottom: '1px solid var(--border-color)',
                 color: 'var(--text-main)',
-                flexShrink: 0 
+                flexShrink: 0
               }}
             >
               {activeChat === null ? '🌍 Загальний чат' : '💬 Приватний чат'}
             </Card.Header>
 
-            <Card.Body 
-                className="d-flex flex-column p-0" 
-                style={{ overflow: 'hidden' }} 
-            >
-              
+            <Card.Body className="d-flex flex-column p-0" style={{ overflow: 'hidden' }}>
               <div
                 className="flex-grow-1 p-3"
                 style={{
                   backgroundColor: 'var(--bg-main)',
-                  overflowY: 'auto', 
-                  minHeight: 0      
+                  overflowY: 'auto',
+                  minHeight: 0
                 }}
               >
                 {filteredMessages.map((msg, idx) => {
-                const isMe = (user.id && String(msg.senderId) === String(user.id)) || 
-                    (user.username && msg.senderName === user.username);
+                  const myId = String(user?.id || '');
+                  const sender = String(msg.senderId || '');
+                  const isMe = sender === myId;
 
                   return (
-                      <div
-                       key={idx}
-                       className={`d-flex mb-3 ${isMe ? 'justify-content-end' : 'justify-content-start'}`}
-                      >
-
+                    <div
+                      key={idx}
+                      className={`d-flex mb-3 ${isMe ? 'justify-content-end' : 'justify-content-start'}`}
+                    >
                       <div
                         className={`message-bubble ${isMe ? 'my-message' : 'other-message'}`}
-                        style={{ maxWidth: '75%' }}
+                        style={{ 
+                            maxWidth: '75%', 
+                            cursor: 'context-menu'
+                        }}
+                        onContextMenu={(e) => handleContextMenu(e, msg)}
                       >
                         {!isMe && (
                           <div className="message-sender">
                             {msg.senderName}
                           </div>
                         )}
-
-                        <div>{msg.content}</div>
-
+                        <div>
+                            {msg.content}
+                            {msg.isEdited && <span className="text-muted ms-1" style={{fontSize: '0.7em'}}>(ред.)</span>}
+                        </div>
                         <div className="message-time text-end">
                           {new Date(msg.timestamp).toLocaleTimeString([], {
                             hour: '2-digit',
@@ -226,10 +296,17 @@ return (
                 style={{
                   backgroundColor: 'var(--bg-panel)',
                   borderTop: '1px solid var(--border-color)',
-                  flexShrink: 0 
+                  flexShrink: 0
                 }}
               >
-                <Form onSubmit={sendMessage} className="d-flex gap-2">
+                {editingId && (
+                    <div className="d-flex justify-content-between align-items-center mb-2 px-2 small text-primary">
+                        <span>✏️ Редагування повідомлення...</span>
+                        <span style={{cursor: 'pointer'}} onClick={cancelEditing}>✖ Скасувати</span>
+                    </div>
+                )}
+
+                <Form onSubmit={handleSendOrSave} className="d-flex gap-2">
                   <Form.Control
                     type="text"
                     placeholder="Напишіть повідомлення..."
@@ -242,19 +319,82 @@ return (
                       borderColor: 'var(--border-color)'
                     }}
                   />
-                  <Button 
-                    type="submit" 
-                    variant="primary"
+                  <Button
+                    type="submit"
+                    variant={editingId ? "success" : "primary"}
                     disabled={!connection || connection.state !== HubConnectionState.Connected}
                   >
-                    Send
+                    {editingId ? "Save" : "Send"}
                   </Button>
                 </Form>
               </div>
             </Card.Body>
           </Card>
-        </Col>
 
+          {contextMenu && (
+              <div 
+                className="shadow-lg rounded"
+                style={{
+                    position: 'absolute',
+                    top: contextMenu.y,
+                    left: contextMenu.x,
+                    backgroundColor: 'var(--bg-card)',
+                    border: '1px solid var(--border-color)',
+                    zIndex: 9999,
+                    minWidth: '160px',
+                    overflow: 'hidden'
+                }}
+              >
+                  {String(contextMenu.message.senderId) === String(user?.id) && (
+                      <div 
+                        className="px-3 py-2 text-start" 
+                        style={{cursor: 'pointer', borderBottom: '1px solid var(--border-color)'}}
+                        onClick={() => startEditing(contextMenu.message)}
+                        onMouseEnter={(e) => e.target.style.backgroundColor = 'var(--bg-secondary)'}
+                        onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                      >
+                          ✏️ Редагувати
+                      </div>
+                  )}
+
+                  {(() => {
+                      const isGeneral = activeChat === null;
+                      const isMe = String(contextMenu.message.senderId) === String(user?.id);
+                      const isAdmin = user?.role === 'Admin';
+
+                      const canDeleteEveryone = isGeneral 
+                          ? isAdmin 
+                          : (isMe || isAdmin); 
+
+                      if (canDeleteEveryone) {
+                          return (
+                              <div 
+                                className="px-3 py-2 text-start text-danger" 
+                                style={{cursor: 'pointer', borderBottom: '1px solid var(--border-color)'}}
+                                onClick={() => deleteForEveryone(contextMenu.message.id)}
+                                onMouseEnter={(e) => e.target.style.backgroundColor = 'var(--bg-secondary)'}
+                                onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                              >
+                                  🗑️ Видалити для всіх
+                              </div>
+                          );
+                      }
+                  })()}
+
+                  {activeChat !== null && (
+                      <div 
+                        className="px-3 py-2 text-start" 
+                        style={{cursor: 'pointer'}}
+                        onClick={() => deleteForMe(contextMenu.message.id)}
+                        onMouseEnter={(e) => e.target.style.backgroundColor = 'var(--bg-secondary)'}
+                        onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                      >
+                           ❌ Видалити для мене
+                      </div>
+                  )}
+              </div>
+          )}
+        </Col>
       </Row>
     </Container>
   );
