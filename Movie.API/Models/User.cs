@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations.Schema; 
 namespace Movie.API.Models
 {
     public class User
@@ -12,5 +13,13 @@ namespace Movie.API.Models
 
         public ICollection<Review>? Reviews { get; set; }
         public ICollection<Watchlist>? Watchlists { get; set; }
+
+        [InverseProperty("Sender")]
+        public ICollection<Report>? ReportsSent { get; set; }
+
+        [InverseProperty("ReportedUser")]
+        public ICollection<Report>? ReportsReceived { get; set; }
+
+        public ICollection<Notification>? Notifications { get; set; }
     }
 }

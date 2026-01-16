@@ -6,6 +6,7 @@ import AdminMovieModal from './AdminMovieModal';
 import ThemeSettings from './ThemeSettings';
 import { useFriends } from '../contexts/FriendsContext';
 import { authAPI } from '../services/api';
+import NotificationBell from './NotificationBell';
 
 const API_BASE_URL = 'http://localhost:5096';
 
@@ -54,6 +55,10 @@ function Navigation() {
                 </Nav.Link>
               )}
             </Nav>
+
+            <div className="d-flex align-items-center gap-3">
+                {user && <NotificationBell />}
+            </div>
 
             <Link 
               to="/chat" 

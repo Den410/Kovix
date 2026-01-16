@@ -484,3 +484,13 @@ h1, h2, h3, h4, h5 {
   text-align: right;
   margin-top: 4px;
 }
+.highlight-message {
+    animation: pulse-red 2s ease-in-out;
+    border: 2px solid #e74c3c !important; 
+}
+
+@keyframes pulse-red {
+    0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
+}

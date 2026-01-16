@@ -79,4 +79,9 @@ export const chatAPI = {
     getPrivateHistory: (userId) => api.get(`/chat/private/${userId}`),
 };
 
+export const reportsAPI = {
+  getAll: () => api.get('/reports'),
+  create: (data) => api.post('/reports', data),
+};
+
 export default api;

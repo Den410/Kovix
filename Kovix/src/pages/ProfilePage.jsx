@@ -66,9 +66,7 @@ function ProfilePage() {
   const handleRemove = async (id) => {
     try {
       await friendsAPI.remove(id);
-
       setFriends(prev => prev.filter(f => f.id !== id));
-
       updateRequestsCount();
     } catch {
       alert("Помилка");
@@ -153,23 +151,32 @@ function ProfilePage() {
             <h3>{profile.username}</h3>
             <p className="text-muted">{profile.email}</p>
 
-           <Badge
-            bg={profile.role === 'Admin' ? 'danger' : 'info'}
-            className="px-3 py-2 fs-6 d-inline-flex align-items-center justify-content-center mb-2"
-            style={{ minWidth: 160 }}
-            >
-            {profile.role === 'Admin' ? '👑 Адміністратор' : '👤 Користувач'}
-          </Badge>
+            <div className="d-flex justify-content-center mb-3">
+                <Badge
+                    bg={profile.role === 'Admin' ? 'danger' : 'info'}
+                    className="px-3 py-2 fs-6"
+                    style={{ minWidth: 160 }}
+                >
+                    {profile.role === 'Admin' ? '👑 Адміністратор' : '👤 Користувач'}
+                </Badge>
+            </div>
 
-
-
-            <div className="d-grid gap-2">
+            <div className="d-grid gap-2 mt-auto">
+              
+              {profile.role === 'Admin' && (
+                <Button 
+                    variant="warning" 
+                    className="fw-bold mb-2"
+                    onClick={() => navigate('/admin/reports')}
+                >
+                    🛑 Всі скарги
+                </Button>
+              )}
               <Button variant="outline-primary" onClick={handleOpenEdit}>✏️ Редагувати</Button>
               <Button variant="outline-danger" onClick={handleLogout}>Вийти</Button>
             </div>
           </Card>
         </Col>
-
         <Col md={8}>
 
           {incomingRequests.length > 0 && (
@@ -179,8 +186,8 @@ function ProfilePage() {
               </h4>
 
               {incomingRequests.map(req => (
-                <div key={req.id} className="d-flex justify-content-between align-items-center p-3 mb-2 rounded shadow-sm">
-                  <Link to={`/users/${req.id}`} className="d-flex align-items-center text-decoration-none">
+                <div key={req.id} className="d-flex justify-content-between align-items-center p-3 mb-2 rounded shadow-sm bg-white">
+                  <Link to={`/users/${req.id}`} className="d-flex align-items-center text-decoration-none text-dark">
                     <div className="rounded-circle bg-secondary text-white d-flex justify-content-center align-items-center me-3"
                          style={{ width: 50, height: 50, overflow: 'hidden' }}>
                       {req.avatarUrl
@@ -203,37 +210,44 @@ function ProfilePage() {
             👥 Мої друзі ({myFriendsList.length})
           </h4>
 
-          <Row>
-            {myFriendsList.map(friend => (
-              <Col xs={6} md={4} lg={3} key={friend.id} className="mb-3">
-                <Link to={`/users/${friend.id}`} className="text-decoration-none">
-                  <Card className="h-100 text-center shadow-sm border-0 p-3">
-                    <div className="mx-auto mb-2 rounded-circle bg-secondary text-white d-flex justify-content-center align-items-center"
-                         style={{ width: 80, height: 80, overflow: 'hidden' }}>
-                      {friend.avatarUrl
-                        ? <img src={`${API_BASE_URL}${friend.avatarUrl}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        : friend.username[0].toUpperCase()}
-                    </div>
+          {myFriendsList.length === 0 ? (
+            <p className="text-muted">У вас поки немає друзів.</p>
+          ) : (
+            <Row>
+                {myFriendsList.map(friend => (
+                <Col xs={6} md={4} lg={3} key={friend.id} className="mb-3">
+                    <Link to={`/users/${friend.id}`} className="text-decoration-none">
+                    <Card className="h-100 text-center shadow-sm border-0 p-3 hover-card">
+                        <div className="mx-auto mb-2 rounded-circle bg-secondary text-white d-flex justify-content-center align-items-center"
+                            style={{ width: 80, height: 80, overflow: 'hidden' }}>
+                        {friend.avatarUrl
+                            ? <img src={`${API_BASE_URL}${friend.avatarUrl}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            : friend.username[0].toUpperCase()}
+                        </div>
 
-                    <Card.Title className="fs-6 text-truncate">
-                      {friend.username}
-                    </Card.Title>
+                        <Card.Title className="fs-6 text-truncate text-dark">
+                        {friend.username}
+                        </Card.Title>
 
-                    <Button
-                      variant="link"
-                      className="text-danger p-0"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handleRemove(friend.id);
-                      }}
-                    >
-                      Видалити
-                    </Button>
-                  </Card>
-                </Link>
-              </Col>
-            ))}
-          </Row>
+                        <Button
+                        variant="link"
+                        className="text-danger p-0 small"
+                        style={{textDecoration: 'none', fontSize: '0.85rem'}}
+                        onClick={(e) => {
+                            e.preventDefault();
+                            if(window.confirm(`Видалити ${friend.username} з друзів?`)) {
+                                handleRemove(friend.id);
+                            }
+                        }}
+                        >
+                        Видалити
+                        </Button>
+                    </Card>
+                    </Link>
+                </Col>
+                ))}
+            </Row>
+          )}
 
         </Col>
       </Row>
@@ -249,7 +263,10 @@ function ProfilePage() {
               <Form.Control value={editName} onChange={e => setEditName(e.target.value)} />
             </Form.Group>
 
-            <Form.Control type="file" onChange={handleFileChange} />
+            <Form.Group className="mb-3">
+                <Form.Label>Аватар</Form.Label>
+                <Form.Control type="file" onChange={handleFileChange} />
+            </Form.Group>
           </Form>
         </Modal.Body>
         <Modal.Footer>

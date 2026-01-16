@@ -17,6 +17,7 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { FriendsProvider } from './contexts/FriendsContext';
 import ChatPage from './pages/ChatPage';
 import NotFoundPage from './pages/NotFoundPage';
+import AdminReportsPage from './pages/AdminReportsPage';
 
 function App() {
   return (
@@ -37,6 +38,7 @@ function App() {
             <Route path="/my-lists" element={<MyListsPage />} />
             <Route path="/users/:id" element={<UserPublicProfilePage />} />
             <Route path="/chat" element={<ChatPage />} />
+            <Route path="/admin/reports" element={<AdminReportsPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </div>

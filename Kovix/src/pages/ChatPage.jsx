@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Container, Row, Col, Card, Form, Button, ListGroup } from 'react-bootstrap';
+import { Container, Row, Col, Card, Form, Button, ListGroup, Modal} from 'react-bootstrap';
 import { useAuth } from '../contexts/AuthContext';
 import { chatAPI, friendsAPI } from '../services/api';
+import { useSearchParams } from 'react-router-dom';
 import { HubConnectionBuilder, HubConnectionState } from '@microsoft/signalr';
 import '../style/App.css';
-
 const API_BASE_URL = 'http://localhost:5096';
 
 function ChatPage() {
@@ -21,9 +21,24 @@ function ChatPage() {
 
   const messagesEndRef = useRef(null);
 
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportReason, setReportReason] = useState('');
+  const [targetMessage, setTargetMessage] = useState(null);
+
+  const [searchParams] = useSearchParams();
+  const highlightId = searchParams.get('highlight');
+  const forcedChatId = searchParams.get('activeChat');
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
+
+  useEffect(() => {
+    if (forcedChatId) {
+      setActiveChat(forcedChatId);
+    }
+  }, [forcedChatId]);
+
 
   useEffect(scrollToBottom, [messages]);
 
@@ -87,6 +102,12 @@ function ChatPage() {
   }, [connection]);
 
   useEffect(() => {
+    if (forcedChatId) {
+      setActiveChat(forcedChatId); 
+    }
+  }, [forcedChatId]);
+
+  useEffect(() => {
     setMessages([]);
     setEditingId(null);
     setMessageInput('');
@@ -129,6 +150,47 @@ function ChatPage() {
           message: msg
       });
   };
+
+  const openReportModal = (msg) => {
+    setTargetMessage(msg); 
+    setReportReason('');  
+    setShowReportModal(true); 
+  };
+
+
+ const submitReport = async () => {
+    if (!reportReason.trim()) return alert("Будь ласка, вкажіть причину.");
+    if (!targetMessage?.senderId) return alert("Неможливо визначити користувача.");
+
+    const payload = {
+        reportedUserId: String(targetMessage.senderId), 
+        messageId: targetMessage.id || null, 
+        content: targetMessage.content,
+        reason: reportReason
+    };
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/reports`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+          const err = await res.json();
+          console.error("Server validation error details:", err.errors);
+      }
+
+      alert("Скаргу успішно відправлено адміністратору.");
+      setShowReportModal(false);
+    } catch (error) {
+      console.error("Помилка при відправці скарги:", error);
+      alert("Сталася помилка.");
+    }
+};
 
   const startEditing = (msg) => {
       setEditingId(msg.id);
@@ -255,29 +317,42 @@ function ChatPage() {
                   const myId = String(user?.id || '');
                   const sender = String(msg.senderId || '');
                   const isMe = sender === myId;
+                  const isHighlighted = String(msg.id) === String(highlightId);
 
                   return (
                     <div
                       key={idx}
                       className={`d-flex mb-3 ${isMe ? 'justify-content-end' : 'justify-content-start'}`}
                     >
-                      <div
-                        className={`message-bubble ${isMe ? 'my-message' : 'other-message'}`}
-                        style={{ 
-                            maxWidth: '75%', 
-                            cursor: 'context-menu'
-                        }}
-                        onContextMenu={(e) => handleContextMenu(e, msg)}
-                      >
+                    <div
+                      className={`message-bubble ${isMe ? 'my-message' : 'other-message'}`}
+                      
+                      onContextMenu={(e) => handleContextMenu(e, msg)} 
+
+                      style={{
+                        maxWidth: '75%',
+                        border: isHighlighted ? '3px solid #dc3545' : undefined,
+                        backgroundColor: isHighlighted ? '#ffe5e5' : undefined,
+                        color: isHighlighted ? '#000000' : undefined, 
+                        fontWeight: isHighlighted ? 'bold' : undefined
+                      }}
+                    >
                         {!isMe && (
                           <div className="message-sender">
                             {msg.senderName}
                           </div>
                         )}
-                        <div>
+                        <div className="d-flex align-items-center">
+                          <span>
                             {msg.content}
-                            {msg.isEdited && <span className="text-muted ms-1" style={{fontSize: '0.7em'}}>(ред.)</span>}
+                            {msg.isEdited && (
+                              <span className="text-muted ms-1" style={{ fontSize: '0.7em' }}>
+                                (ред.)
+                              </span>
+                            )}
+                          </span>
                         </div>
+
                         <div className="message-time text-end">
                           {new Date(msg.timestamp).toLocaleTimeString([], {
                             hour: '2-digit',
@@ -357,14 +432,25 @@ function ChatPage() {
                       </div>
                   )}
 
+                  {String(contextMenu.message.senderId) !== String(user?.id) && activeChat === null && (
+                      <div 
+                        className="px-3 py-2 text-start text-warning" 
+                        style={{cursor: 'pointer', borderBottom: '1px solid var(--border-color)'}}
+                        onClick={() => {
+                            openReportModal(contextMenu.message);
+                            setContextMenu(null); 
+                        }}
+                        onMouseEnter={(e) => e.target.style.backgroundColor = 'var(--bg-secondary)'}
+                        onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                      >
+                          ⚠️ Поскаржитися
+                      </div>
+                  )}
+
                   {(() => {
-                      const isGeneral = activeChat === null;
                       const isMe = String(contextMenu.message.senderId) === String(user?.id);
                       const isAdmin = user?.role === 'Admin';
-
-                      const canDeleteEveryone = isGeneral 
-                          ? isAdmin 
-                          : (isMe || isAdmin); 
+                      const canDeleteEveryone = isMe || isAdmin; 
 
                       if (canDeleteEveryone) {
                           return (
@@ -396,6 +482,49 @@ function ChatPage() {
           )}
         </Col>
       </Row>
+      <Modal
+        show={showReportModal}
+        onHide={() => setShowReportModal(false)}
+        centered
+      >
+        <Modal.Header closeButton className="bg-light">
+          <Modal.Title className="text-danger">
+            ⚠️ Поскаржитися на користувача
+          </Modal.Title>
+        </Modal.Header>
+
+        <Modal.Body>
+          <p className="small text-muted mb-2">
+            Ви скаржитесь на повідомлення від користувача{" "}
+            <strong>{targetMessage?.senderName}</strong>:
+          </p>
+
+          <div className="p-2 bg-secondary bg-opacity-10 rounded mb-3 fst-italic border-start border-4 border-danger">
+            "{targetMessage?.content}"
+          </div>
+
+          <Form.Group>
+            <Form.Label>Вкажіть причину скарги:</Form.Label>
+            <Form.Control
+              as="textarea"
+              rows={3}
+              placeholder="Наприклад: спам, образи, неприйнятний контент..."
+              value={reportReason}
+              onChange={(e) => setReportReason(e.target.value)}
+              autoFocus
+            />
+          </Form.Group>
+        </Modal.Body>
+
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowReportModal(false)}>
+            Скасувати
+          </Button>
+          <Button variant="danger" onClick={submitReport}>
+            Відправити скаргу
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </Container>
   );
 }
