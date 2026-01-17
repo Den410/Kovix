@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Movie.API.Data;
 using Movie.API.Models;
+using Movie.API.Models.Enums;
 using System.Security.Claims;
 
 namespace Movie.API.Hubs
@@ -19,18 +20,94 @@ namespace Movie.API.Hubs
 
         private int GetUserId()
         {
-            return int.Parse(Context.User!.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+            var userIdClaim = Context.User?.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
+            {
+                throw new HubException("Unauthorized: User ID not found.");
+            }
+            return userId;
+        }
+
+        public override async Task OnConnectedAsync()
+        {
+            try
+            {
+                var userId = GetUserId();
+                var user = await _context.Users.FindAsync(userId);
+
+                if (user != null)
+                {
+                    user.IsOnline = true;
+                    await _context.SaveChangesAsync();
+                    await Clients.All.SendAsync("UserStatusChanged", userId, true, null);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in OnConnectedAsync: {ex.Message}");
+            }
+
+            await base.OnConnectedAsync();
+        }
+
+        public override async Task OnDisconnectedAsync(Exception? exception)
+        {
+            try
+            {
+                var userId = GetUserId();
+                var user = await _context.Users.FindAsync(userId);
+
+                if (user != null)
+                {
+                    user.IsOnline = false;
+                    user.LastActive = DateTime.UtcNow; 
+                    await _context.SaveChangesAsync();
+
+                    await Clients.All.SendAsync("UserStatusChanged", userId, false, user.LastActive);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in OnDisconnectedAsync: {ex.Message}");
+            }
+
+            await base.OnDisconnectedAsync(exception);
+        }
+
+        public async Task GetFriendsStatus()
+        {
+            var userId = GetUserId();
+
+            var friendIds = await _context.Friendships
+                .Where(f => (f.RequesterId == userId || f.ReceiverId == userId)
+                            && f.Status == FriendshipStatus.Accepted)
+                .Select(f => f.RequesterId == userId ? f.ReceiverId : f.RequesterId)
+                .ToListAsync();
+
+            foreach (var fid in friendIds)
+            {
+                var friend = await _context.Users.FindAsync(fid);
+                if (friend != null)
+                {
+                    await Clients.Caller.SendAsync(
+                        "UserStatusChanged",
+                        friend.Id,
+                        friend.IsOnline,
+                        friend.LastActive
+                    );
+                }
+            }
         }
 
         public async Task SendMessage(string content, int? receiverId)
         {
-            var userId = int.Parse(Context.User.FindFirst(ClaimTypes.NameIdentifier).Value);
+            var userId = GetUserId();
             var userName = Context.User.Identity.Name;
 
             var message = new Message
             {
                 SenderId = userId,
-                ReceiverId = receiverId, 
+                ReceiverId = receiverId,
                 Content = content,
                 Timestamp = DateTime.UtcNow
             };
@@ -48,7 +125,6 @@ namespace Movie.API.Hubs
                 await Clients.Caller.SendAsync("ReceiveMessage", userId, userName, content, receiverId, message.Timestamp, message.Id);
             }
         }
-
 
         public async Task EditMessage(int messageId, string newContent)
         {

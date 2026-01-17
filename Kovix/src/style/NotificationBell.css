@@ -1,0 +1,41 @@
+.notification-btn {
+    background: transparent;
+    padding-right: 6px; 
+}
+
+.bell-icon {
+    font-size: 1.5rem;
+    margin-right: 12px;   
+    margin-bottom: 2px;     
+    transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.bell-icon.solid {
+    color: #fbbf24; 
+    fill: #fbbf24;
+    filter: drop-shadow(0 0 5px rgba(251, 191, 36, 0.5));
+}
+
+.notification-btn:hover .bell-icon {
+    transform: scale(1.1) rotate(-8deg);
+    filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.8));
+}
+
+.badge-counter {
+    position: absolute;
+    top: 0;
+    right: 12px;
+    transform: translate(50%, -50%);
+    background: #dc3545;
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 600;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;    
+    box-shadow: 0 0 0 2px var(--bg-panel);
+}

@@ -14,7 +14,7 @@ function UserPublicProfilePage() {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const { updateRequestsCount } = useFriends();
+  const { refreshRequests } = useFriends();
   const [friendStatus, setFriendStatus] = useState('None');
   const [isBlocked, setIsBlocked] = useState(false);
 
@@ -62,8 +62,11 @@ const handleFriendAction = async () => {
             await friendsAPI.remove(id);
             setFriendStatus('None');
         }
-        updateRequestsCount();
+        
+        if (refreshRequests) refreshRequests(); 
+        
     } catch (error) {
+        console.error("Деталі помилки:", error);
         if (error.response && error.response.status === 400) {
             alert(error.response.data);
         } else {

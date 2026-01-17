@@ -10,6 +10,8 @@ namespace Movie.API.Models
         public string? AvatarUrl { get; set; }
         public string Role { get; set; } = "User";
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public bool IsOnline { get; set; } = false;
+        public DateTime? LastActive { get; set; }
 
         public ICollection<Review>? Reviews { get; set; }
         public ICollection<Watchlist>? Watchlists { get; set; }

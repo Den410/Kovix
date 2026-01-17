@@ -4,17 +4,21 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import AdminMovieModal from './AdminMovieModal';
 import ThemeSettings from './ThemeSettings';
-import { useFriends } from '../contexts/FriendsContext';
 import { authAPI } from '../services/api';
 import NotificationBell from './NotificationBell';
+import { useTheme } from '../contexts/ThemeContext';
+import '../style/App.css';
 
 const API_BASE_URL = 'http://localhost:5096';
 
 function Navigation() {
   const { user, logout, isAdmin } = useAuth();
-  const { requestCount } = useFriends();
   const navigate = useNavigate();
   const location = useLocation(); 
+  
+  const { themeMode } = useTheme();
+  
+  const isDark = themeMode === 'dark';
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [showThemeModal, setShowThemeModal] = useState(false);
@@ -40,7 +44,13 @@ function Navigation() {
 
   return (
     <>
-      <Navbar bg="dark" variant="dark" expand="lg" className="mb-4 sticky-top shadow-sm">
+        <Navbar
+          bg={isDark ? 'dark' : 'light'}
+          variant={isDark ? 'dark' : 'light'}
+          expand="lg"
+          className="mb-4 sticky-top shadow-sm"
+        >
+
         <Container>
           <Navbar.Brand as={Link} to="/" className="fw-bold text-warning">
               🎬 Kovix
@@ -50,9 +60,14 @@ function Navigation() {
             
             <Nav className="me-auto">
               {user && (
-                <Nav.Link as={Link} to="/my-lists" className="fw-bold text-white">
+                <Nav.Link
+                  as={Link}
+                  to="/my-lists"
+                  className="fw-bold nav-text"
+                >
                   🗂️ Мої списки
                 </Nav.Link>
+
               )}
             </Nav>
 
@@ -62,7 +77,7 @@ function Navigation() {
 
             <Link 
               to="/chat" 
-              className="text-decoration-none me-3" 
+              className="text-decoration-none me-3 text-body" 
               title="Повідомлення"
               style={{ fontSize: '1.4rem', color: 'rgba(255,255,255,0.7)' }}
             >
@@ -70,27 +85,6 @@ function Navigation() {
             </Link>
 
             <Nav className="align-items-center">
-              
-              {user && (
-                  <Link 
-                    to="/profile" 
-                    className="position-relative text-decoration-none me-3 d-flex align-items-center"
-                    title={requestCount > 0 ? `У вас ${requestCount} нових запитів` : "Сповіщення"}
-                    style={{ color: 'rgba(255,255,255,0.7)', transition: 'color 0.2s' }}
-                  >
-                      <span style={{ fontSize: '1.4rem' }}>🔔</span>
-                      
-                      {requestCount > 0 && (
-                          <span 
-                            className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
-                            style={{ fontSize: '0.6rem', border: '1px solid #343a40' }}
-                          >
-                              {requestCount}
-                          </span>
-                      )}
-                  </Link>
-              )}
-
               <Button 
                 variant="link" 
                 className="text-decoration-none me-3 p-0 border-0" 
@@ -114,7 +108,7 @@ function Navigation() {
                     </Button>
                   )}
 
-                  <Nav.Link as={Link} to="/profile" className="fw-bold text-light me-2 d-flex align-items-center gap-2">
+                  <Nav.Link as={Link} to="/profile" className="fw-bold text-body me-2 d-flex align-items-center gap-2">
                     {userAvatar ? (
                         <img 
                             src={`${API_BASE_URL}${userAvatar}`} 

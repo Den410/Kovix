@@ -1,12 +1,8 @@
-import React from 'react';
-import { Container, Button } from 'react-bootstrap';
-import { useNavigate } from 'react-router-dom';
+import { Container } from 'react-bootstrap';
 import { useLottie } from "lottie-react";
 import animationData from '../assets/404 retro.json';
 
 function NotFoundPage() {
-  const navigate = useNavigate();
-
   const options = {
     animationData: animationData,
     loop: true,

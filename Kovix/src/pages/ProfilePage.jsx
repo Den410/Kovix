@@ -4,6 +4,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import { authAPI, friendsAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useFriends } from '../contexts/FriendsContext';
+import { useChatConnection } from '../hooks/useChatConnection';
+import { formatLastSeen } from '../utils/dateUtils';
 
 const API_BASE_URL = 'http://localhost:5096'; 
 
@@ -19,13 +21,40 @@ function ProfilePage() {
   const [shouldDeleteAvatar, setShouldDeleteAvatar] = useState(false);
 
   const { logout, login } = useAuth();
-  const { updateRequestsCount } = useFriends();
+  const { refreshRequests } = useFriends();
   const navigate = useNavigate();
 
   useEffect(() => {
     loadProfile();
     loadFriends();
   }, []);
+
+const connection = useChatConnection(async (conn) => {
+      conn.on('UserStatusChanged', (userId, isOnline, lastActive) => {
+          setFriends(prev =>
+              prev.map(f =>
+                  String(f.id) === String(userId)
+                      ? { ...f, isOnline, lastActive }
+                      : f
+              )
+          );
+      });
+
+      try {
+          let attempts = 0;
+          while (conn.state !== "Connected" && attempts < 50) {
+              await new Promise(r => setTimeout(r, 50)); 
+              attempts++;
+          }
+          
+          if (conn.state === "Connected") {
+              await conn.invoke("GetFriendsStatus");
+          }
+      } catch (err) {
+          console.error('Помилка отримання статусів:', err);
+      }
+  });
+
 
   const loadProfile = async () => {
     try {
@@ -57,7 +86,7 @@ function ProfilePage() {
         )
       );
 
-      updateRequestsCount();
+      refreshRequests();
     } catch {
       alert("Помилка прийняття");
     }
@@ -67,13 +96,20 @@ function ProfilePage() {
     try {
       await friendsAPI.remove(id);
       setFriends(prev => prev.filter(f => f.id !== id));
-      updateRequestsCount();
+      refreshRequests();
     } catch {
       alert("Помилка");
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async() => {
+    try {
+      if (connection) {
+        await connection.stop();
+      }
+    } catch (error) {
+      console.error("Помилка при закритті з'єднання:", error);
+    }
     logout();
     navigate('/');
   };
@@ -119,8 +155,20 @@ function ProfilePage() {
     }
   };
 
-  if (loading) {
+ if (loading) {
     return <Container className="mt-5 text-center"><Spinner animation="border" /></Container>;
+  }
+
+  if (!profile) {
+    return (
+        <Container className="mt-5 text-center">
+            <h3>⚠️ Помилка авторизації</h3>
+            <p className="text-muted">Схоже, ваша сесія закінчилась.</p>
+            <Button variant="primary" onClick={handleLogout}>
+                Увійти знову
+            </Button>
+        </Container>
+    );
   }
 
   const incomingRequests = friends.filter(f => f.status === 'PendingIncoming');
@@ -177,6 +225,7 @@ function ProfilePage() {
             </div>
           </Card>
         </Col>
+        
         <Col md={8}>
 
           {incomingRequests.length > 0 && (
@@ -186,8 +235,19 @@ function ProfilePage() {
               </h4>
 
               {incomingRequests.map(req => (
-                <div key={req.id} className="d-flex justify-content-between align-items-center p-3 mb-2 rounded shadow-sm bg-white">
-                  <Link to={`/users/${req.id}`} className="d-flex align-items-center text-decoration-none text-dark">
+                <div 
+                    key={req.id} 
+                    className="d-flex justify-content-between align-items-center p-3 mb-2 rounded shadow-sm"
+                    style={{ 
+                        backgroundColor: 'var(--bg-card)', 
+                        border: '1px solid var(--border-color)'
+                    }}
+                >
+                  <Link 
+                    to={`/users/${req.id}`} 
+                    className="d-flex align-items-center text-decoration-none"
+                    style={{ color: 'var(--text-main)' }} 
+                  >
                     <div className="rounded-circle bg-secondary text-white d-flex justify-content-center align-items-center me-3"
                          style={{ width: 50, height: 50, overflow: 'hidden' }}>
                       {req.avatarUrl
@@ -213,39 +273,51 @@ function ProfilePage() {
           {myFriendsList.length === 0 ? (
             <p className="text-muted">У вас поки немає друзів.</p>
           ) : (
-            <Row>
-                {myFriendsList.map(friend => (
+           <Row>
+              {myFriendsList.map(friend => {
+                const isOnline = friend.isOnline === true;
+                const borderColor = isOnline ? '#57cbde' : 'transparent';
+                const statusText = formatLastSeen(friend.lastActive, isOnline);
+                const statusColor = isOnline ? '#57cbde' : '#909090';
+
+                return (
                 <Col xs={6} md={4} lg={3} key={friend.id} className="mb-3">
                     <Link to={`/users/${friend.id}`} className="text-decoration-none">
                     <Card className="h-100 text-center shadow-sm border-0 p-3 hover-card">
-                        <div className="mx-auto mb-2 rounded-circle bg-secondary text-white d-flex justify-content-center align-items-center"
-                            style={{ width: 80, height: 80, overflow: 'hidden' }}>
-                        {friend.avatarUrl
+                        
+                        <div className="mx-auto mb-2 rounded-circle bg-secondary text-white d-flex justify-content-center align-items-center position-relative"
+                             style={{ width: 80, height: 80, overflow: 'hidden', border: `3px solid ${borderColor}`, transition: 'border-color 0.3s' }}>
+                          {friend.avatarUrl
                             ? <img src={`${API_BASE_URL}${friend.avatarUrl}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                             : friend.username[0].toUpperCase()}
                         </div>
 
-                        <Card.Title className="fs-6 text-truncate text-dark">
-                        {friend.username}
+                        <Card.Title className="fs-6 text-truncate text-dark mb-1">
+                          {friend.username}
                         </Card.Title>
 
+                        <div className="small mb-2 fw-bold" style={{ color: statusColor, fontSize: '0.75rem' }}>
+                            {statusText}
+                        </div>
+
                         <Button
-                        variant="link"
-                        className="text-danger p-0 small"
-                        style={{textDecoration: 'none', fontSize: '0.85rem'}}
-                        onClick={(e) => {
-                            e.preventDefault();
-                            if(window.confirm(`Видалити ${friend.username} з друзів?`)) {
-                                handleRemove(friend.id);
-                            }
-                        }}
+                            variant="link"
+                            className="text-danger p-0 small"
+                            style={{textDecoration: 'none', fontSize: '0.85rem'}}
+                            onClick={(e) => {
+                                e.preventDefault();
+                                if(window.confirm(`Видалити ${friend.username} з друзів?`)) {
+                                    handleRemove(friend.id);
+                                }
+                            }}
                         >
-                        Видалити
+                            Видалити
                         </Button>
                     </Card>
                     </Link>
                 </Col>
-                ))}
+                );
+              })}
             </Row>
           )}
 
@@ -264,8 +336,21 @@ function ProfilePage() {
             </Form.Group>
 
             <Form.Group className="mb-3">
-                <Form.Label>Аватар</Form.Label>
-                <Form.Control type="file" onChange={handleFileChange} />
+              <Form.Label>Аватар</Form.Label>
+              <Form.Control type="file" onChange={handleFileChange} />
+              {previewUrl && (
+                <div className="mt-2 d-flex align-items-center">
+                  <img
+                    src={previewUrl}
+                    alt="preview"
+                    className="rounded-circle"
+                    style={{ width: 60, height: 60, objectFit: 'cover', marginRight: '10px' }}
+                  />
+                  <Button variant="danger" size="sm" onClick={handleDeletePhoto}>
+                    Видалити фото
+                  </Button>
+                </div>
+              )}
             </Form.Group>
           </Form>
         </Modal.Body>
