@@ -96,33 +96,56 @@ namespace Movie.API.Controllers
         [HttpGet("my-friends")]
         public async Task<ActionResult<IEnumerable<FriendDto>>> GetMyFriends()
         {
-            var currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
 
-            var friendships = await _context.Friendships
-                .Where(f => f.RequesterId == currentUserId || f.ReceiverId == currentUserId)
-                .Include(f => f.Requester)
-                .Include(f => f.Receiver)
+            var friendIds = await _context.Friendships
+                .AsNoTracking()
+                .Where(f => (f.RequesterId == userId || f.ReceiverId == userId) && f.Status == FriendshipStatus.Accepted)
+                .Select(f => f.RequesterId == userId ? f.ReceiverId : f.RequesterId)
                 .ToListAsync();
 
-            var result = friendships.Select(f =>
-            {
-                var isRequester = f.RequesterId == currentUserId;
-                var otherUser = isRequester ? f.Receiver : f.Requester;
+            if (!friendIds.Any()) return Ok(new List<FriendDto>());
 
-                string statusStr;
-                if (f.Status == FriendshipStatus.Accepted) statusStr = "Friend";
-                else statusStr = isRequester ? "PendingOutgoing" : "PendingIncoming";
-
-                return new FriendDto
+            var friendsData = await _context.Users
+                .AsNoTracking()
+                .Where(u => friendIds.Contains(u.Id))
+                .Select(u => new FriendDto
                 {
-                    Id = otherUser.Id,
-                    Username = otherUser.Username,
-                    AvatarUrl = otherUser.AvatarUrl,
-                    Status = statusStr
-                };
-            });
+                    Id = u.Id,
+                    Username = u.Username,
+                    AvatarUrl = u.AvatarUrl,
+                    Status = "Friend",
+                    IsOnline = u.IsOnline,
 
-            return Ok(result);
+                    LastMessage = _context.Messages
+                        .Where(m => !m.IsDeleted &&
+                                    ((m.SenderId == userId && m.ReceiverId == u.Id) ||
+                                     (m.SenderId == u.Id && m.ReceiverId == userId)))
+                        .OrderByDescending(m => m.Timestamp)
+                        .Select(m => m.Content)
+                        .FirstOrDefault(),
+
+                    LastMessageTime = _context.Messages
+                        .Where(m => !m.IsDeleted &&
+                                    ((m.SenderId == userId && m.ReceiverId == u.Id) ||
+                                     (m.SenderId == u.Id && m.ReceiverId == userId)))
+                        .OrderByDescending(m => m.Timestamp)
+                        .Select(m => m.Timestamp)
+                        .FirstOrDefault(),
+
+                    UnreadCount = _context.Messages
+                        .Count(m => !m.IsDeleted &&
+                                    m.SenderId == u.Id &&   
+                                    m.ReceiverId == userId && 
+                                    !m.IsRead)             
+                })
+                .ToListAsync();
+
+            var sortedFriends = friendsData
+                .OrderByDescending(x => x.LastMessageTime ?? DateTime.MinValue)
+                .ToList();
+
+            return Ok(sortedFriends);
         }
 
         [HttpGet("status/{userId}")]

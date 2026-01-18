@@ -86,7 +86,7 @@ namespace Movie.API.Controllers
 
             return NoContent();
         }
-       
+
         [HttpGet("{id}/profile")]
         public async Task<ActionResult<UserProfileDto>> GetUserProfile(int id)
         {
@@ -97,7 +97,10 @@ namespace Movie.API.Controllers
                     Id = u.Id,
                     Username = u.Username,
                     AvatarUrl = u.AvatarUrl,
-                    CreatedAt = u.CreatedAt
+                    CreatedAt = u.CreatedAt,
+
+                    IsOnline = u.IsOnline,
+                    LastActive = u.LastActive
                 })
                 .FirstOrDefaultAsync();
 

@@ -32,12 +32,7 @@ namespace Movie.API.Controllers
 
             var msgs = await _context.Messages
                 .AsNoTracking()
-                .Where(m =>
-                    m.ReceiverId == null &&
-                    !m.IsDeleted &&
-                    !m.DeletedFor.Any(d => d.UserId == userId)
-                )
-                .Include(m => m.Sender)
+                .Where(m => m.ReceiverId == null && !m.IsDeleted)
                 .OrderByDescending(m => m.Timestamp)
                 .Take(50)
                 .OrderBy(m => m.Timestamp)
@@ -48,13 +43,39 @@ namespace Movie.API.Controllers
                     m.Timestamp,
                     m.SenderId,
                     SenderName = m.Sender.Username,
-                    m.ReceiverId,
-                    m.IsEdited
+                    m.IsEdited,
+                    IsRead = _context.MessageReadStatuses.Any(r => r.MessageId == m.Id && r.UserId == userId && r.IsRead)
                 })
                 .ToListAsync();
 
             return Ok(msgs);
         }
+
+        [HttpPost("general/read")]
+        public async Task<IActionResult> MarkGeneralAsRead()
+        {
+            var userId = GetUserId();
+
+            var unread = await _context.Messages
+                .Where(m => m.ReceiverId == null && !m.IsDeleted)
+                .Where(m => !_context.MessageReadStatuses.Any(r => r.MessageId == m.Id && r.UserId == userId && r.IsRead))
+                .ToListAsync();
+
+            foreach (var msg in unread)
+            {
+                _context.MessageReadStatuses.Add(new MessageReadStatus
+                {
+                    MessageId = msg.Id,
+                    UserId = userId,
+                    IsRead = true
+                });
+            }
+
+            await _context.SaveChangesAsync();
+
+            return Ok();
+        }
+
 
         [HttpGet("private/{userId}")]
         public async Task<IActionResult> GetPrivateHistory(int userId)
@@ -150,6 +171,28 @@ namespace Movie.API.Controllers
 
             await _context.SaveChangesAsync();
             return Ok();
+        }
+
+        [HttpPost("messages/read/{senderId}")]
+        public async Task<IActionResult> MarkMessagesAsRead(int senderId)
+        {
+            var myId = GetUserId();
+
+            var unreadMessages = await _context.Messages
+                .Where(m => m.SenderId == senderId && m.ReceiverId == myId && !m.IsRead)
+                .ToListAsync();
+
+            if (unreadMessages.Any())
+            {
+                foreach (var msg in unreadMessages)
+                {
+                    msg.IsRead = true;
+                }
+
+                await _context.SaveChangesAsync();
+            }
+
+            return Ok(new { count = unreadMessages.Count });
         }
     }
 }

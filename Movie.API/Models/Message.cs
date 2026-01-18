@@ -21,7 +21,7 @@ namespace Movie.API.Models
         public int? ReceiverId { get; set; }
         [ForeignKey(nameof(ReceiverId))]
         public User? Receiver { get; set; }
-
+        public bool IsRead { get; set; } = false;
         public ICollection<MessageDelete> DeletedFor { get; set; } = new List<MessageDelete>();
     }
 }

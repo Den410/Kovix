@@ -4,6 +4,7 @@ import { Container, Card, Spinner, Row, Col, Badge, Button } from 'react-bootstr
 import { useAuth } from '../contexts/AuthContext';
 import { usersAPI, reviewsAPI, friendsAPI, blocksAPI } from '../services/api';
 import { useFriends } from '../contexts/FriendsContext';
+import { formatLastSeen } from '../utils/dateUtils';
 
 const API_BASE_URL = 'http://localhost:5096';
 
@@ -17,6 +18,9 @@ function UserPublicProfilePage() {
   const { refreshRequests } = useFriends();
   const [friendStatus, setFriendStatus] = useState('None');
   const [isBlocked, setIsBlocked] = useState(false);
+  const [isOnline, setIsOnline] = useState(false);
+  const [lastActive, setLastActive] = useState(null);
+
 
   useEffect(() => {
     loadData();
@@ -31,6 +35,8 @@ function UserPublicProfilePage() {
       ]);
       
       setUserProfile(profileRes.data);
+      setIsOnline(profileRes.data.isOnline);
+      setLastActive(profileRes.data.lastActive);
       setReviews(reviewsRes.data);
 
       if (user && user.id !== parseInt(id)) {
@@ -124,6 +130,10 @@ const handleFriendAction = async () => {
         </div>
 
         <h2 className="fw-bold mb-1">{userProfile.username}</h2>
+
+        <div className="small fw-bold" style={{ color: isOnline ? '#57cbde' : '#909090' }}>
+          {formatLastSeen(lastActive, isOnline)}
+        </div>
         
         {user && user.id !== parseInt(id) && (
             <div className="mt-3 d-flex flex-column align-items-center gap-2">

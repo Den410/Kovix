@@ -77,6 +77,9 @@ export const blocksAPI = {
 export const chatAPI = {
     getGeneralHistory: () => api.get('/chat/general'),
     getPrivateHistory: (userId) => api.get(`/chat/private/${userId}`),
+    markAsRead: (senderId) => api.post(`/chat/messages/read/${senderId}`),
+    getGeneralChatInfo: () => api.get('/chat/general'),
+    markGeneralAsRead: () => api.post('/chat/general/read'),
 };
 
 export const reportsAPI = {

@@ -12,7 +12,7 @@ namespace Movie.API.Hubs
     public class ChatHub : Hub
     {
         private readonly ApplicationDbContext _context;
-
+        private static readonly Dictionary<int, int> Connections = new();
         public ChatHub(ApplicationDbContext context)
         {
             _context = context;
@@ -30,21 +30,31 @@ namespace Movie.API.Hubs
 
         public override async Task OnConnectedAsync()
         {
-            try
-            {
-                var userId = GetUserId();
-                var user = await _context.Users.FindAsync(userId);
+            var userId = GetUserId();
 
+            lock (Connections)
+            {
+                if (Connections.ContainsKey(userId))
+                    Connections[userId]++;
+                else
+                    Connections[userId] = 1;
+            }
+
+            if (Connections[userId] == 1)
+            {
+                var user = await _context.Users.FindAsync(userId);
                 if (user != null)
                 {
                     user.IsOnline = true;
                     await _context.SaveChangesAsync();
-                    await Clients.All.SendAsync("UserStatusChanged", userId, true, null);
+
+                    await Clients.All.SendAsync(
+                        "UserStatusChanged",
+                        userId,
+                        true,
+                        null
+                    );
                 }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error in OnConnectedAsync: {ex.Message}");
             }
 
             await base.OnConnectedAsync();
@@ -52,23 +62,39 @@ namespace Movie.API.Hubs
 
         public override async Task OnDisconnectedAsync(Exception? exception)
         {
-            try
-            {
-                var userId = GetUserId();
-                var user = await _context.Users.FindAsync(userId);
+            var userId = GetUserId();
+            bool isLastConnection = false;
 
+            lock (Connections)
+            {
+                if (!Connections.ContainsKey(userId))
+                    return;
+
+                Connections[userId]--;
+
+                if (Connections[userId] <= 0)
+                {
+                    Connections.Remove(userId);
+                    isLastConnection = true;
+                }
+            }
+
+            if (isLastConnection)
+            {
+                var user = await _context.Users.FindAsync(userId);
                 if (user != null)
                 {
                     user.IsOnline = false;
-                    user.LastActive = DateTime.UtcNow; 
+                    user.LastActive = DateTime.UtcNow;
                     await _context.SaveChangesAsync();
 
-                    await Clients.All.SendAsync("UserStatusChanged", userId, false, user.LastActive);
+                    await Clients.All.SendAsync(
+                        "UserStatusChanged",
+                        userId,
+                        false,
+                        user.LastActive
+                    );
                 }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error in OnDisconnectedAsync: {ex.Message}");
             }
 
             await base.OnDisconnectedAsync(exception);
