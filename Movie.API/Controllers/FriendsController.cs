@@ -25,6 +25,9 @@ namespace Movie.API.Controllers
         public async Task<IActionResult> AddFriend(int userId)
         {
             var currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var currentUser = await _context.Users.FindAsync(currentUserId);
+            if (currentUser.IsBlocked) return Forbid("Ви заблоковані і не можете додавати друзів.");
+
             if (currentUserId == userId) return BadRequest("Не можна додати самого себе");
 
             var hasBlock = await _context.UserBlocks

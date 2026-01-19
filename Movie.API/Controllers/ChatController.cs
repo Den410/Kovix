@@ -81,6 +81,8 @@ namespace Movie.API.Controllers
         public async Task<IActionResult> GetPrivateHistory(int userId)
         {
             var currentUserId = GetUserId();
+            var me = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == currentUserId);
+            if (me.IsBlocked) return StatusCode(403, "Ваш акаунт заблоковано");
 
             var msgs = await _context.Messages
                 .AsNoTracking()

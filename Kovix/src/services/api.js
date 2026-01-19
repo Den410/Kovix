@@ -57,7 +57,8 @@ export const watchlistAPI = {
 
 export const usersAPI = {
   getPublicProfile: (id) =>
-    api.get(`/users/${id}/profile`)
+    api.get(`/users/${id}/profile`),
+  toggleBlock: (id) => api.post(`/users/${id}/toggle-block`),
 };
 
 export const friendsAPI = {

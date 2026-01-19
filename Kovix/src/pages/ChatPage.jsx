@@ -6,6 +6,7 @@ import { useSearchParams } from 'react-router-dom';
 import { HubConnectionState } from '@microsoft/signalr';
 import { useChatConnection } from '../hooks/useChatConnection';
 import '../style/App.css';
+import { usersAPI } from '../services/api';
 
 const API_BASE_URL = 'http://localhost:5096';
 
@@ -24,6 +25,19 @@ const formatMessageDate = (dateString) => {
 
 function ChatPage() {
   const { user } = useAuth();
+  const [isBlocked, setIsBlocked] = useState(false);
+
+const checkIfAccountBlocked = async () => {
+  try {
+    const res = await usersAPI.getPublicProfile(user.id);
+    setIsBlocked(res.data.isBlocked);
+  } catch (e) {
+    console.error(e);}};
+
+  useEffect(() => {
+    checkIfAccountBlocked();
+  }, []);
+  
 
   const [messages, setMessages] = useState([]);
   const [messageInput, setMessageInput] = useState('');
@@ -84,6 +98,20 @@ function ChatPage() {
       })
       .catch(console.error);
   }, []); 
+
+  const showBlockedSystemMessage = () => {
+  setIsBlocked(true);
+  setMessages([
+    {
+      id: 'blocked-' + Date.now(),
+      senderId: 0,
+      senderName: 'СИСТЕМА',
+      content: '⛔ Ваш акаунт заблоковано. Ви не можете користуватись чатом.',
+      timestamp: new Date().toISOString(),
+      isSystem: true
+    }
+    
+  ]);};
 
   const connection = useChatConnection((conn) => {
       
@@ -149,13 +177,27 @@ function ChatPage() {
       chatAPI.markGeneralAsRead().catch(console.error);
       chatAPI.getGeneralHistory()
         .then(res => setMessages(res.data))
-        .catch(console.error);
+        .catch(err => {
+            if (err.response?.status === 403) {
+            showBlockedSystemMessage();
+            } else {
+            console.error(err);
+            }
+        });
+
     } else {
       setFriends(prev => prev.map(f => f.id === activeChat ? { ...f, unreadCount: 0 } : f));
       chatAPI.markAsRead(activeChat).catch(console.error);
       chatAPI.getPrivateHistory(activeChat)
         .then(res => setMessages(res.data))
-        .catch(console.error);
+        .catch(err => {
+            if (err.response?.status === 403) {
+            showBlockedSystemMessage();
+            } else {
+            console.error(err);
+            }
+        });
+
     }
   }, [activeChat]); 
 
@@ -169,38 +211,48 @@ function ChatPage() {
   const handleSendOrSave = async (e) => {
     e.preventDefault();
     if (!messageInput.trim() || !connection) return;
+    const originalMessage = messageInput;
 
     try {
-        if (editingId) {
-            await connection.invoke('EditMessage', editingId, messageInput);
-            setEditingId(null);
+      if (editingId) {
+          await connection.invoke('EditMessage', editingId, messageInput);
+          setEditingId(null);
+      } else {
+        const now = new Date().toISOString();
+        const tempId = 'temp-' + Date.now();
+        if (activeChat !== null) {
+            setMessages(prev => [...prev, {
+                id: tempId,
+                senderId: user.id,
+                senderName: user.username,
+                receiverId: activeChat,
+                content: messageInput,
+                timestamp: now
+            }]);
         } else {
-            const now = new Date().toISOString();
-            if (activeChat !== null) {
-                setMessages(prev => [...prev, {
-                    id: 'temp-' + now,
-                    senderId: user.id,
-                    senderName: user.username,
-                    receiverId: activeChat,
-                    content: messageInput,
-                    timestamp: now
-                }]);
-            } else {
-                setGeneralChat(prev => ({ ...prev, lastMessage: `Ви: ${messageInput}`, lastMessageTime: now }));
-            }
-            if (activeChat !== null) {
-                setFriends(prev => prev.map(f => 
-                    f.id === activeChat 
-                    ? { ...f, lastMessage: messageInput, lastMessageTime: now } 
-                    : f
-                ).sort((a, b) => new Date(b.lastMessageTime || 0) - new Date(a.lastMessageTime || 0)));
-            }
-
-            await connection.invoke('SendMessage', messageInput, activeChat);
+            setGeneralChat(prev => ({ ...prev, lastMessage: `Ви: ${messageInput}`, lastMessageTime: now }));
         }
         setMessageInput('');
-    } catch (err) { console.error(err); }
-};
+        await connection.invoke('SendMessage', messageInput, activeChat);
+      }
+    } catch (err) {
+      console.error("Помилка відправки:", err);
+      if (err.toString().includes("BLOCK_ERROR") || err.toString().includes("заблоковано")) {
+          const errorMessage = {
+              id: 'error-' + Date.now(),
+              senderId: 0, 
+              senderName: "СИСТЕМА",
+              content: "⛔ ВАШ АКАУНТ ЗАБЛОКОВАНО. Ви не можете надсилати повідомлення.",
+              timestamp: new Date().toISOString(),
+              isSystem: true 
+          };
+          setMessages(prev => [...prev, errorMessage]);
+          setMessageInput(originalMessage);
+      } else {
+          alert("Помилка з'єднання: " + err.message);
+      }
+    }
+  };
 
 
   const handleContextMenu = (e, msg) => { e.preventDefault(); setContextMenu({ x: e.pageX, y: e.pageY, message: msg }); };
@@ -328,6 +380,16 @@ function ChatPage() {
                         const myId = String(user?.id || '');
                         const sender = String(msg.senderId || '');
                         const isMe = sender === myId;
+                        if (msg.senderId === 0 || msg.senderName === "СИСТЕМА") {
+                            return (
+                                <div key={idx} className="d-flex justify-content-center mb-3">
+                                    <Badge bg="danger" className="p-2 text-wrap" style={{ maxWidth: '80%' }}>
+                                        {msg.content}
+                                    </Badge>
+                                </div>
+                            );
+                        }
+                        
                         return (
                             <div key={idx} className={`d-flex mb-3 ${isMe ? 'justify-content-end' : 'justify-content-start'}`}>
                                 <div className={`message-bubble ${isMe ? 'my-message' : 'other-message'}`} 
@@ -352,8 +414,31 @@ function ChatPage() {
                 <div className="p-3" style={{ backgroundColor: 'var(--bg-panel)', borderTop: '1px solid var(--border-color)' }}>
                     {editingId && <div className="d-flex justify-content-between small text-primary mb-2"><span>✏️ Редагування...</span><span onClick={cancelEditing} style={{cursor:'pointer'}}>✖</span></div>}
                     <Form onSubmit={handleSendOrSave} className="d-flex gap-2">
-                        <Form.Control type="text" placeholder="Напишіть повідомлення..." value={messageInput} onChange={e => setMessageInput(e.target.value)} autoComplete="off" style={{ backgroundColor: 'var(--bg-chat)', color: 'var(--text-main)', borderColor: 'var(--border-color)' }} />
-                        <Button type="submit" variant={editingId ? "success" : "primary"} disabled={!connection || connection.state !== HubConnectionState.Connected}>{editingId ? "Save" : "Send"}</Button>
+                    <Form.Control
+                        type="text"
+                        value={messageInput}
+                        onChange={e => setMessageInput(e.target.value)}
+                        autoComplete="off"
+                        disabled={isBlocked}
+                        placeholder={isBlocked ? "⛔ Акаунт заблоковано" : "Напишіть повідомлення..."}
+                        style={{
+                        backgroundColor: 'var(--bg-chat)',
+                        color: 'var(--text-main)',
+                        borderColor: 'var(--border-color)'
+                        }}
+                    />
+
+                    <Button
+                        type="submit"
+                        variant={editingId ? "success" : "primary"}
+                        disabled={
+                        isBlocked ||
+                        !connection ||
+                        connection.state !== HubConnectionState.Connected
+                        }
+                    >
+                        {editingId ? "Save" : "Send"}
+                    </Button>
                     </Form>
                 </div>
             </Card.Body>

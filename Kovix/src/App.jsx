@@ -18,6 +18,7 @@ import { FriendsProvider } from './contexts/FriendsContext';
 import ChatPage from './pages/ChatPage';
 import NotFoundPage from './pages/NotFoundPage';
 import AdminReportsPage from './pages/AdminReportsPage';
+import BlockedRoute from './components/BlockedRoute';
 
 function App() {
   return (
@@ -36,9 +37,17 @@ function App() {
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/movies" element={<AllMoviesPage />} />
             <Route path="/my-lists" element={<MyListsPage />} />
-            <Route path="/users/:id" element={<UserPublicProfilePage />} />
-            <Route path="/chat" element={<ChatPage />} />
             <Route path="/admin/reports" element={<AdminReportsPage />} />
+            <Route path="/chat" element={
+                <BlockedRoute>
+                    <ChatPage />
+                </BlockedRoute>
+            } />
+            <Route path="/users/:id" element={
+                <BlockedRoute>
+                    <UserPublicProfilePage />
+                </BlockedRoute>
+            } />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </div>

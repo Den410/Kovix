@@ -12,6 +12,7 @@ namespace Movie.API.Models
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public bool IsOnline { get; set; } = false;
         public DateTime? LastActive { get; set; }
+        public bool IsBlocked { get; set; } = false;
 
         public ICollection<Review>? Reviews { get; set; }
         public ICollection<Watchlist>? Watchlists { get; set; }

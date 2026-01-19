@@ -106,6 +106,14 @@ namespace Movie.API.Controllers
             if (userIdClaim == null) return Unauthorized();
             int userId = int.Parse(userIdClaim.Value);
 
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null) return Unauthorized();
+
+            if (user.IsBlocked)
+            {
+                return StatusCode(403, "Ваш акаунт заблоковано. Ви не можете залишати відгуки.");
+            }
+
             var movie = await _context.Movies
                 .Include(m => m.Reviews)
                 .FirstOrDefaultAsync(m => m.Id == dto.MovieId);

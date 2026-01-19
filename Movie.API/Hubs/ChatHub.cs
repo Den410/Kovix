@@ -130,6 +130,21 @@ namespace Movie.API.Hubs
             var userId = GetUserId();
             var userName = Context.User.Identity.Name;
 
+            var userIdString = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdString))
+            {
+                throw new HubException("Unauthorized");
+            }
+            var senderId = int.Parse(userIdString);
+
+            var sender = await _context.Users
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u => u.Id == senderId);
+
+            if (sender == null || sender.IsBlocked)
+            {
+                throw new HubException("BLOCK_ERROR: Ваш акаунт заблоковано адміністратором.");
+            }
             var message = new Message
             {
                 SenderId = userId,

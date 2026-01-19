@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Container, Card, Spinner, Row, Col, Badge, Button } from 'react-bootstrap';
 import { useAuth } from '../contexts/AuthContext';
-import { usersAPI, reviewsAPI, friendsAPI, blocksAPI } from '../services/api';
+import { usersAPI, reviewsAPI, friendsAPI, blocksAPI } from '../services/api'; 
 import { useFriends } from '../contexts/FriendsContext';
 import { formatLastSeen } from '../utils/dateUtils';
 
@@ -10,7 +10,7 @@ const API_BASE_URL = 'http://localhost:5096';
 
 function UserPublicProfilePage() {
   const { id } = useParams();
-  const { user } = useAuth();
+  const { user } = useAuth(); 
   const [userProfile, setUserProfile] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -21,6 +21,7 @@ function UserPublicProfilePage() {
   const [isOnline, setIsOnline] = useState(false);
   const [lastActive, setLastActive] = useState(null);
 
+  const isAdmin = user?.role === 'Admin'; 
 
   useEffect(() => {
     loadData();
@@ -35,6 +36,7 @@ function UserPublicProfilePage() {
       ]);
       
       setUserProfile(profileRes.data);
+      setIsBlocked(profileRes.data.isBlocked); 
       setIsOnline(profileRes.data.isOnline);
       setLastActive(profileRes.data.lastActive);
       setReviews(reviewsRes.data);
@@ -42,9 +44,6 @@ function UserPublicProfilePage() {
       if (user && user.id !== parseInt(id)) {
          const statusRes = await friendsAPI.checkStatus(id);
          setFriendStatus(statusRes.data.status);
-
-         const blockRes = await blocksAPI.check(id);
-         setIsBlocked(blockRes.data.isBlocked);
       }
 
     } catch (error) {
@@ -55,7 +54,7 @@ function UserPublicProfilePage() {
     }
   };
 
-const handleFriendAction = async () => {
+  const handleFriendAction = async () => {
     try {
         if (friendStatus === 'None') {
             await friendsAPI.add(id);
@@ -75,6 +74,8 @@ const handleFriendAction = async () => {
         console.error("Деталі помилки:", error);
         if (error.response && error.response.status === 400) {
             alert(error.response.data);
+        } else if (error.response && error.response.status === 403) {
+             alert("Дія заборонена. Можливо, користувач заблокований.");
         } else {
             alert("Помилка дії з друзями");
         }
@@ -83,21 +84,24 @@ const handleFriendAction = async () => {
   };
 
   const handleBlockAction = async () => {
-      if (isBlocked) {
-          if (!window.confirm("Розблокувати цього користувача?")) return;
-          try {
-              await blocksAPI.unblock(id);
-              setIsBlocked(false);
-          } catch (e) { alert("Помилка розблокування"); }
-      } else {
-          if (!window.confirm("Заблокувати користувача? Ви більше не будете бачити його активність, а він буде видалений з друзів.")) return;
-          try {
-              await blocksAPI.block(id);
-              setIsBlocked(true);
-              setFriendStatus('None');
-          } catch (e) { alert("Помилка блокування"); }
-      }
-  };
+  if (!isAdmin) return;
+
+  const confirmText = isBlocked
+    ? "Розблокувати цього користувача?"
+    : "Заблокувати користувача? Він буде видалений з друзів.";
+
+  if (!window.confirm(confirmText)) return;
+
+  try {
+    await usersAPI.toggleBlock(id);
+    await loadData();
+    alert(isBlocked ? "Користувача розблоковано." : "Користувача заблоковано.");
+  } catch (e) {
+    console.error(e);
+    alert("Помилка: " + (e.response?.data || "Unknown error"));
+  }
+};
+
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('uk-UA', {
@@ -137,37 +141,54 @@ const handleFriendAction = async () => {
         
         {user && user.id !== parseInt(id) && (
             <div className="mt-3 d-flex flex-column align-items-center gap-2">
-                
-                {isBlocked ? (
-                    <Button variant="dark" onClick={handleBlockAction}>🔓 Розблокувати</Button>
-                ) : (
-                    <>
+                {isAdmin && (
+                    isBlocked ? (
+                    <Button variant="dark" onClick={handleBlockAction}>
+                        🔓 Розблокувати (Admin)
+                    </Button>
+                    ) : (
+                    <Button
+                        variant="link"
+                        className="text-danger text-decoration-none"
+                        size="sm"
+                        onClick={handleBlockAction}
+                    >
+                        🚫 Заблокувати (Admin)
+                    </Button>
+                    )
+                )}
+                {isBlocked && (
+                        <Badge bg="danger" className="p-2">
+                        ⛔ Цей акаунт заблоковано
+                        </Badge>
+                    )}
+                    {!isBlocked && user && user.id !== parseInt(id) && (
+                        <>
                         {friendStatus === 'None' && (
-                            <Button variant="primary" onClick={handleFriendAction}>➕ Додати в друзі</Button>
-                        )}
-                        {friendStatus === 'PendingOutgoing' && (
-                            <Button variant="secondary" onClick={handleFriendAction}>🕒 Запит надіслано (Скасувати)</Button>
-                        )}
-                        {friendStatus === 'PendingIncoming' && (
-                            <Badge bg="info" className="p-2 fs-6">
-                                📩 Вам надіслано запит (Перевірте сповіщення 🔔)
-                            </Badge>
-                        )}
-                        {friendStatus === 'Friend' && (
-                            <Button variant="outline-danger" onClick={handleFriendAction}>🗑️ Видалити з друзів</Button>
+                            <Button variant="primary" onClick={handleFriendAction}>
+                            ➕ Додати в друзі
+                            </Button>
                         )}
 
-                        <Button 
-                            variant="link" 
-                            className="text-danger text-decoration-none mt-1" 
-                            size="sm"
-                            onClick={handleBlockAction}
-                            style={{ fontSize: '0.9rem' }}
-                        >
-                            🚫 Заблокувати
-                        </Button>
-                    </>
-                )}
+                        {friendStatus === 'PendingOutgoing' && (
+                            <Button variant="secondary" onClick={handleFriendAction}>
+                            🕒 Запит надіслано (Скасувати)
+                            </Button>
+                        )}
+
+                        {friendStatus === 'PendingIncoming' && (
+                            <Badge bg="info" className="p-2 fs-6">
+                            📩 Вам надіслано запит (Перевірте сповіщення 🔔)
+                            </Badge>
+                        )}
+
+                        {friendStatus === 'Friend' && (
+                            <Button variant="outline-danger" onClick={handleFriendAction}>
+                            🗑️ Видалити з друзів
+                            </Button>
+                        )}
+                        </>
+                    )}
             </div>
         )}
 
@@ -179,7 +200,7 @@ const handleFriendAction = async () => {
       {isBlocked ? (
           <div className="text-center p-5 text-muted border rounded" style={{ backgroundColor: 'var(--bg-card)' }}>
               <h4>🚫 Користувач заблокований</h4>
-              <p>Ви обмежили доступ до контенту цього користувача.</p>
+              <p>Доступ до контенту цього користувача обмежено адміністратором.</p>
           </div>
       ) : (
           <>

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Movie.API.Data;
 using Movie.API.DTOs;
@@ -87,6 +88,21 @@ namespace Movie.API.Controllers
             return NoContent();
         }
 
+        [Authorize(Roles = "Admin")]
+        [HttpPost("{id}/toggle-block")]
+        public async Task<IActionResult> ToggleBlockUser(int id)
+        {
+            var user = await _context.Users.FindAsync(id);
+            if (user == null) return NotFound("Користувача не знайдено");
+
+            if (user.Role == "Admin") return BadRequest("Не можна заблокувати адміністратора");
+
+            user.IsBlocked = !user.IsBlocked;
+            await _context.SaveChangesAsync();
+
+            return Ok(new { isBlocked = user.IsBlocked, message = user.IsBlocked ? "Користувача заблоковано" : "Користувача розблоковано" });
+        }
+
         [HttpGet("{id}/profile")]
         public async Task<ActionResult<UserProfileDto>> GetUserProfile(int id)
         {
@@ -98,7 +114,7 @@ namespace Movie.API.Controllers
                     Username = u.Username,
                     AvatarUrl = u.AvatarUrl,
                     CreatedAt = u.CreatedAt,
-
+                    IsBlocked = u.IsBlocked,
                     IsOnline = u.IsOnline,
                     LastActive = u.LastActive
                 })
