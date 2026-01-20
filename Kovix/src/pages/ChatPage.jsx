@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Container, Row, Col, Card, Form, Button, ListGroup, Modal, Badge } from 'react-bootstrap';
 import { useAuth } from '../contexts/AuthContext';
 import { chatAPI, friendsAPI } from '../services/api';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { HubConnectionState } from '@microsoft/signalr';
 import { useChatConnection } from '../hooks/useChatConnection';
 import '../style/App.css';
@@ -43,6 +43,8 @@ const checkIfAccountBlocked = async () => {
   const [messageInput, setMessageInput] = useState('');
   const [activeChat, setActiveChat] = useState(null);
   const [friends, setFriends] = useState([]);
+  const navigate = useNavigate();
+
   
   const [generalChat, setGeneralChat] = useState({
       lastMessage: '',
@@ -394,7 +396,15 @@ const checkIfAccountBlocked = async () => {
                             <div key={idx} className={`d-flex mb-3 ${isMe ? 'justify-content-end' : 'justify-content-start'}`}>
                                 <div className={`message-bubble ${isMe ? 'my-message' : 'other-message'}`} 
                                      onContextMenu={(e) => handleContextMenu(e, msg)} style={{ maxWidth: '75%' }}>
-                                    {!isMe && <div className="message-sender">{msg.senderName}</div>}
+                                    {!isMe && (
+                                        <div
+                                            className="message-sender"
+                                            style={{ cursor: 'pointer', textDecoration: 'underline' }}
+                                            onClick={() => navigate(`/users/${msg.senderId}`)}
+                                        >
+                                            {msg.senderName}
+                                        </div>
+                                    )}
                                     <div className="d-flex align-items-center flex-wrap">
                                         <span style={{ wordBreak: 'break-word' }}>
                                             {msg.content}

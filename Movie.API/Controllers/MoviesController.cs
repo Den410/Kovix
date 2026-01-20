@@ -22,10 +22,10 @@ namespace Movie.API.Controllers
 
         [HttpGet]
         public async Task<ActionResult<PagedResult<MovieEntity>>> GetAll(
-              [FromQuery] string? search,
-              [FromQuery] string? genres,
-              [FromQuery] int page = 1,
-              [FromQuery] int pageSize = 8)
+        [FromQuery] string? search,
+        [FromQuery] string? genres,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 8)
         {
             var query = _context.Movies.AsQueryable();
 
@@ -38,7 +38,12 @@ namespace Movie.API.Controllers
             if (!string.IsNullOrWhiteSpace(genres))
             {
                 var genreList = genres.ToLower().Split(',', StringSplitOptions.RemoveEmptyEntries);
-                query = query.Where(m => genreList.Any(g => m.Genre != null && m.Genre.ToLower().Contains(g.Trim())));
+
+                foreach (var genre in genreList)
+                {
+                    var g = genre.Trim();
+                    query = query.Where(m => m.Genre != null && m.Genre.ToLower().Contains(g));
+                }
             }
 
             int totalCount = await query.CountAsync();
@@ -153,8 +158,28 @@ namespace Movie.API.Controllers
         [HttpGet("trending")]
         public async Task<ActionResult<IEnumerable<MovieEntity>>> GetTrending()
         {
-            return await _context.Movies.OrderByDescending(m => m.TotalReviews).Take(4).ToListAsync();
+            var trendingMovies = await _context.MovieReactions
+                .Where(r => r.Type == ReactionType.Like)
+                .GroupBy(r => r.MovieId)
+                .Select(g => new
+                {
+                    MovieId = g.Key,
+                    LikesCount = g.Count()
+                })
+                .OrderByDescending(x => x.LikesCount)
+                .Take(10)
+                .Join(
+                    _context.Movies,
+                    r => r.MovieId,
+                    m => m.Id,
+                    (r, m) => m
+                )
+                .Where(m => !string.IsNullOrEmpty(m.TrailerUrl)) 
+                .ToListAsync();
+
+            return Ok(trendingMovies);
         }
+
 
         [HttpGet("top-rated")]
         public async Task<ActionResult<IEnumerable<MovieEntity>>> GetTopRated()
@@ -228,5 +253,6 @@ namespace Movie.API.Controllers
                 .Take(10)
                 .ToListAsync();
         }
+
     }
 }
