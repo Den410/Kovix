@@ -18,9 +18,11 @@ api.interceptors.request.use((config) => {
 });
 
 export const moviesAPI = {
-  getAll: (page = 1, pageSize = 8, search = '', genres = '') => 
-      api.get('/movies', { params: { page, pageSize, search, genres } }),
-  getNew: () => api.get('/movies/new'),
+  getAll: (page = 1, pageSize = 8, search = '', genres = '', year = '') => 
+      api.get('/movies', { params: { page, pageSize, search, genres, year } }),
+  getFilters: () => api.get('/movies/filters'),
+  getNew: (days = 45, limit = 10) =>
+      api.get(`/movies/new?days=${days}&limit=${limit}`),
   getById: (id) => api.get(`/movies/${id}`),
   getById: (id) => api.get(`/movies/${id}`),
   getTrending: () => api.get('/movies/trending'),
@@ -47,6 +49,7 @@ export const authAPI = {
   updateProfile: (formData) => api.put('/auth/me', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   }),
+  updateSettings: (data) => api.put('/auth/settings', data),
 };
 
 export const watchlistAPI = {

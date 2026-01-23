@@ -161,5 +161,20 @@ namespace Movie.API.Controllers
             fullUser!.PasswordHash = "";
             return Ok(fullUser);
         }
+
+
+        [HttpPut("settings")]
+        [Authorize]
+        public async Task<IActionResult> UpdateSettings([FromBody] UserContentSettingsDto dto)
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null) return NotFound();
+
+            user.BlockedGenres = string.Join(",", dto.BlockedGenres).ToLower();
+
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
     }
 }

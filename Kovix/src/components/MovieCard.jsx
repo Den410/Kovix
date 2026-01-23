@@ -2,8 +2,7 @@ import { Card, Badge } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import '../style/MovieCard.css';
 
-function MovieCard({ movie, disableLink = false, hideMeta = false }) {
-  
+function MovieCard({ movie, disableLink = false, hideMeta = false, isNew = false }) {
   const getRatingColor = (rating) => {
     if (rating >= 8) return "success";
     if (rating >= 5) return "warning";
@@ -16,6 +15,12 @@ function MovieCard({ movie, disableLink = false, hideMeta = false }) {
   const CardContent = (
     <Card className="h-100 shadow-sm movie-card">
       <div className="movie-card-img-wrapper">
+         {isNew && (
+            <div className="new-badge">
+              <span className="new-badge-dot" />
+              Новинка
+            </div>
+          )}
         <Card.Img
           variant="top"
           src={movie.posterUrl || 'https://via.placeholder.com/300x450'}

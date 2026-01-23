@@ -30,7 +30,7 @@ function HomePage() {
     try {
       setLoading(true);
       const [newRes, topRes, trendingRes] = await Promise.all([
-        moviesAPI.getNew(),
+        moviesAPI.getNew(45, 12),
         moviesAPI.getTopRated(),
         moviesAPI.getTrending() 
       ]);
@@ -59,6 +59,48 @@ function HomePage() {
       { breakpoint: 768, settings: { slidesToShow: 2 } },
       { breakpoint: 480, settings: { slidesToShow: 1 } }
     ]
+  };
+
+  const trailerSliderSettings = {
+    ...sliderSettings,
+    slidesToShow: 2,
+    responsive: [
+      { breakpoint: 1024, settings: { slidesToShow: 2 } },
+      { breakpoint: 768, settings: { slidesToShow: 1 } },
+      { breakpoint: 480, settings: { slidesToShow: 1 } }
+    ]
+  };
+
+
+  const getYouTubeId = (url) => {
+    if (!url) return null;
+
+    try {
+      const u = new URL(url);
+
+      if (u.hostname.includes('youtu.be')) {
+        return u.pathname.replace('/', '') || null;
+      }
+
+      if (u.searchParams.get('v')) {
+        return u.searchParams.get('v');
+      }
+
+      const parts = u.pathname.split('/');
+      const embedIndex = parts.indexOf('embed');
+      if (embedIndex !== -1 && parts[embedIndex + 1]) {
+        return parts[embedIndex + 1];
+      }
+
+        return null;
+      } catch {
+        return null;
+      }
+  };
+
+  const getYouTubeEmbedUrl = (trailerUrl) => {
+    const id = getYouTubeId(trailerUrl);
+    return id ? `https://www.youtube.com/embed/${id}?rel=0&modestbranding=1` : null;
   };
 
   const openTrailer = (movie) => {
@@ -96,43 +138,12 @@ function HomePage() {
           <Slider {...sliderSettings}>
             {newMovies.map((movie) => (
               <div key={movie.id} className="p-2"> 
-                <MovieCard movie={movie} />
+                <MovieCard movie={movie} isNew={true} />
               </div>
             ))}
           </Slider>
         ) : (
           <p className="text-muted">Немає нових фільмів</p>
-        )}
-      </section>
-
-      <section className="mb-5 slider-section">
-        <div className="d-flex justify-content-between align-items-center mb-3 border-start border-4 border-danger ps-2">
-            <h3 className="mb-0">🎬 Найкращі трейлери</h3>
-            <Link to="/movies" className="text-decoration-none small">Дивитися всі &rarr;</Link>
-        </div>
-        
-        {trendingMovies.length > 0 ? (
-          <Slider {...sliderSettings}>
-            {trendingMovies.map((movie) => (
-                <div key={movie.id} className="p-2">
-                  <div
-                    onClick={() => openTrailer(movie)}
-                    style={{
-                      cursor: movie.trailerUrl ? 'pointer' : 'default'
-                    }}
-                  >
-                    {/* Тут залишаємо disableLink та hideMeta */}
-                    <MovieCard 
-                        movie={movie} 
-                        disableLink={true} 
-                        hideMeta={true} 
-                    />
-                  </div>
-                </div>
-            ))}
-          </Slider>
-        ) : (
-          <p className="text-muted">Трейлери відсутні</p>
         )}
       </section>
 
@@ -152,6 +163,57 @@ function HomePage() {
           </Slider>
         ) : (
           <p className="text-muted">Немає рейтингів</p>
+        )}
+      </section>
+
+            <section className="mb-5 slider-section">
+        <div className="d-flex justify-content-between align-items-center mb-3 border-start border-4 border-danger ps-2">
+            <h3 className="mb-0">🎬 Найкращі трейлери</h3>
+            <Link to="/movies" className="text-decoration-none small">Дивитися всі &rarr;</Link>
+        </div>
+        
+        {trendingMovies.length > 0 ? (
+          <Slider {...trailerSliderSettings}>
+            {trendingMovies.map((movie) => {
+              const embedUrl = getYouTubeEmbedUrl(movie.trailerUrl);
+
+              return (
+                <div key={movie.id} className="p-2">
+                  <div
+                    className="trailer-slide-card"
+                    onClick={() => openTrailer(movie)}
+                    style={{ cursor: movie.trailerUrl ? 'pointer' : 'default' }}
+                  >
+                   {embedUrl ? (
+                      <div className="position-relative">
+                        <div className="ratio ratio-16x9 rounded overflow-hidden shadow-sm">
+                          <iframe
+                            src={embedUrl}
+                            title={`Trailer ${movie.title}`}
+                            allow="autoplay; encrypted-media"
+                            allowFullScreen
+                          />
+                        </div>
+
+                        <div
+                          className="position-absolute top-0 start-0 w-100 h-100"
+                          style={{ background: 'transparent' }}
+                        />
+                      </div>
+                    ) : (
+                      <MovieCard movie={movie} disableLink={true} hideMeta={true} />
+                    )}
+
+                    <div className="mt-2 small text-truncate trailer-title">
+                      {movie.title}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </Slider>
+        ) : (
+          <p className="text-muted">Трейлери відсутні</p>
         )}
       </section>
 

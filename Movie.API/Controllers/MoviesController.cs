@@ -24,10 +24,29 @@ namespace Movie.API.Controllers
         public async Task<ActionResult<PagedResult<MovieEntity>>> GetAll(
         [FromQuery] string? search,
         [FromQuery] string? genres,
+        [FromQuery] int? year,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 8)
         {
             var query = _context.Movies.AsQueryable();
+
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim != null)
+            {
+                var userId = int.Parse(userIdClaim.Value);
+                var user = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId);
+
+                if (user != null && !string.IsNullOrEmpty(user.BlockedGenres))
+                {
+                    var blockedList = user.BlockedGenres.Split(',', StringSplitOptions.RemoveEmptyEntries);
+
+                    foreach (var blocked in blockedList)
+                    {
+                        var b = blocked.Trim();
+                        query = query.Where(m => m.Genre == null || !m.Genre.ToLower().Contains(b));
+                    }
+                }
+            }
 
             if (!string.IsNullOrWhiteSpace(search))
             {
@@ -35,10 +54,14 @@ namespace Movie.API.Controllers
                 query = query.Where(m => m.Title.ToLower().Contains(searchLower));
             }
 
+            if (year.HasValue)
+            {
+                query = query.Where(m => m.Year == year.Value);
+            }
+
             if (!string.IsNullOrWhiteSpace(genres))
             {
                 var genreList = genres.ToLower().Split(',', StringSplitOptions.RemoveEmptyEntries);
-
                 foreach (var genre in genreList)
                 {
                     var g = genre.Trim();
@@ -158,6 +181,14 @@ namespace Movie.API.Controllers
         [HttpGet("trending")]
         public async Task<ActionResult<IEnumerable<MovieEntity>>> GetTrending()
         {
+            var blockedGenres = await GetUserBlockedGenres();
+            var moviesQuery = _context.Movies.AsNoTracking().AsQueryable();
+
+            foreach (var genre in blockedGenres)
+            {
+                moviesQuery = moviesQuery.Where(m => m.Genre == null || !m.Genre.ToLower().Contains(genre));
+            }
+
             var trendingMovies = await _context.MovieReactions
                 .Where(r => r.Type == ReactionType.Like)
                 .GroupBy(r => r.MovieId)
@@ -169,12 +200,12 @@ namespace Movie.API.Controllers
                 .OrderByDescending(x => x.LikesCount)
                 .Take(10)
                 .Join(
-                    _context.Movies,
+                    moviesQuery,
                     r => r.MovieId,
                     m => m.Id,
                     (r, m) => m
                 )
-                .Where(m => !string.IsNullOrEmpty(m.TrailerUrl)) 
+                .Where(m => !string.IsNullOrEmpty(m.TrailerUrl))
                 .ToListAsync();
 
             return Ok(trendingMovies);
@@ -182,9 +213,31 @@ namespace Movie.API.Controllers
 
 
         [HttpGet("top-rated")]
-        public async Task<ActionResult<IEnumerable<MovieEntity>>> GetTopRated()
+        public async Task<ActionResult<IEnumerable<MovieDetailDto>>> GetTopRated()
         {
-            return await _context.Movies.OrderByDescending(m => m.AverageRating).Take(4).ToListAsync();
+            var query = _context.Movies.AsNoTracking();
+
+            var blockedGenres = await GetUserBlockedGenres();
+            foreach (var genre in blockedGenres)
+            {
+                query = query.Where(m => m.Genre == null || !m.Genre.ToLower().Contains(genre));
+            }
+
+            var movies = await query
+                .OrderByDescending(m => m.AverageRating)
+                .Take(10)
+                .Select(m => new MovieDetailDto
+                {
+                    Id = m.Id,
+                    Title = m.Title,
+                    PosterUrl = m.PosterUrl,
+                    Year = m.Year,
+                    AverageRating = m.AverageRating,
+                    Genre = m.Genre
+                })
+                .ToListAsync();
+
+            return Ok(movies);
         }
 
 
@@ -246,13 +299,76 @@ namespace Movie.API.Controllers
         }
 
         [HttpGet("new")]
-        public async Task<ActionResult<IEnumerable<MovieEntity>>> GetNew()
+        public async Task<ActionResult<IEnumerable<MovieDetailDto>>> GetNew()
         {
-            return await _context.Movies
+            var query = _context.Movies.AsNoTracking();
+
+            var blockedGenres = await GetUserBlockedGenres();
+            foreach (var genre in blockedGenres)
+            {
+                query = query.Where(m => m.Genre == null || !m.Genre.ToLower().Contains(genre));
+            }
+
+            var movies = await query
                 .OrderByDescending(m => m.CreatedAt) 
                 .Take(10)
+               .Select(m => new MovieDetailDto
+               {
+                   Id = m.Id,
+                   Title = m.Title,
+                   PosterUrl = m.PosterUrl,
+                   Year = m.Year,
+                   AverageRating = m.AverageRating,
+                   Genre = m.Genre
+               })
                 .ToListAsync();
+
+            return Ok(movies);
         }
 
+
+        [HttpGet("filters")]
+        public async Task<ActionResult<MovieFiltersDto>> GetFilters()
+        {
+            var rawData = await _context.Movies
+                .AsNoTracking()
+                .Select(m => new { m.Genre, m.Year })
+                .ToListAsync();
+
+            var genres = rawData
+                .Where(m => !string.IsNullOrEmpty(m.Genre))
+                .SelectMany(m => m.Genre.Split(','))
+                .Select(g => g.Trim().ToLower())
+                .Distinct()
+                .OrderBy(g => g)
+                .ToList();
+
+            var years = rawData
+                .Select(m => m.Year)
+                .Distinct()
+                .OrderByDescending(y => y)
+                .ToList();
+
+            return Ok(new MovieFiltersDto { Genres = genres, Years = years });
+        }
+        private async Task<List<string>> GetUserBlockedGenres()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null) return new List<string>();
+
+            var userId = int.Parse(userIdClaim.Value);
+
+            var userSettings = await _context.Users
+                .AsNoTracking()
+                .Where(u => u.Id == userId)
+                .Select(u => u.BlockedGenres)
+                .FirstOrDefaultAsync();
+
+            if (string.IsNullOrEmpty(userSettings)) return new List<string>();
+
+            return userSettings.ToLower().Split(',', StringSplitOptions.RemoveEmptyEntries)
+                               .Select(g => g.Trim())
+                               .ToList();
+        }
     }
 }

@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Badge, Spinner, Button, Modal, Form, Alert } from 'react-bootstrap';
 import { useNavigate, Link } from 'react-router-dom';
-import { authAPI, friendsAPI } from '../services/api';
+import { authAPI, friendsAPI, moviesAPI } from '../services/api'; 
 import { useAuth } from '../contexts/AuthContext';
 import { useFriends } from '../contexts/FriendsContext';
 import { useChatConnection } from '../hooks/useChatConnection';
+import { usePresence } from '../contexts/PresenceContext';
 import { formatLastSeen } from '../utils/dateUtils';
 
 const API_BASE_URL = 'http://localhost:5096'; 
@@ -20,18 +21,30 @@ function ProfilePage() {
   const [previewUrl, setPreviewUrl] = useState(null);
   const [shouldDeleteAvatar, setShouldDeleteAvatar] = useState(false);
 
+  const [showSettings, setShowSettings] = useState(false);
+  const [blockedGenres, setBlockedGenres] = useState([]);
+  const [availableGenres, setAvailableGenres] = useState([]); 
+  
   const { logout, login, user: currentUser } = useAuth();
   const { refreshRequests } = useFriends();
+  const { connection: presenceConnection } = usePresence(); 
   const navigate = useNavigate();
 
   useEffect(() => {
     loadProfile();
+    loadGenres();
     if (!currentUser?.isBlocked) {
         loadFriends();
     }
   }, [currentUser]); 
 
-  const connection = useChatConnection(async (conn) => {
+  useEffect(() => {
+      if (profile && profile.blockedGenres) {
+          setBlockedGenres(profile.blockedGenres.split(',').map(g => g.trim()));
+      }
+  }, [profile]);
+
+  const localConnection = useChatConnection(async (conn) => {
       if (currentUser?.isBlocked) return;
 
       conn.on('UserStatusChanged', (userId, isOnline, lastActive) => {
@@ -59,7 +72,6 @@ function ProfilePage() {
       }
   });
 
-
   const loadProfile = async () => {
     try {
       const res = await authAPI.getProfile();
@@ -69,6 +81,17 @@ function ProfilePage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadGenres = async () => {
+      try {
+          const res = await moviesAPI.getFilters();
+          if (res.data && res.data.genres) {
+              setAvailableGenres(res.data.genres);
+          }
+      } catch (e) {
+          console.error("Не вдалося завантажити жанри", e);
+      }
   };
 
   const loadFriends = async () => {
@@ -98,8 +121,11 @@ function ProfilePage() {
 
   const handleLogout = async() => {
     try {
-      if (connection) {
-        await connection.stop();
+      if (localConnection && localConnection.state === "Connected") {
+        await localConnection.stop();
+      }
+      if (presenceConnection && presenceConnection.state === "Connected") {
+          await presenceConnection.stop();
       }
     } catch (error) {
       console.error("Помилка при закритті з'єднання:", error);
@@ -149,9 +175,27 @@ function ProfilePage() {
     }
   };
 
-  if (loading) {
-    return <Container className="mt-5 text-center"><Spinner animation="border" /></Container>;
-  }
+  const handleGenreToggle = (genre) => {
+      if (blockedGenres.includes(genre)) {
+          setBlockedGenres(blockedGenres.filter(g => g !== genre));
+      } else {
+          setBlockedGenres([...blockedGenres, genre]);
+      }
+  };
+
+  const handleSaveSettings = async () => {
+      try {
+          await authAPI.updateSettings({ blockedGenres });
+          setShowSettings(false);
+          setProfile(prev => ({ ...prev, blockedGenres: blockedGenres.join(',') }));
+          alert("Налаштування збережено! Фільми з цими жанрами будуть приховані.");
+      } catch (e) {
+          console.error(e);
+          alert("Помилка збереження налаштувань");
+      }
+  };
+
+  if (loading) return <Container className="mt-5 text-center"><Spinner animation="border" /></Container>;
 
   if (!profile) {
     return (
@@ -222,9 +266,30 @@ function ProfilePage() {
                     🛑 Всі скарги
                 </Button>
               )}
+              
               <Button variant="outline-primary" onClick={handleOpenEdit} disabled={profile.isBlocked}>
                   {profile.isBlocked ? 'Редагування недоступне' : '✏️ Редагувати'}
               </Button>
+
+              <Button 
+                  onClick={() => setShowSettings(true)} 
+                  disabled={profile.isBlocked}
+                  style={{
+                      backgroundColor: 'transparent',
+                      color: 'var(--text-main)',           
+                      border: '1px solid var(--border-color)', 
+                      transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={(e) => {
+                      e.target.style.backgroundColor = 'rgba(128, 128, 128, 0.1)'; 
+                  }}
+                  onMouseLeave={(e) => {
+                      e.target.style.backgroundColor = 'transparent';
+                  }}
+              >
+                  🛡️ Фільтр контенту
+              </Button>
+
               <Button variant="outline-danger" onClick={handleLogout}>Вийти</Button>
             </div>
           </Card>
@@ -289,16 +354,26 @@ function ProfilePage() {
       </Row>
 
       <Modal show={showEdit} onHide={() => setShowEdit(false)} centered>
-        <Modal.Header closeButton><Modal.Title>Редагування профілю</Modal.Title></Modal.Header>
-        <Modal.Body>
+        <Modal.Header closeButton style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-main)', borderColor: 'var(--border-color)' }}>
+            <Modal.Title>Редагування профілю</Modal.Title>
+        </Modal.Header>
+        <Modal.Body style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-main)' }}>
           <Form>
             <Form.Group className="mb-3">
               <Form.Label>Імʼя</Form.Label>
-              <Form.Control value={editName} onChange={e => setEditName(e.target.value)} />
+              <Form.Control 
+                value={editName} 
+                onChange={e => setEditName(e.target.value)} 
+                style={{ backgroundColor: 'var(--bg-main)', color: 'var(--text-main)', borderColor: 'var(--border-color)' }}
+              />
             </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>Аватар</Form.Label>
-              <Form.Control type="file" onChange={handleFileChange} />
+              <Form.Control 
+                type="file" 
+                onChange={handleFileChange} 
+                style={{ backgroundColor: 'var(--bg-main)', color: 'var(--text-main)', borderColor: 'var(--border-color)' }}
+              />
               {previewUrl && (
                 <div className="mt-2 d-flex align-items-center">
                   <img src={previewUrl} alt="preview" className="rounded-circle" style={{ width: 60, height: 60, objectFit: 'cover', marginRight: '10px' }} />
@@ -308,11 +383,58 @@ function ProfilePage() {
             </Form.Group>
           </Form>
         </Modal.Body>
-        <Modal.Footer>
+        <Modal.Footer style={{ backgroundColor: 'var(--bg-card)', borderTopColor: 'var(--border-color)' }}>
           <Button variant="secondary" onClick={() => setShowEdit(false)}>Скасувати</Button>
           <Button variant="primary" onClick={handleSaveChanges}>Зберегти</Button>
         </Modal.Footer>
       </Modal>
+
+      <Modal show={showSettings} onHide={() => setShowSettings(false)} centered>
+        <Modal.Header closeButton style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-main)', borderColor: 'var(--border-color)' }}>
+          <Modal.Title>🛡️ Фільтр контенту</Modal.Title>
+        </Modal.Header>
+        <Modal.Body style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-main)' }}>
+          <p className="small" style={{ opacity: 0.8 }}>
+            Оберіть жанри, які ви <strong>НЕ хочете</strong> бачити у стрічці новин та каталозі.
+          </p>
+          <div className="d-flex flex-wrap gap-2">
+             {availableGenres.length === 0 ? (
+                 <div className="w-100 text-center py-3"><Spinner size="sm" /> Завантаження жанрів...</div>
+             ) : (
+                 availableGenres.map(genre => {
+                     const isBlocked = blockedGenres.includes(genre);
+                     return (
+                         <div 
+                            key={genre}
+                            onClick={() => handleGenreToggle(genre)}
+                            style={{
+                                padding: '8px 12px',
+                                border: isBlocked ? '1px solid #dc3545' : '1px solid var(--border-color)',
+                                borderRadius: '20px',
+                                backgroundColor: isBlocked ? '#dc3545' : 'transparent',
+                                color: isBlocked ? 'white' : 'var(--text-main)',
+                                cursor: 'pointer',
+                                userSelect: 'none',
+                                fontSize: '0.9rem',
+                                transition: 'all 0.2s',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '5px'
+                            }}
+                         >
+                            {isBlocked ? '🚫' : ''} {genre.charAt(0).toUpperCase() + genre.slice(1)}
+                         </div>
+                     );
+                 })
+             )}
+          </div>
+        </Modal.Body>
+        <Modal.Footer style={{ backgroundColor: 'var(--bg-card)', borderTopColor: 'var(--border-color)' }}>
+          <Button variant="secondary" onClick={() => setShowSettings(false)}>Скасувати</Button>
+          <Button variant="danger" onClick={handleSaveSettings}>Зберегти обмеження</Button>
+        </Modal.Footer>
+      </Modal>
+
     </Container>
   );
 }

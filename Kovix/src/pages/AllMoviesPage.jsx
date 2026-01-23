@@ -5,38 +5,46 @@ import MovieCard from '../components/MovieCard';
 
 function AllMoviesPage() {
   const [movies, setMovies] = useState([]);
+  
+  const [availableGenres, setAvailableGenres] = useState([]); 
+  const [availableYears, setAvailableYears] = useState([]);  
+  
+  const [selectedGenres, setSelectedGenres] = useState([]); 
+  const [selectedYear, setSelectedYear] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  
-  const [selectedGenres, setSelectedGenres] = useState([]); 
-  
   const [error, setError] = useState('');
+  
   const pageSize = 8;
 
-  const genresList = [
-    "екшн", "драма", "комедія", "трилер", "жахи", "фантастика",
-    "наукова фантастика", "фентезі", "пригоди", 
-    "бойовик", "кримінал", "детектив", "сімейний", "анімація"
-  ];
+  useEffect(() => {
+    moviesAPI.getFilters()
+      .then(res => {
+        setAvailableGenres(res.data.genres || []);
+        setAvailableYears(res.data.years || []);
+      })
+      .catch(console.error);
+  }, []);
 
   useEffect(() => {
     const genresString = selectedGenres.join(','); 
-    loadMovies(page, searchTerm, genresString);
-  }, [page, selectedGenres]); 
+    loadMovies(page, searchTerm, genresString, selectedYear);
+  }, [page, selectedGenres, selectedYear]);
 
-  const loadMovies = async (currentPage, currentSearch, currentGenresStr) => {
+  const loadMovies = async (currentPage, currentSearch, currentGenresStr, currentYear) => {
     setLoading(true);
     setError('');
     try {
-      const response = await moviesAPI.getAll(currentPage, pageSize, currentSearch, currentGenresStr);
+      const response = await moviesAPI.getAll(currentPage, pageSize, currentSearch, currentGenresStr, currentYear);
       
-      const items = response.data.items || response.data.Items || [];
-      const total = response.data.totalPages || response.data.TotalPages || 1;
+      const items = response.data.items || [];
+      const total = response.data.totalPages || 1;
 
       setMovies(items);
-      setTotalPages(total);
+      setTotalPages(Math.ceil(response.data.totalCount / pageSize));
 
       if (items.length === 0) {
           setError('За вашим запитом нічого не знайдено 😔');
@@ -53,7 +61,7 @@ function AllMoviesPage() {
     e.preventDefault();
     setPage(1);
     const genresString = selectedGenres.join(',');
-    loadMovies(1, searchTerm, genresString);
+    loadMovies(1, searchTerm, genresString, selectedYear);
   };
 
   const toggleGenre = (genre) => {
@@ -65,9 +73,15 @@ function AllMoviesPage() {
     }
   };
 
+  const handleYearChange = (e) => {
+      setPage(1);
+      setSelectedYear(e.target.value);
+  };
+
   const clearFilters = () => {
     setSelectedGenres([]);
     setSearchTerm('');
+    setSelectedYear('');
     setPage(1);
   };
 
@@ -93,8 +107,21 @@ function AllMoviesPage() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
+              
+              <Form.Select 
+                value={selectedYear} 
+                onChange={handleYearChange}
+                style={{ maxWidth: '150px' }}
+              >
+                  <option value="">Всі роки</option>
+                  {availableYears.map(year => (
+                      <option key={year} value={year}>{year}</option>
+                  ))}
+              </Form.Select>
+
               <Button variant="primary" type="submit">🔍 Пошук</Button>
-              {(searchTerm || selectedGenres.length > 0) && (
+              
+              {(searchTerm || selectedGenres.length > 0 || selectedYear) && (
                 <Button variant="outline-danger" onClick={clearFilters}>✖ Скинути</Button>
               )}
             </InputGroup>
@@ -103,8 +130,11 @@ function AllMoviesPage() {
 
         <Col md={12}>
           <div className="d-flex flex-wrap gap-2 align-items-center p-3 bg-light rounded border">
-            <strong className="me-2 text-muted">Фільтри:</strong>
-            {genresList.map(genre => {
+            <strong className="me-2 text-muted">Жанри:</strong>
+            
+            {availableGenres.length === 0 && <span className="text-muted small">Завантаження...</span>}
+
+            {availableGenres.map(genre => {
               const isActive = selectedGenres.includes(genre);
               return (
                 <Badge 

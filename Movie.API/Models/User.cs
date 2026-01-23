@@ -24,5 +24,6 @@ namespace Movie.API.Models
         public ICollection<Report>? ReportsReceived { get; set; }
 
         public ICollection<Notification>? Notifications { get; set; }
+        public string? BlockedGenres { get; set; }
     }
 }
