@@ -370,5 +370,29 @@ namespace Movie.API.Controllers
                                .Select(g => g.Trim())
                                .ToList();
         }
+
+        [HttpGet("random")]
+        public async Task<ActionResult<object>> GetRandom()
+        {
+            var blockedGenres = await GetUserBlockedGenres();
+            var query = _context.Movies.AsNoTracking().AsQueryable();
+
+            foreach (var genre in blockedGenres)
+            {
+                query = query.Where(m => m.Genre == null || !m.Genre.ToLower().Contains(genre));
+            }
+
+            var movieIds = await query.Select(m => m.Id).ToListAsync();
+
+            if (!movieIds.Any())
+            {
+                return NotFound("Фільмів не знайдено (можливо, занадто суворі фільтри)");
+            }
+
+            var random = new Random();
+            var randomId = movieIds[random.Next(movieIds.Count)];
+
+            return Ok(new { id = randomId });
+        }
     }
 }

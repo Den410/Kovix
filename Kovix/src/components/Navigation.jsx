@@ -4,7 +4,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import AdminMovieModal from './AdminMovieModal';
 import ThemeSettings from './ThemeSettings';
-import { authAPI } from '../services/api';
+import { authAPI, moviesAPI } from '../services/api';
 import NotificationBell from './NotificationBell';
 import { useTheme } from '../contexts/ThemeContext';
 import '../style/App.css';
@@ -15,7 +15,8 @@ function Navigation() {
   const { user, logout, isAdmin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation(); 
-  
+  const [randomLoading, setRandomLoading] = useState(false);
+
   const { themeMode } = useTheme();
   
   const isDark = themeMode === 'dark';
@@ -40,6 +41,22 @@ function Navigation() {
   const handleLogout = () => {
     logout();
     navigate('/');
+  };
+  const handleRandomMovie = async () => {
+    if (randomLoading) return; 
+
+    try {
+      setRandomLoading(true);
+      const response = await moviesAPI.getRandom();
+      const randomId = response.data.id;
+      
+      navigate(`/movie/${randomId}`);
+    } catch (error) {
+      console.error("Не вдалося знайти випадковий фільм", error);
+      alert("Не вдалося підібрати фільм. Можливо, ваші фільтри занадто суворі.");
+    } finally {
+      setRandomLoading(false);
+    }
   };
 
   return (
@@ -85,6 +102,25 @@ function Navigation() {
             </Link>
 
             <Nav className="align-items-center">
+              <Button
+                variant={isDark ? "outline-warning" : "warning"}
+                size="sm"
+                className="me-3 d-flex align-items-center gap-1"
+                onClick={handleRandomMovie}
+                disabled={randomLoading}
+                title="Випадковий фільм"
+              >
+                {randomLoading ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm" />
+                  </>
+                ) : (
+                  <>
+                    🎲 <span className="d-none d-md-inline">Рандом</span>
+                  </>
+                )}
+              </Button>
+
               <Button 
                 variant="link" 
                 className="text-decoration-none me-3 p-0 border-0" 

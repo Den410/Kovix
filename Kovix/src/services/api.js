@@ -27,6 +27,7 @@ export const moviesAPI = {
   getById: (id) => api.get(`/movies/${id}`),
   getTrending: () => api.get('/movies/trending'),
   getTopRated: () => api.get('/movies/top-rated'),
+  getRandom: () => api.get('/movies/random'),
   create: (movieData) => api.post('/movies', movieData),
   update: (id, movieData) => api.put(`/movies/${id}`, movieData),
   delete: (id) => api.delete(`/movies/${id}`),
