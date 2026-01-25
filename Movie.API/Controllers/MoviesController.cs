@@ -394,5 +394,62 @@ namespace Movie.API.Controllers
 
             return Ok(new { id = randomId });
         }
+
+        [HttpPost("{id}/history")]
+        [Authorize]
+        public async Task<IActionResult> AddToHistory(int id)
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var existingItem = await _context.WatchHistory
+                .FirstOrDefaultAsync(h => h.UserId == userId && h.MovieId == id);
+
+            if (existingItem != null)
+            {
+                existingItem.ViewedAt = DateTime.UtcNow;
+            }
+            else
+            {
+                _context.WatchHistory.Add(new WatchHistoryItem
+                {
+                    UserId = userId,
+                    MovieId = id,
+                    ViewedAt = DateTime.UtcNow
+                });
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
+        [HttpGet("history")]
+        [Authorize]
+        public async Task<ActionResult<IEnumerable<MovieDetailDto>>> GetHistory(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 20)
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+
+            var historyQuery = _context.WatchHistory
+                .AsNoTracking()
+                .Where(h => h.UserId == userId)
+                .OrderByDescending(h => h.ViewedAt) 
+                .Include(h => h.Movie);
+
+            var movies = await historyQuery
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(h => new MovieDetailDto
+                {
+                    Id = h.Movie.Id,
+                    Title = h.Movie.Title,
+                    PosterUrl = h.Movie.PosterUrl,
+                    Year = h.Movie.Year,
+                    AverageRating = h.Movie.AverageRating,
+                    Genre = h.Movie.Genre
+                })
+                .ToListAsync();
+
+            return Ok(movies);
+        }
     }
 }

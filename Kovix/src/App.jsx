@@ -19,6 +19,7 @@ import ChatPage from './pages/ChatPage';
 import NotFoundPage from './pages/NotFoundPage';
 import AdminReportsPage from './pages/AdminReportsPage';
 import BlockedRoute from './components/BlockedRoute';
+import HistoryPage from './pages/HistoryPage';
 
 function App() {
   return (
@@ -46,6 +47,11 @@ function App() {
             <Route path="/users/:id" element={
                 <BlockedRoute>
                     <UserPublicProfilePage />
+                </BlockedRoute>
+            } />
+            <Route path="/history" element={
+                <BlockedRoute>
+                    <HistoryPage />
                 </BlockedRoute>
             } />
             <Route path="*" element={<NotFoundPage />} />

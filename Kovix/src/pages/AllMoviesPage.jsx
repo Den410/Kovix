@@ -1,10 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Container, Row, Col, Pagination, Spinner, Form, InputGroup, Button, Alert, Badge } from 'react-bootstrap';
 import { moviesAPI } from '../services/api';
+import { useSearchParams } from 'react-router-dom';
 import MovieCard from '../components/MovieCard';
 
 function AllMoviesPage() {
   const [movies, setMovies] = useState([]);
+  const [searchParams] = useSearchParams();
+  const [filtersReady, setFiltersReady] = useState(false);
+
   
   const [availableGenres, setAvailableGenres] = useState([]); 
   const [availableYears, setAvailableYears] = useState([]);  
@@ -30,9 +34,37 @@ function AllMoviesPage() {
   }, []);
 
   useEffect(() => {
-    const genresString = selectedGenres.join(','); 
+    if (!filtersReady) return;
+
+    const genresString = selectedGenres.join(',');
     loadMovies(page, searchTerm, genresString, selectedYear);
-  }, [page, selectedGenres, selectedYear]);
+  }, [page, selectedGenres, selectedYear, filtersReady]);
+
+
+  useEffect(() => {
+    const genresFromUrl = searchParams.get('genres');
+    const yearFromUrl = searchParams.get('year');
+    const searchFromUrl = searchParams.get('search');
+
+    if (genresFromUrl) {
+      setSelectedGenres(
+        genresFromUrl.split(',').map(g => g.trim()).filter(Boolean)
+      );
+    }
+
+    if (yearFromUrl) {
+      setSelectedYear(yearFromUrl);
+    }
+
+    if (searchFromUrl) {
+      setSearchTerm(searchFromUrl);
+    }
+
+    setPage(1);
+    setFiltersReady(true);
+  }, []);
+
+
 
   const loadMovies = async (currentPage, currentSearch, currentGenresStr, currentYear) => {
     setLoading(true);
@@ -93,6 +125,25 @@ function AllMoviesPage() {
       </Pagination.Item>
     );
   }
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+
+    if (selectedGenres.length > 0) {
+      params.set('genres', selectedGenres.join(','));
+    }
+
+    if (selectedYear) {
+      params.set('year', selectedYear);
+    }
+
+    if (searchTerm) {
+      params.set('search', searchTerm);
+    }
+
+    window.history.replaceState(null, '', `?${params.toString()}`);
+  }, [selectedGenres, selectedYear, searchTerm]);
+
 
   return (
     <Container className="mt-4 mb-5">

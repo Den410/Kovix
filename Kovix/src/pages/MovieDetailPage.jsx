@@ -57,6 +57,18 @@ function MovieDetailPage() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    loadMovieData();
+
+    if (user && !user.isBlocked) {
+        const timer = setTimeout(() => {
+            moviesAPI.addToHistory(id).catch(err => console.error("History error", err));
+        }, 2000);
+
+        return () => clearTimeout(timer);
+    }
+  }, [id, user]);
+
   const loadMovieData = async () => {
     try {
       const [movieRes, reviewsRes] = await Promise.all([
@@ -161,10 +173,32 @@ function MovieDetailPage() {
         <Col md={8}>
           <h1 className="mb-3">{movie.title}</h1>
           <div className="mb-4">
-            <Badge bg={getRatingColor(movie.averageRating)} className="me-2 fs-5 p-2">⭐ {movie.averageRating.toFixed(1)}</Badge>
-            <Badge bg="secondary" className="me-2 fs-5 p-2">{movie.year}</Badge>
-            <Badge bg="info" className="fs-5 p-2">{movie.genre}</Badge>
+            <Badge bg={getRatingColor(movie.averageRating)} className="me-2 fs-5 p-2">
+              ⭐ {movie.averageRating.toFixed(1)}
+            </Badge>
+
+            <Badge bg="secondary" className="me-2 fs-5 p-2">
+              {movie.year}
+            </Badge>
+
+            {movie.genre?.split(',').map((g) => {
+              const genre = g.trim();
+              return (
+                <Badge
+                  key={genre}
+                  bg="info"
+                  pill
+                  className="fs-6 p-2 me-2 genre-badge"
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => navigate(`/movies?genres=${encodeURIComponent(genre.toLowerCase())}`)}
+                  title={`Показати всі фільми жанру "${genre}"`}
+                >
+                  #{genre}
+                </Badge>
+              );
+            })}
           </div>
+
           <p className="lead">{movie.description}</p>
           <hr />
           

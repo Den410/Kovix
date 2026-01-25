@@ -503,3 +503,12 @@ h1, h2, h3, h4, h5 {
 .nav-text:hover {
     opacity: 0.85;
 }
+
+.navbar .nav-link {
+  display: flex;
+  align-items: center;
+}
+
+.dropdown-toggle::after {
+  margin-left: 6px;
+}

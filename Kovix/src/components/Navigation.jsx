@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Navbar, Nav, Container, Button } from 'react-bootstrap';
+import { Navbar, Nav, Container, Button, NavDropdown } from 'react-bootstrap';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import AdminMovieModal from './AdminMovieModal';
@@ -18,7 +18,6 @@ function Navigation() {
   const [randomLoading, setRandomLoading] = useState(false);
 
   const { themeMode } = useTheme();
-  
   const isDark = themeMode === 'dark';
 
   const [showAddModal, setShowAddModal] = useState(false);
@@ -42,6 +41,7 @@ function Navigation() {
     logout();
     navigate('/');
   };
+
   const handleRandomMovie = async () => {
     if (randomLoading) return; 
 
@@ -60,132 +60,169 @@ function Navigation() {
   };
 
   return (
-    <>
-        <Navbar
-          bg={isDark ? 'dark' : 'light'}
-          variant={isDark ? 'dark' : 'light'}
-          expand="lg"
-          className="mb-4 sticky-top shadow-sm"
-        >
+  <>
+    <Navbar
+      bg={isDark ? 'dark' : 'light'}
+      variant={isDark ? 'dark' : 'light'}
+      expand="lg"
+      className="mb-4 sticky-top shadow-sm"
+    >
+      <Container>
+        <Navbar.Brand as={Link} to="/" className="fw-bold text-warning">
+          🎬 Kovix
+        </Navbar.Brand>
 
-        <Container>
-          <Navbar.Brand as={Link} to="/" className="fw-bold text-warning">
-              🎬 Kovix
-          </Navbar.Brand>
-          <Navbar.Toggle aria-controls="basic-navbar-nav" />
-          <Navbar.Collapse id="basic-navbar-nav">
-            
-            <Nav className="me-auto">
-              {user && (
-                <Nav.Link
-                  as={Link}
-                  to="/my-lists"
-                  className="fw-bold nav-text"
-                >
-                  🗂️ Мої списки
-                </Nav.Link>
+        <Navbar.Toggle />
 
-              )}
-            </Nav>
+        <Navbar.Collapse>
+          <Nav className="me-auto" />
+          <Nav className="align-items-center gap-2">
 
-            <div className="d-flex align-items-center gap-3">
-                {user && <NotificationBell />}
-            </div>
+            {user && <NotificationBell />}
 
-            <Link 
-              to="/chat" 
-              className="text-decoration-none me-3 text-body" 
-              title="Повідомлення"
-              style={{ fontSize: '1.4rem', color: 'rgba(255,255,255,0.7)' }}
+            {user && (
+              <Nav.Link
+                as={Link}
+                to="/chat"
+                title="Чат"
+                className="fs-5"
+              >
+                💬
+              </Nav.Link>
+            )}
+
+            <Button
+              variant={isDark ? "outline-warning" : "warning"}
+              size="sm"
+              onClick={handleRandomMovie}
+              disabled={randomLoading}
+              className="d-flex align-items-center gap-1"
             >
-              💬
-            </Link>
+              {randomLoading
+                ? <span className="spinner-border spinner-border-sm" />
+                : <>🎲 <span className="d-none d-md-inline">Рандом</span></>
+              }
+            </Button>
 
-            <Nav className="align-items-center">
-              <Button
-                variant={isDark ? "outline-warning" : "warning"}
-                size="sm"
-                className="me-3 d-flex align-items-center gap-1"
-                onClick={handleRandomMovie}
-                disabled={randomLoading}
-                title="Випадковий фільм"
-              >
-                {randomLoading ? (
-                  <>
-                    <span className="spinner-border spinner-border-sm" />
-                  </>
-                ) : (
-                  <>
-                    🎲 <span className="d-none d-md-inline">Рандом</span>
-                  </>
+            <Button
+              variant="link"
+              className="fs-5 text-decoration-none"
+              onClick={() => setShowThemeModal(true)}
+              title="Тема"
+            >
+              🎨
+            </Button>
+
+            {user ? (
+              <>
+                {isAdmin() && (
+                  <Button
+                    variant="success"
+                    size="sm"
+                    className="d-none d-lg-inline"
+                    onClick={() => setShowAddModal(true)}
+                  >
+                    ➕
+                  </Button>
                 )}
-              </Button>
 
-              <Button 
-                variant="link" 
-                className="text-decoration-none me-3 p-0 border-0" 
-                style={{ fontSize: '1.2rem' }}
-                onClick={() => setShowThemeModal(true)}
-                title="Змінити тему"
-              >
-                🎨
-              </Button>
+                <NavDropdown
+                  align="end"
+                  id="profile-dropdown"
+                  title={
+                    <div className="d-flex align-items-center gap-2">
+                      {userAvatar ? (
+                        <img
+                          src={`${API_BASE_URL}${userAvatar}`}
+                          alt="avatar"
+                          className="rounded-circle"
+                          style={{ width: 32, height: 32, objectFit: 'cover' }}
+                        />
+                      ) : (
+                        <div
+                          className="bg-secondary text-white rounded-circle d-flex justify-content-center align-items-center"
+                          style={{ width: 32, height: 32 }}
+                        >
+                          {user.username[0].toUpperCase()}
+                        </div>
+                      )}
+                      <span className="d-none d-md-inline fw-semibold">
+                        {user.username}
+                      </span>
+                    </div>
+                  }
+                >
+                  <NavDropdown.Header>
+                    Привіт, {user.username} 👋
+                  </NavDropdown.Header>
 
-              {user ? (
-                <>
+                  <NavDropdown.Item as={Link} to="/profile">
+                    👤 Профіль
+                  </NavDropdown.Item>
+
+                  <NavDropdown.Item as={Link} to="/my-lists">
+                    🗂️ Мої списки
+                  </NavDropdown.Item>
+
+                  <NavDropdown.Item as={Link} to="/history">
+                    🕰️ Історія
+                  </NavDropdown.Item>
+
                   {isAdmin() && (
-                    <Button 
-                      variant="success" 
-                      size="sm" 
-                      className="me-3 d-flex align-items-center gap-1"
-                      onClick={() => setShowAddModal(true)}
-                    >
-                      <span>➕</span> Додати фільм
-                    </Button>
+                    <>
+                      <NavDropdown.Divider />
+
+                      <NavDropdown.Item
+                        onClick={() => setShowAddModal(true)}
+                        className="d-lg-none"
+                      >
+                        ➕ Додати фільм
+                      </NavDropdown.Item>
+
+                      <NavDropdown.Item
+                        as={Link}
+                        to="/admin/reports"
+                        className="text-warning"
+                      >
+                        🛡️ Скарги
+                      </NavDropdown.Item>
+                    </>
                   )}
 
-                  <Nav.Link as={Link} to="/profile" className="fw-bold text-body me-2 d-flex align-items-center gap-2">
-                    {userAvatar ? (
-                        <img 
-                            src={`${API_BASE_URL}${userAvatar}`} 
-                            alt="Avatar" 
-                            className="rounded-circle"
-                            style={{ width: 30, height: 30, objectFit: 'cover' }}
-                        />
-                    ) : (
-                        <div className="bg-secondary rounded-circle d-flex align-items-center justify-content-center" style={{width: 30, height: 30, fontSize: '0.8rem'}}>
-                            {user.username.charAt(0).toUpperCase()}
-                        </div>
-                    )}
 
-                    <span className="d-none d-sm-inline">{user.username}</span>
-                  </Nav.Link>
+                  <NavDropdown.Divider />
+                  <NavDropdown.Item onClick={handleLogout} className="text-danger">
+                    🚪 Вийти
+                  </NavDropdown.Item>
+                </NavDropdown>
+              </>
+            ) : (
+              <>
+                <Button as={Link} to="/login" size="sm" variant="outline-primary">
+                  Вхід
+                </Button>
+                <Button as={Link} to="/register" size="sm">
+                  Реєстрація
+                </Button>
+              </>
+            )}
+          </Nav>
+        </Navbar.Collapse>
+      </Container>
+    </Navbar>
 
-                  <Button variant="outline-secondary" size="sm" onClick={handleLogout}>Вихід</Button>
-                </>
-              ) : (
-                <>
-                  <Nav.Link as={Link} to="/login">Вхід</Nav.Link>
-                  <Button as={Link} to="/register" variant="primary" size="sm" className="ms-2">Реєстрація</Button>
-                </>
-              )}
-            </Nav>
-          </Navbar.Collapse>
-        </Container>
-      </Navbar>
+    <AdminMovieModal
+      show={showAddModal}
+      onHide={() => setShowAddModal(false)}
+      onSuccess={() => window.location.reload()}
+    />
 
-      <AdminMovieModal 
-        show={showAddModal} 
-        onHide={() => setShowAddModal(false)} 
-        onSuccess={() => window.location.reload()} 
-      />
-      
-      <ThemeSettings 
-        show={showThemeModal} 
-        onHide={() => setShowThemeModal(false)} 
-      />
-    </>
-  );
+    <ThemeSettings
+      show={showThemeModal}
+      onHide={() => setShowThemeModal(false)}
+    />
+  </>
+);
 }
 
 export default Navigation;
