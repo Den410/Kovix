@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Google.Apis.Auth;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -53,7 +55,7 @@ namespace Movie.API.Controllers
         public async Task<ActionResult<string>> Login(LoginDto request)
         {
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
-           
+
             if (user == null)
             {
                 return BadRequest("Користувача не знайдено.");
@@ -96,7 +98,7 @@ namespace Movie.API.Controllers
         }
 
         [HttpGet("me")]
-        [Authorize] 
+        [Authorize]
         public async Task<ActionResult<User>> GetProfile()
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
@@ -176,5 +178,74 @@ namespace Movie.API.Controllers
             await _context.SaveChangesAsync();
             return Ok();
         }
+        [HttpPost("external-login")]
+        public async Task<IActionResult> ExternalLogin([FromBody] ExternalAuthDto dto)
+        {
+            if (dto.Provider != "Google")
+                return BadRequest("Provider not supported");
+
+            try
+            {
+                var settings = new GoogleJsonWebSignature.ValidationSettings
+                {
+                    Audience = new List<string>
+            {
+                "411859879387-fltqoda92rij49g7jnols8kgv6cs0gt8.apps.googleusercontent.com"
+            }
+                };
+
+                var payload = await GoogleJsonWebSignature.ValidateAsync(dto.IdToken, settings);
+
+                var user = await _context.Users.FirstOrDefaultAsync(u =>
+                    u.ExternalProvider == "Google" &&
+                    u.ExternalId == payload.Subject
+                );
+
+                if (user == null && !string.IsNullOrEmpty(payload.Email))
+                {
+                    user = await _context.Users.FirstOrDefaultAsync(u => u.Email == payload.Email);
+
+                    if (user != null)
+                    {
+                        user.ExternalProvider = "Google";
+                        user.ExternalId = payload.Subject;
+                        await _context.SaveChangesAsync();
+                    }
+                }
+
+                if (user == null)
+                {
+                    user = new User
+                    {
+                        Username = payload.Name ?? payload.Email,
+                        Email = payload.Email,
+                        PasswordHash = "",
+                        Role = "User",
+                        ExternalProvider = "Google",
+                        ExternalId = payload.Subject,
+                        AvatarUrl = payload.Picture,
+                        CreatedAt = DateTime.UtcNow
+                    };
+
+                    _context.Users.Add(user);
+                    await _context.SaveChangesAsync();
+                }
+
+                var token = CreateToken(user);
+
+                return Ok(new
+                {
+                    token,
+                    role = user.Role,
+                    username = user.Username,
+                    avatarUrl = user.AvatarUrl
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest("Invalid Google token: " + ex.Message);
+            }
+        }
+
     }
 }

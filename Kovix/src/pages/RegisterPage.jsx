@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Container, Form, Button, Card, Alert } from 'react-bootstrap';
 import { useNavigate, Link } from 'react-router-dom';
 import { authAPI } from '../services/api';
+import SocialLogin from '../components/SocialLogin'; 
 
 function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -46,6 +47,7 @@ function RegisterPage() {
         <Card.Body>
           <h2 className="text-center mb-4">Реєстрація</h2>
           {error && <Alert variant="danger">{error}</Alert>}
+          
           <Form onSubmit={handleSubmit}>
             <Form.Group className="mb-3">
               <Form.Label>Ім'я користувача</Form.Label>
@@ -89,6 +91,19 @@ function RegisterPage() {
             </Form.Group>
             <Button className="w-100" type="submit">Зареєструватися</Button>
           </Form>
+
+          <div className="d-flex align-items-center my-3">
+             <hr className="flex-grow-1" />
+             <span className="mx-2 text-muted small">АБО</span>
+             <hr className="flex-grow-1" />
+          </div>
+
+          <div className="text-center mb-2 text-muted small">
+            Увійти через соціальні мережі
+          </div>
+
+          <SocialLogin /> 
+
           <div className="text-center mt-3">
             Вже є акаунт? <Link to="/login">Увійти</Link>
           </div>

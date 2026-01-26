@@ -25,5 +25,7 @@ namespace Movie.API.Models
 
         public ICollection<Notification>? Notifications { get; set; }
         public string? BlockedGenres { get; set; }
+        public string? ExternalProvider { get; set; }
+        public string? ExternalId { get; set; }
     }
 }

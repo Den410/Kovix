@@ -8,8 +8,10 @@ import { authAPI, moviesAPI } from '../services/api';
 import NotificationBell from './NotificationBell';
 import { useTheme } from '../contexts/ThemeContext';
 import '../style/App.css';
+import defaultAvatarImg from '../assets/NotFoundAvatar.png';
 
 const API_BASE_URL = 'http://localhost:5096';
+const DEFAULT_AVATAR = defaultAvatarImg
 
 function Navigation() {
   const { user, logout, isAdmin } = useAuth();
@@ -131,21 +133,14 @@ function Navigation() {
                   id="profile-dropdown"
                   title={
                     <div className="d-flex align-items-center gap-2">
-                      {userAvatar ? (
-                        <img
-                          src={`${API_BASE_URL}${userAvatar}`}
-                          alt="avatar"
-                          className="rounded-circle"
-                          style={{ width: 32, height: 32, objectFit: 'cover' }}
-                        />
-                      ) : (
-                        <div
-                          className="bg-secondary text-white rounded-circle d-flex justify-content-center align-items-center"
-                          style={{ width: 32, height: 32 }}
-                        >
-                          {user.username[0].toUpperCase()}
-                        </div>
-                      )}
+                      
+                      <img
+                        src={userAvatar ? `${API_BASE_URL}${userAvatar}` : DEFAULT_AVATAR}
+                        alt="avatar"
+                        className="rounded-circle border border-secondary"
+                        style={{ width: 32, height: 32, objectFit: 'cover' }}
+                        onError={(e) => { e.target.src = DEFAULT_AVATAR; }} 
+                      />
                       <span className="d-none d-md-inline fw-semibold">
                         {user.username}
                       </span>

@@ -3,20 +3,16 @@
   "WorkspaceRootPath": "C:\\\u041D\u0430\u0432\u0447\u0430\u043D\u043D\u044F\\\u041A\u0443\u0440\u0441\u043E\u0432\u0430 (\u041C\u043E\u0434\u0435\u043B\u044E\u0432\u0430\u043D\u043D\u044F)\\Kovix\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{036E119C-DEA9-129D-9002-5E21F1EDBCB3}|Movie.API\\Movie.API.csproj|c:\\\u043D\u0430\u0432\u0447\u0430\u043D\u043D\u044F\\\u043A\u0443\u0440\u0441\u043E\u0432\u0430 (\u043C\u043E\u0434\u0435\u043B\u044E\u0432\u0430\u043D\u043D\u044F)\\kovix\\movie.api\\controllers\\moviescontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{036E119C-DEA9-129D-9002-5E21F1EDBCB3}|Movie.API\\Movie.API.csproj|solutionrelative:movie.api\\controllers\\moviescontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{036E119C-DEA9-129D-9002-5E21F1EDBCB3}|Movie.API\\Movie.API.csproj|c:\\\u043D\u0430\u0432\u0447\u0430\u043D\u043D\u044F\\\u043A\u0443\u0440\u0441\u043E\u0432\u0430 (\u043C\u043E\u0434\u0435\u043B\u044E\u0432\u0430\u043D\u043D\u044F)\\kovix\\movie.api\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{036E119C-DEA9-129D-9002-5E21F1EDBCB3}|Movie.API\\Movie.API.csproj|solutionrelative:movie.api\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{036E119C-DEA9-129D-9002-5E21F1EDBCB3}|Movie.API\\Movie.API.csproj|c:\\\u043D\u0430\u0432\u0447\u0430\u043D\u043D\u044F\\\u043A\u0443\u0440\u0441\u043E\u0432\u0430 (\u043C\u043E\u0434\u0435\u043B\u044E\u0432\u0430\u043D\u043D\u044F)\\kovix\\movie.api\\dtos\\moviedetaildto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{036E119C-DEA9-129D-9002-5E21F1EDBCB3}|Movie.API\\Movie.API.csproj|solutionrelative:movie.api\\dtos\\moviedetaildto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{036E119C-DEA9-129D-9002-5E21F1EDBCB3}|Movie.API\\Movie.API.csproj|c:\\\u043D\u0430\u0432\u0447\u0430\u043D\u043D\u044F\\\u043A\u0443\u0440\u0441\u043E\u0432\u0430 (\u043C\u043E\u0434\u0435\u043B\u044E\u0432\u0430\u043D\u043D\u044F)\\kovix\\movie.api\\controllers\\authcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{036E119C-DEA9-129D-9002-5E21F1EDBCB3}|Movie.API\\Movie.API.csproj|solutionrelative:movie.api\\controllers\\authcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{036E119C-DEA9-129D-9002-5E21F1EDBCB3}|Movie.API\\Movie.API.csproj|c:\\\u043D\u0430\u0432\u0447\u0430\u043D\u043D\u044F\\\u043A\u0443\u0440\u0441\u043E\u0432\u0430 (\u043C\u043E\u0434\u0435\u043B\u044E\u0432\u0430\u043D\u043D\u044F)\\kovix\\movie.api\\data\\applicationdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{036E119C-DEA9-129D-9002-5E21F1EDBCB3}|Movie.API\\Movie.API.csproj|solutionrelative:movie.api\\data\\applicationdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{036E119C-DEA9-129D-9002-5E21F1EDBCB3}|Movie.API\\Movie.API.csproj|c:\\\u043D\u0430\u0432\u0447\u0430\u043D\u043D\u044F\\\u043A\u0443\u0440\u0441\u043E\u0432\u0430 (\u043C\u043E\u0434\u0435\u043B\u044E\u0432\u0430\u043D\u043D\u044F)\\kovix\\movie.api\\models\\watchhistoryitem.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{036E119C-DEA9-129D-9002-5E21F1EDBCB3}|Movie.API\\Movie.API.csproj|solutionrelative:movie.api\\models\\watchhistoryitem.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{036E119C-DEA9-129D-9002-5E21F1EDBCB3}|Movie.API\\Movie.API.csproj|c:\\\u043D\u0430\u0432\u0447\u0430\u043D\u043D\u044F\\\u043A\u0443\u0440\u0441\u043E\u0432\u0430 (\u043C\u043E\u0434\u0435\u043B\u044E\u0432\u0430\u043D\u043D\u044F)\\kovix\\movie.api\\models\\user.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{036E119C-DEA9-129D-9002-5E21F1EDBCB3}|Movie.API\\Movie.API.csproj|solutionrelative:movie.api\\models\\user.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -26,58 +22,45 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 1,
+          "SelectedChildIndex": 0,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "MovieDetailDto.cs",
-              "DocumentMoniker": "C:\\\u041D\u0430\u0432\u0447\u0430\u043D\u043D\u044F\\\u041A\u0443\u0440\u0441\u043E\u0432\u0430 (\u041C\u043E\u0434\u0435\u043B\u044E\u0432\u0430\u043D\u043D\u044F)\\Kovix\\Movie.API\\DTOs\\MovieDetailDto.cs",
-              "RelativeDocumentMoniker": "Movie.API\\DTOs\\MovieDetailDto.cs",
-              "ToolTip": "C:\\\u041D\u0430\u0432\u0447\u0430\u043D\u043D\u044F\\\u041A\u0443\u0440\u0441\u043E\u0432\u0430 (\u041C\u043E\u0434\u0435\u043B\u044E\u0432\u0430\u043D\u043D\u044F)\\Kovix\\Movie.API\\DTOs\\MovieDetailDto.cs",
-              "RelativeToolTip": "Movie.API\\DTOs\\MovieDetailDto.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABQAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-01-25T07:25:58.685Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
               "DocumentIndex": 0,
-              "Title": "MoviesController.cs",
-              "DocumentMoniker": "C:\\\u041D\u0430\u0432\u0447\u0430\u043D\u043D\u044F\\\u041A\u0443\u0440\u0441\u043E\u0432\u0430 (\u041C\u043E\u0434\u0435\u043B\u044E\u0432\u0430\u043D\u043D\u044F)\\Kovix\\Movie.API\\Controllers\\MoviesController.cs",
-              "RelativeDocumentMoniker": "Movie.API\\Controllers\\MoviesController.cs",
-              "ToolTip": "C:\\\u041D\u0430\u0432\u0447\u0430\u043D\u043D\u044F\\\u041A\u0443\u0440\u0441\u043E\u0432\u0430 (\u041C\u043E\u0434\u0435\u043B\u044E\u0432\u0430\u043D\u043D\u044F)\\Kovix\\Movie.API\\Controllers\\MoviesController.cs",
-              "RelativeToolTip": "Movie.API\\Controllers\\MoviesController.cs",
-              "ViewState": "AgIAAKYBAAAAAAAAAAAIwMABAAASAAAAAAAAAA==",
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\\u041D\u0430\u0432\u0447\u0430\u043D\u043D\u044F\\\u041A\u0443\u0440\u0441\u043E\u0432\u0430 (\u041C\u043E\u0434\u0435\u043B\u044E\u0432\u0430\u043D\u043D\u044F)\\Kovix\\Movie.API\\Program.cs",
+              "RelativeDocumentMoniker": "Movie.API\\Program.cs",
+              "ToolTip": "C:\\\u041D\u0430\u0432\u0447\u0430\u043D\u043D\u044F\\\u041A\u0443\u0440\u0441\u043E\u0432\u0430 (\u041C\u043E\u0434\u0435\u043B\u044E\u0432\u0430\u043D\u043D\u044F)\\Kovix\\Movie.API\\Program.cs*",
+              "RelativeToolTip": "Movie.API\\Program.cs*",
+              "ViewState": "AgIAAE8AAAAAAAAAAAAEwGcAAAAXAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-01-25T07:24:59.658Z",
+              "WhenOpened": "2026-01-26T07:07:33.28Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 2,
-              "Title": "ApplicationDbContext.cs",
-              "DocumentMoniker": "C:\\\u041D\u0430\u0432\u0447\u0430\u043D\u043D\u044F\\\u041A\u0443\u0440\u0441\u043E\u0432\u0430 (\u041C\u043E\u0434\u0435\u043B\u044E\u0432\u0430\u043D\u043D\u044F)\\Kovix\\Movie.API\\Data\\ApplicationDbContext.cs",
-              "RelativeDocumentMoniker": "Movie.API\\Data\\ApplicationDbContext.cs",
-              "ToolTip": "C:\\\u041D\u0430\u0432\u0447\u0430\u043D\u043D\u044F\\\u041A\u0443\u0440\u0441\u043E\u0432\u0430 (\u041C\u043E\u0434\u0435\u043B\u044E\u0432\u0430\u043D\u043D\u044F)\\Kovix\\Movie.API\\Data\\ApplicationDbContext.cs",
-              "RelativeToolTip": "Movie.API\\Data\\ApplicationDbContext.cs",
-              "ViewState": "AgIAAA8AAAAAAAAAAAA1wBwAAABBAAAAAAAAAA==",
+              "Title": "User.cs",
+              "DocumentMoniker": "C:\\\u041D\u0430\u0432\u0447\u0430\u043D\u043D\u044F\\\u041A\u0443\u0440\u0441\u043E\u0432\u0430 (\u041C\u043E\u0434\u0435\u043B\u044E\u0432\u0430\u043D\u043D\u044F)\\Kovix\\Movie.API\\Models\\User.cs",
+              "RelativeDocumentMoniker": "Movie.API\\Models\\User.cs",
+              "ToolTip": "C:\\\u041D\u0430\u0432\u0447\u0430\u043D\u043D\u044F\\\u041A\u0443\u0440\u0441\u043E\u0432\u0430 (\u041C\u043E\u0434\u0435\u043B\u044E\u0432\u0430\u043D\u043D\u044F)\\Kovix\\Movie.API\\Models\\User.cs",
+              "RelativeToolTip": "Movie.API\\Models\\User.cs",
+              "ViewState": "AgIAAAkAAAAAAAAAAAA7wBwAAAAvAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-01-25T07:23:56.577Z",
+              "WhenOpened": "2026-01-26T06:34:31.008Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
-              "Title": "WatchHistoryItem.cs",
-              "DocumentMoniker": "C:\\\u041D\u0430\u0432\u0447\u0430\u043D\u043D\u044F\\\u041A\u0443\u0440\u0441\u043E\u0432\u0430 (\u041C\u043E\u0434\u0435\u043B\u044E\u0432\u0430\u043D\u043D\u044F)\\Kovix\\Movie.API\\Models\\WatchHistoryItem.cs",
-              "RelativeDocumentMoniker": "Movie.API\\Models\\WatchHistoryItem.cs",
-              "ToolTip": "C:\\\u041D\u0430\u0432\u0447\u0430\u043D\u043D\u044F\\\u041A\u0443\u0440\u0441\u043E\u0432\u0430 (\u041C\u043E\u0434\u0435\u043B\u044E\u0432\u0430\u043D\u043D\u044F)\\Kovix\\Movie.API\\Models\\WatchHistoryItem.cs",
-              "RelativeToolTip": "Movie.API\\Models\\WatchHistoryItem.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAABBAAAAAAAAAA==",
+              "DocumentIndex": 1,
+              "Title": "AuthController.cs",
+              "DocumentMoniker": "C:\\\u041D\u0430\u0432\u0447\u0430\u043D\u043D\u044F\\\u041A\u0443\u0440\u0441\u043E\u0432\u0430 (\u041C\u043E\u0434\u0435\u043B\u044E\u0432\u0430\u043D\u043D\u044F)\\Kovix\\Movie.API\\Controllers\\AuthController.cs",
+              "RelativeDocumentMoniker": "Movie.API\\Controllers\\AuthController.cs",
+              "ToolTip": "C:\\\u041D\u0430\u0432\u0447\u0430\u043D\u043D\u044F\\\u041A\u0443\u0440\u0441\u043E\u0432\u0430 (\u041C\u043E\u0434\u0435\u043B\u044E\u0432\u0430\u043D\u043D\u044F)\\Kovix\\Movie.API\\Controllers\\AuthController.cs",
+              "RelativeToolTip": "Movie.API\\Controllers\\AuthController.cs",
+              "ViewState": "AgIAANgAAAAAAAAAAAAUwOoAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-01-25T07:23:37.073Z",
+              "WhenOpened": "2026-01-26T06:31:35.319Z",
               "EditorCaption": ""
             }
           ]

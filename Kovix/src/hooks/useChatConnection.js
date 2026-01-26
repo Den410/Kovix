@@ -27,31 +27,36 @@ export const useChatConnection = (onConnectedCallback) => {
     }, []);
 
     useEffect(() => {
-        if (!connection) return;
+    if (!connection) return;
 
-        const startConnection = async () => {
-            try {
-                if (connection.state === HubConnectionState.Disconnected) {
-                    if (callbackRef.current) {
-                        callbackRef.current(connection);
-                    }
+    const startConnection = async () => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            console.warn('No token found. SignalR connection skipped.');
+            return; 
+        }
 
-                    await connection.start();
-                    console.log('SignalR Connected via Hook');
+        try {
+            if (connection.state === HubConnectionState.Disconnected) {
+                await connection.start();
+                console.log('SignalR Connected via Hook');
+
+                if (callbackRef.current) {
+                    callbackRef.current(connection);
                 }
-            } catch (err) {
-                console.error('SignalR Connection Error:', err);
             }
-        };
+        } catch (err) {
+            console.error('SignalR Connection Error:', err);
+        }
+    };
 
-        startConnection();
+    startConnection();
 
         return () => {
             if (connection.state === HubConnectionState.Connected) {
                 connection.stop().catch(err => console.error("Error stopping connection:", err));
             }
         };
-    }, [connection]); 
-
+    }, [connection]);
     return connection;
 };

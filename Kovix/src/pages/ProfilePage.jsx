@@ -7,8 +7,10 @@ import { useFriends } from '../contexts/FriendsContext';
 import { useChatConnection } from '../hooks/useChatConnection';
 import { usePresence } from '../contexts/PresenceContext';
 import { formatLastSeen } from '../utils/dateUtils';
+import defaultAvatarImg from '../assets/NotFoundAvatar.png';
 
 const API_BASE_URL = 'http://localhost:5096'; 
+const DEFAULT_AVATAR = defaultAvatarImg
 
 function ProfilePage() {
   const [profile, setProfile] = useState(null);
@@ -228,19 +230,13 @@ function ProfilePage() {
         <Col md={4} className="mb-4">
           <Card className="shadow-sm border-0 text-center p-4 h-100">
             <div className="mb-3 d-flex justify-content-center">
-              {profile.avatarUrl ? (
-                <img
-                  src={`${API_BASE_URL}${profile.avatarUrl}`}
-                  alt=""
-                  className="rounded-circle border"
-                  style={{ width: 150, height: 150, objectFit: 'cover', opacity: profile.isBlocked ? 0.5 : 1 }}
-                />
-              ) : (
-                <div className="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center"
-                     style={{ width: 150, height: 150, fontSize: '4rem' }}>
-                  {profile.username[0].toUpperCase()}
-                </div>
-              )}
+              <img
+                src={profile.avatarUrl ? `${API_BASE_URL}${profile.avatarUrl}` : DEFAULT_AVATAR}
+                alt="Profile"
+                className="rounded-circle border"
+                style={{ width: 150, height: 150, objectFit: 'cover', opacity: profile.isBlocked ? 0.5 : 1 }}
+                onError={(e) => { e.target.src = DEFAULT_AVATAR; }}
+              />
             </div>
 
             <h3>{profile.username}</h3>
@@ -309,8 +305,14 @@ function ProfilePage() {
                       {incomingRequests.map(req => (
                         <div key={req.id} className="d-flex justify-content-between align-items-center p-3 mb-2 rounded shadow-sm" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)' }}>
                           <Link to={`/users/${req.id}`} className="d-flex align-items-center text-decoration-none" style={{ color: 'var(--text-main)' }}>
-                            <div className="rounded-circle bg-secondary text-white d-flex justify-content-center align-items-center me-3" style={{ width: 50, height: 50, overflow: 'hidden' }}>
-                              {req.avatarUrl ? <img src={`${API_BASE_URL}${req.avatarUrl}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : req.username[0].toUpperCase()}
+                            
+                            <div className="rounded-circle bg-secondary d-flex justify-content-center align-items-center me-3" style={{ width: 50, height: 50, overflow: 'hidden' }}>
+                              <img 
+                                src={req.avatarUrl ? `${API_BASE_URL}${req.avatarUrl}` : DEFAULT_AVATAR} 
+                                alt="" 
+                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                onError={(e) => { e.target.src = DEFAULT_AVATAR; }}
+                              />
                             </div>
                             <strong>{req.username}</strong>
                           </Link>
@@ -335,8 +337,14 @@ function ProfilePage() {
                           <Col xs={6} md={4} lg={3} key={friend.id} className="mb-3">
                             <Link to={`/users/${friend.id}`} className="text-decoration-none">
                               <Card className="h-100 text-center shadow-sm border-0 p-3 hover-card">
-                                <div className="mx-auto mb-2 rounded-circle bg-secondary text-white d-flex justify-content-center align-items-center position-relative" style={{ width: 80, height: 80, overflow: 'hidden', border: `3px solid ${borderColor}`, transition: 'border-color 0.3s' }}>
-                                  {friend.avatarUrl ? <img src={`${API_BASE_URL}${friend.avatarUrl}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : friend.username[0].toUpperCase()}
+                                
+                                <div className="mx-auto mb-2 rounded-circle bg-secondary d-flex justify-content-center align-items-center position-relative" style={{ width: 80, height: 80, overflow: 'hidden', border: `3px solid ${borderColor}`, transition: 'border-color 0.3s' }}>
+                                  <img 
+                                    src={friend.avatarUrl ? `${API_BASE_URL}${friend.avatarUrl}` : DEFAULT_AVATAR} 
+                                    alt="" 
+                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                    onError={(e) => { e.target.src = DEFAULT_AVATAR; }}
+                                  />
                                 </div>
                                 <Card.Title className="fs-6 text-truncate text-dark mb-1">{friend.username}</Card.Title>
                                 <div className="small mb-2 fw-bold" style={{ color: statusColor, fontSize: '0.75rem' }}>{statusText}</div>
