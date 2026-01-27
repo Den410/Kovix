@@ -1,27 +1,50 @@
 import { useState, useEffect } from 'react';
-import { Container, Row, Col, Pagination, Spinner, Form, InputGroup, Button, Alert, Badge } from 'react-bootstrap';
+import { Container, Row, Col, Pagination, Spinner, Form, InputGroup, Button, Alert, Badge, Card } from 'react-bootstrap';
 import { moviesAPI } from '../services/api';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import MovieCard from '../components/MovieCard';
+import defaultPosterImg from '../assets/NotFoundPoster.webp';
+import { useTheme } from '../contexts/ThemeContext';
+
+const API_BASE_URL = 'http://localhost:5096'; 
+const PLACEHOLDER_IMG = defaultPosterImg;
+
+const SORT_OPTIONS = [
+  { value: 'dateDesc', label: 'Даті додавання (нові)' },
+  { value: 'dateAsc', label: 'Даті додавання (старі)' },
+  { value: 'ratingDesc', label: 'Рейтингу' },
+  { value: 'yearDesc', label: 'Року випуску' },
+  { value: 'titleAsc', label: 'Назві (А-Я)' },
+];
+
+const getRatingVariant = (rating) => {
+    if (!rating) return 'secondary';
+    if (rating >= 8) return 'success'; 
+    if (rating >= 6) return 'warning'; 
+    return 'danger';
+};
 
 function AllMoviesPage() {
   const [movies, setMovies] = useState([]);
   const [searchParams] = useSearchParams();
   const [filtersReady, setFiltersReady] = useState(false);
 
-  
-  const [availableGenres, setAvailableGenres] = useState([]); 
-  const [availableYears, setAvailableYears] = useState([]);  
-  
-  const [selectedGenres, setSelectedGenres] = useState([]); 
+  const [availableGenres, setAvailableGenres] = useState([]);
+  const [availableYears, setAvailableYears] = useState([]);
+
+  const [selectedGenres, setSelectedGenres] = useState([]);
   const [selectedYear, setSelectedYear] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState('dateDesc');
+  const [viewMode, setViewMode] = useState('grid'); 
+  const { themeMode } = useTheme();
+  const isDark = themeMode === 'dark';
 
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  
+
   const pageSize = 8;
 
   useEffect(() => {
@@ -35,52 +58,38 @@ function AllMoviesPage() {
 
   useEffect(() => {
     if (!filtersReady) return;
-
     const genresString = selectedGenres.join(',');
-    loadMovies(page, searchTerm, genresString, selectedYear);
-  }, [page, selectedGenres, selectedYear, filtersReady]);
-
+    loadMovies(page, searchTerm, genresString, selectedYear, sortBy);
+  }, [page, selectedGenres, selectedYear, sortBy, filtersReady]); 
 
   useEffect(() => {
     const genresFromUrl = searchParams.get('genres');
     const yearFromUrl = searchParams.get('year');
     const searchFromUrl = searchParams.get('search');
+    const sortFromUrl = searchParams.get('sort');
+    const viewFromUrl = searchParams.get('view');
 
-    if (genresFromUrl) {
-      setSelectedGenres(
-        genresFromUrl.split(',').map(g => g.trim()).filter(Boolean)
-      );
-    }
-
-    if (yearFromUrl) {
-      setSelectedYear(yearFromUrl);
-    }
-
-    if (searchFromUrl) {
-      setSearchTerm(searchFromUrl);
-    }
+    if (genresFromUrl) setSelectedGenres(genresFromUrl.split(',').map(g => g.trim()).filter(Boolean));
+    if (yearFromUrl) setSelectedYear(yearFromUrl);
+    if (searchFromUrl) setSearchTerm(searchFromUrl);
+    if (sortFromUrl) setSortBy(sortFromUrl);
+    if (viewFromUrl) setViewMode(viewFromUrl);
 
     setPage(1);
     setFiltersReady(true);
   }, []);
 
-
-
-  const loadMovies = async (currentPage, currentSearch, currentGenresStr, currentYear) => {
+  const loadMovies = async (currentPage, currentSearch, currentGenresStr, currentYear, currentSort) => {
     setLoading(true);
     setError('');
     try {
-      const response = await moviesAPI.getAll(currentPage, pageSize, currentSearch, currentGenresStr, currentYear);
+      const response = await moviesAPI.getAll(currentPage, pageSize, currentSearch, currentGenresStr, currentYear, currentSort);
       
       const items = response.data.items || [];
-      const total = response.data.totalPages || 1;
-
       setMovies(items);
       setTotalPages(Math.ceil(response.data.totalCount / pageSize));
 
-      if (items.length === 0) {
-          setError('За вашим запитом нічого не знайдено 😔');
-      }
+      if (items.length === 0) setError('За вашим запитом нічого не знайдено 😔');
     } catch (err) {
       console.error(err);
       setError('Помилка завантаження даних.');
@@ -93,11 +102,11 @@ function AllMoviesPage() {
     e.preventDefault();
     setPage(1);
     const genresString = selectedGenres.join(',');
-    loadMovies(1, searchTerm, genresString, selectedYear);
+    loadMovies(1, searchTerm, genresString, selectedYear, sortBy);
   };
 
   const toggleGenre = (genre) => {
-    setPage(1); 
+    setPage(1);
     if (selectedGenres.includes(genre)) {
       setSelectedGenres(selectedGenres.filter(g => g !== genre));
     } else {
@@ -106,16 +115,33 @@ function AllMoviesPage() {
   };
 
   const handleYearChange = (e) => {
-      setPage(1);
-      setSelectedYear(e.target.value);
+    setPage(1);
+    setSelectedYear(e.target.value);
+  };
+
+  const handleSortChange = (e) => {
+    setPage(1);
+    setSortBy(e.target.value);
   };
 
   const clearFilters = () => {
     setSelectedGenres([]);
     setSearchTerm('');
     setSelectedYear('');
+    setSortBy('dateDesc');
     setPage(1);
   };
+
+  useEffect(() => {
+    if (!filtersReady) return;
+    const params = new URLSearchParams();
+    if (selectedGenres.length > 0) params.set('genres', selectedGenres.join(','));
+    if (selectedYear) params.set('year', selectedYear);
+    if (searchTerm) params.set('search', searchTerm);
+    if (sortBy !== 'dateDesc') params.set('sort', sortBy);
+    if (viewMode !== 'grid') params.set('view', viewMode);
+    window.history.replaceState(null, '', `?${params.toString()}`);
+  }, [selectedGenres, selectedYear, searchTerm, sortBy, viewMode, filtersReady]);
 
   let paginationItems = [];
   for (let number = 1; number <= totalPages; number++) {
@@ -126,43 +152,120 @@ function AllMoviesPage() {
     );
   }
 
-  useEffect(() => {
-    const params = new URLSearchParams();
+  const renderListView = (movie) => {
+    let imageUrl = PLACEHOLDER_IMG;
+    let rawPoster = movie.posterUrl || movie.PosterUrl;
 
-    if (selectedGenres.length > 0) {
-      params.set('genres', selectedGenres.join(','));
+    if (rawPoster) {
+        rawPoster = rawPoster.replace(/\\/g, '/');
+
+        if (rawPoster.startsWith('http')) {
+            imageUrl = rawPoster;
+        } else {
+            const separator = rawPoster.startsWith('/') ? '' : '/';
+            imageUrl = `${API_BASE_URL}${separator}${rawPoster}`;
+        }
     }
 
-    if (selectedYear) {
-      params.set('year', selectedYear);
-    }
+    const ratingValue = movie.averageRating || movie.rating || 0;
 
-    if (searchTerm) {
-      params.set('search', searchTerm);
-    }
+    return (
+        <Col key={movie.id} xs={12} className="mb-3">
+          <Card className="flex-row shadow-sm h-100 overflow-hidden" style={{ minHeight: '180px' }}>
+            <div style={{ width: '150px', minWidth: '150px', position: 'relative', backgroundColor: '#e9ecef' }}>
+              <img 
+                src={imageUrl} 
+                alt={movie.title}
+                style={{ 
+                    width: '100%', 
+                    height: '100%', 
+                    objectFit: 'cover',
+                    display: 'block' 
+                }}
+                onError={(e) => { 
+                    if (e.target.src !== PLACEHOLDER_IMG) {
+                        e.target.src = PLACEHOLDER_IMG;
+                    }
+                }} 
+              />
+            </div>
+            
+            <Card.Body className="d-flex flex-column py-2">
+              <div className="d-flex justify-content-between align-items-start">
+                 <div>
+                    <h5 className="mb-1">
+                        <Link to={`/movie/${movie.id}`} className="text-decoration-none text-dark fw-bold">
+                            {movie.title}
+                        </Link>
+                    </h5>
+                    {movie.director && <small className="text-muted d-block">Режисер: {movie.director}</small>}
+                 </div>
+                 
+                 <Badge 
+                    bg={getRatingVariant(ratingValue)} 
+                    text="white" 
+                    className="fs-6 shadow-sm"
+                 >
+                    ★ {ratingValue.toFixed(1)}
+                 </Badge>
+              </div>
+              
+              <div className="mt-2 mb-2">
+                <Badge bg="secondary" className="me-2">{movie.year}</Badge>
+                <span className="text-muted small">
+                    {Array.isArray(movie.genres) ? movie.genres.join(', ') : movie.genres || movie.genre}
+                </span>
+              </div>
 
-    window.history.replaceState(null, '', `?${params.toString()}`);
-  }, [selectedGenres, selectedYear, searchTerm]);
+              <Card.Text className="text-muted small flex-grow-1" style={{
+                  display: '-webkit-box',
+                  WebkitLineClamp: 3,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden'
+              }}>
+                {movie.description || "Опис відсутній..."}
+              </Card.Text>
 
+              <div className="mt-auto text-end">
+                <Link to={`/movie/${movie.id}`}>
+                     <Button variant="outline-primary" size="sm">Детальніше</Button>
+                </Link>
+              </div>
+            </Card.Body>
+          </Card>
+        </Col>
+      );
+  };
 
   return (
     <Container className="mt-4 mb-5">
       <h2 className="mb-4">🎬 Каталог фільмів</h2>
       
-      <Row className="mb-4">
-        <Col md={12} className="mb-3">
+      <Row className="mb-3">
+        <Col md={12}>
           <Form onSubmit={handleSearchSubmit}>
             <InputGroup>
               <Form.Control 
                 placeholder="Введіть назву фільму..." 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                style={{
+                    backgroundColor: isDark ? '#2b3035' : '#fff',
+                    color: isDark ? '#fff' : '#000',
+                    borderColor: isDark ? '#495057' : '#ced4da'
+                }}
               />
               
               <Form.Select 
                 value={selectedYear} 
                 onChange={handleYearChange}
-                style={{ maxWidth: '150px' }}
+                style={{ 
+                    maxWidth: '150px',
+                    backgroundColor: isDark ? '#2b3035' : '#fff',
+                    color: isDark ? '#fff' : '#000',
+                    borderColor: isDark ? '#495057' : '#ced4da',
+                    cursor: 'pointer'
+                }}
               >
                   <option value="">Всі роки</option>
                   {availableYears.map(year => (
@@ -172,19 +275,19 @@ function AllMoviesPage() {
 
               <Button variant="primary" type="submit">🔍 Пошук</Button>
               
-              {(searchTerm || selectedGenres.length > 0 || selectedYear) && (
+              {(searchTerm || selectedGenres.length > 0 || selectedYear || sortBy !== 'dateDesc') && (
                 <Button variant="outline-danger" onClick={clearFilters}>✖ Скинути</Button>
               )}
             </InputGroup>
           </Form>
         </Col>
+      </Row>
 
+      <Row className="mb-4">
         <Col md={12}>
           <div className="d-flex flex-wrap gap-2 align-items-center p-3 bg-light rounded border">
             <strong className="me-2 text-muted">Жанри:</strong>
-            
             {availableGenres.length === 0 && <span className="text-muted small">Завантаження...</span>}
-
             {availableGenres.map(genre => {
               const isActive = selectedGenres.includes(genre);
               return (
@@ -205,6 +308,64 @@ function AllMoviesPage() {
         </Col>
       </Row>
 
+      <Row 
+        className={`mb-4 align-items-center justify-content-between p-2 rounded shadow-sm border mx-0 ${isDark ? 'bg-dark border-secondary' : 'bg-white'}`}
+      >
+        <Col xs="auto" className="d-flex align-items-center">
+            <span className={`me-2 ${isDark ? 'text-light' : 'text-muted'}`}>Сортувати за:</span>
+            <Form.Select 
+                size="sm" 
+                value={sortBy} 
+                onChange={handleSortChange} 
+                style={{ 
+                    width: 'auto', 
+                    fontWeight: 'bold', 
+                    cursor: 'pointer',
+                    backgroundColor: isDark ? '#2b3035' : '#fff', 
+                    color: isDark ? '#fff' : '#dc3545',
+                    border: isDark ? '1px solid #495057' : 'none'
+                }}
+                className="shadow-none form-select-sm"
+            >
+                {SORT_OPTIONS.map(opt => (
+                    <option 
+                        key={opt.value} 
+                        value={opt.value}
+                        style={{
+                            backgroundColor: isDark ? '#2b3035' : '#fff',
+                            color: isDark ? '#fff' : '#000'
+                        }}
+                    >
+                        {opt.label}
+                    </option>
+                ))}
+            </Form.Select>
+        </Col>
+
+        <Col xs="auto">
+            <div className="btn-group">
+                <Button 
+                    variant={viewMode === 'grid' ? (isDark ? 'light' : 'secondary') : (isDark ? 'outline-light' : 'outline-secondary')} 
+                    size="sm"
+                    onClick={() => setViewMode('grid')}
+                    title="Плитка"
+                >
+                    <i className="bi bi-grid-fill"></i> 
+                    <span style={{ fontSize: '1.2rem', lineHeight: 1 }}>⊞</span> 
+                </Button>
+                <Button 
+                    variant={viewMode === 'list' ? (isDark ? 'light' : 'secondary') : (isDark ? 'outline-light' : 'outline-secondary')} 
+                    size="sm"
+                    onClick={() => setViewMode('list')}
+                    title="Список"
+                >
+                     <i className="bi bi-list"></i>
+                     <span style={{ fontSize: '1.2rem', lineHeight: 1 }}>☰</span>
+                </Button>
+            </div>
+        </Col>
+      </Row>
+
       {error && <Alert variant="info">{error}</Alert>}
 
       {loading ? (
@@ -212,11 +373,17 @@ function AllMoviesPage() {
       ) : (
         <>
           <Row>
-            {movies.map(movie => (
-              <Col key={movie.id} xs={12} sm={6} md={4} lg={3} className="mb-4">
-                <MovieCard movie={movie} />
-              </Col>
-            ))}
+            {movies.map(movie => {
+                if (viewMode === 'grid') {
+                    return (
+                        <Col key={movie.id} xs={12} sm={6} md={4} lg={3} className="mb-4">
+                            <MovieCard movie={movie} />
+                        </Col>
+                    );
+                } else {
+                    return renderListView(movie);
+                }
+            })}
           </Row>
 
           {totalPages > 1 && (

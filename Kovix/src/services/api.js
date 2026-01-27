@@ -18,12 +18,11 @@ api.interceptors.request.use((config) => {
 });
 
 export const moviesAPI = {
-  getAll: (page = 1, pageSize = 8, search = '', genres = '', year = '') => 
-      api.get('/movies', { params: { page, pageSize, search, genres, year } }),
+  getAll: (page = 1, pageSize = 8, search = '', genres = '', year = '', sort = '') => 
+      api.get('/movies', { params: { page, pageSize, search, genres, year, sort } }),
   getFilters: () => api.get('/movies/filters'),
   getNew: (days = 45, limit = 10) =>
       api.get(`/movies/new?days=${days}&limit=${limit}`),
-  getById: (id) => api.get(`/movies/${id}`),
   getById: (id) => api.get(`/movies/${id}`),
   getTrending: () => api.get('/movies/trending'),
   getTopRated: () => api.get('/movies/top-rated'),

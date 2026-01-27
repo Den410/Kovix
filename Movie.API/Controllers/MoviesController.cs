@@ -24,6 +24,7 @@ namespace Movie.API.Controllers
         public async Task<ActionResult<PagedResult<MovieEntity>>> GetAll(
         [FromQuery] string? search,
         [FromQuery] string? genres,
+        [FromQuery] string? sort,
         [FromQuery] int? year,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 8)
@@ -69,10 +70,29 @@ namespace Movie.API.Controllers
                 }
             }
 
+            switch (sort)
+            {
+                case "dateAsc":
+                    query = query.OrderBy(m => m.CreatedAt);
+                    break;
+                case "ratingDesc":
+                    query = query.OrderByDescending(m => m.AverageRating);
+                    break;
+                case "yearDesc":
+                    query = query.OrderByDescending(m => m.Year);
+                    break;
+                case "titleAsc":
+                    query = query.OrderBy(m => m.Title);
+                    break;
+                case "dateDesc":
+                default:
+                    query = query.OrderByDescending(m => m.CreatedAt);
+                    break;
+            }
+
             int totalCount = await query.CountAsync();
 
             var items = await query
-                .OrderByDescending(m => m.CreatedAt)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
