@@ -52,6 +52,7 @@ export const authAPI = {
     headers: { 'Content-Type': 'multipart/form-data' }
   }),
   updateSettings: (data) => api.put('/auth/settings', data),
+  changePassword: (data) => api.post('/auth/change-password', data),
 };
 
 export const watchlistAPI = {

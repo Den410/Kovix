@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Container, Row, Col, Card, Badge, Spinner, Button } from 'react-bootstrap';
+import { Container, Row, Col, Card, Badge, Spinner, Button, Form } from 'react-bootstrap';
 import { moviesAPI, reviewsAPI, watchlistAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import ReviewForm from '../components/ReviewForm';
@@ -144,7 +144,7 @@ function MovieDetailPage() {
   const getRatingColor = (rating) => {
     if (rating >= 8) return "success"; 
     if (rating >= 5) return "warning"; 
-    return "danger";                   
+    return "danger";                  
   };
 
   if (loading) return <Container className="text-center mt-5"><Spinner animation="border" /></Container>;
@@ -200,7 +200,7 @@ function MovieDetailPage() {
           </div>
 
           <p className="lead">{movie.description}</p>
-          <hr />
+          <hr style={{ borderColor: 'var(--border-color)' }} />
           
           {movie.trailerUrl && (
             <div className="mb-4">
@@ -210,80 +210,140 @@ function MovieDetailPage() {
             </div>
           )}
 
-          <div className="movie-actions-bar shadow-sm mb-5">
+          <div 
+            className="d-flex flex-wrap align-items-center p-3 shadow-sm mb-5 gap-3"
+            style={{ 
+                backgroundColor: 'var(--bg-card)', 
+                border: '1px solid var(--border-color)',
+                color: 'var(--text-main)',
+                borderRadius: '50px' 
+            }}
+          >
             
-            <div className="like-dislike-group">
-                <button 
-                    className={`action-btn ${movie.currentUserVote === LIKE_ID ? 'active' : ''}`}
+            <div className="d-flex align-items-center gap-2">
+                <Button 
+                    variant={movie.currentUserVote === LIKE_ID ? "success" : "outline-secondary"}
+                    size="sm"
                     onClick={() => handleReaction(LIKE_ID)}
                     title="Мені подобається"
+                    style={{ 
+                        color: movie.currentUserVote !== LIKE_ID ? 'var(--text-main)' : undefined, 
+                        borderColor: movie.currentUserVote !== LIKE_ID ? 'var(--border-color)' : undefined,
+                        borderRadius: '20px', 
+                        paddingLeft: '15px',
+                        paddingRight: '15px'
+                    }}
                 >
                     👍 <span className="ms-1">{likesCount > 0 ? likesCount : 'Лайк'}</span>
-                </button>
-                <div style={{width: 1, height: 20, background: '#ccc'}}></div> 
-                <button 
-                    className={`action-btn ${movie.currentUserVote === DISLIKE_ID ? 'active-dislike' : ''}`}
+                </Button>
+                
+                <Button 
+                    variant={movie.currentUserVote === DISLIKE_ID ? "danger" : "outline-secondary"}
+                    size="sm"
                     onClick={() => handleReaction(DISLIKE_ID)}
                     title="Не подобається"
+                    style={{ 
+                        color: movie.currentUserVote !== DISLIKE_ID ? 'var(--text-main)' : undefined, 
+                        borderColor: movie.currentUserVote !== DISLIKE_ID ? 'var(--border-color)' : undefined,
+                        borderRadius: '20px',
+                        paddingLeft: '15px',
+                        paddingRight: '15px'
+                    }}
                 >
                     👎 <span className="ms-1">{dislikesCount > 0 ? dislikesCount : ''}</span>
-                </button>
+                </Button>
             </div>
 
-            <div className="vertical-divider"></div>
+            <div className="vr mx-2" style={{ backgroundColor: 'var(--border-color)', opacity: 1 }}></div>
 
-            <div className="watchlist-group">
-                <select 
-                  className="status-select"
-                  value={watchStatus}
-                  onChange={(e) => handleWatchlistUpdate(e.target.value, isFavorite)}
+            <div className="d-flex align-items-center gap-2 flex-grow-1">
+                <Form.Select 
+                    size="sm"
+                    value={watchStatus}
+                    onChange={(e) => handleWatchlistUpdate(e.target.value, isFavorite)}
+                    style={{ 
+                        maxWidth: '200px', 
+                        cursor: 'pointer',
+                        borderRadius: '20px'
+                    }}
+                    className="shadow-none"
                 >
-                  {WATCH_STATUSES.map(s => (
-                    <option key={s.id} value={s.id}>{s.label}</option>
-                  ))}
-                </select>
+                    {WATCH_STATUSES.map(s => (
+                        <option key={s.id} value={s.id}>{s.label}</option>
+                    ))}
+                </Form.Select>
 
-                <button 
-                  className={`favorite-btn ${isFavorite ? 'active' : ''}`}
-                  onClick={() => handleWatchlistUpdate(watchStatus, !isFavorite)}
-                  title={isFavorite ? "Видалити з улюблених" : "Додати в улюблене"}
+                <Button 
+                    variant={isFavorite ? "warning" : "outline-secondary"}
+                    size="sm"
+                    onClick={() => handleWatchlistUpdate(watchStatus, !isFavorite)}
+                    title={isFavorite ? "Видалити з улюблених" : "Додати в улюблене"}
+                    style={{ 
+                        color: !isFavorite ? 'var(--text-main)' : '#fff', 
+                        borderColor: !isFavorite ? 'var(--border-color)' : undefined,
+                        borderRadius: '20px',
+                        paddingLeft: '12px',
+                        paddingRight: '12px'
+                    }}
                 >
-                  ★
-                </button>
+                    ★
+                </Button>
             </div>
 
-            <div className="vertical-divider"></div>
+            <div className="vr mx-2 d-none d-md-block" style={{ backgroundColor: 'var(--border-color)', opacity: 1 }}></div>
 
-            <div className="reaction-btn-wrapper" ref={popupRef}>
+            <div className="position-relative" ref={popupRef}>
                {(() => {
                  const activeEmotion = EMOTIONS.find(e => e.id === movie.currentUserEmotion);
                  return (
-                   <button 
-                      className="reaction-toggle-btn"
+                   <Button 
+                      variant="outline-secondary"
+                      size="sm"
                       onClick={() => setShowReactionPopup(!showReactionPopup)}
-                      style={activeEmotion ? {color: '#e2264d', background: 'rgba(226, 38, 77, 0.1)'} : {}}
+                      style={{
+                          color: activeEmotion ? '#e2264d' : 'var(--text-main)', 
+                          borderColor: activeEmotion ? '#e2264d' : 'var(--border-color)',
+                          backgroundColor: activeEmotion ? 'rgba(226, 38, 77, 0.1)' : 'transparent',
+                          borderRadius: '20px',
+                          paddingLeft: '15px',
+                          paddingRight: '15px'
+                      }}
                    >
                       {activeEmotion 
                         ? <>{activeEmotion.icon} {activeEmotion.label}</> 
                         : <>☺ Реакція</>
                       }
-                   </button>
+                   </Button>
                  );
                })()}
 
                {showReactionPopup && (
-                 <div className="reaction-popup">
+                 <div 
+                    className="position-absolute bottom-100 start-50 translate-middle-x mb-2 p-2 rounded shadow d-flex gap-2"
+                    style={{ 
+                        backgroundColor: 'var(--bg-card)', 
+                        border: '1px solid var(--border-color)',
+                        zIndex: 1000,
+                        width: 'max-content',
+                        borderRadius: '20px' 
+                    }}
+                 >
                     {EMOTIONS.map((emo) => (
-                      <div key={emo.id} className="reaction-option" onClick={() => handleReaction(emo.id)}>
-                        <span className="reaction-option-icon">{emo.icon}</span>
-                        <span className="reaction-option-label">{emo.label}</span>
+                      <div 
+                        key={emo.id} 
+                        className="d-flex flex-column align-items-center p-2 rounded reaction-hover" 
+                        onClick={() => handleReaction(emo.id)}
+                        style={{ cursor: 'pointer', transition: 'transform 0.2s' }}
+                      >
+                        <span style={{ fontSize: '1.5rem' }}>{emo.icon}</span>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{emo.label}</span>
                       </div>
                     ))}
                  </div>
                )}
             </div>
 
-            <div className="reactions-list">
+            <div className="d-flex gap-2">
                 {Object.entries(movie.reactionCounts).map(([key, count]) => {
                     if (key === 'Like' || key === 'Dislike' || count === 0) return null;
                     const emo = EMOTIONS.find(e => e.key === key);
@@ -294,11 +354,17 @@ function MovieDetailPage() {
                         <div 
                            key={key} 
                            onClick={() => handleReaction(emo.id)}
-                           className={`reaction-badge ${isActive ? 'active' : ''}`} 
+                           className={`d-flex align-items-center gap-1 px-2 py-1 border ${isActive ? 'border-danger bg-light-danger' : 'border-secondary'}`}
+                           style={{ 
+                               cursor: 'pointer', 
+                               backgroundColor: isActive ? 'rgba(220, 53, 69, 0.1)' : 'transparent',
+                               borderColor: isActive ? '#dc3545' : 'var(--border-color)',
+                               borderRadius: '15px' 
+                           }}
                            title={emo.label}
                         >
-                            <span style={{fontSize: '18px'}}>{emo.icon}</span>
-                            <span className="reaction-count">{count}</span>
+                            <span>{emo.icon}</span>
+                            <span style={{ fontSize: '0.8rem', color: 'var(--text-main)' }}>{count}</span>
                         </div>
                     );
                 })}
@@ -311,7 +377,7 @@ function MovieDetailPage() {
 
       <Row>
         <Col>
-          <h3 className="mb-4 border-bottom pb-2">Відгуки глядачів</h3>
+          <h3 className="mb-4 border-bottom pb-2" style={{ borderColor: 'var(--border-color)' }}>Відгуки глядачів</h3>
           <ReviewForm movieId={movie.id} onSubmit={handleReviewChange} />
           <ReviewList reviews={reviews} onReviewUpdated={handleReviewChange} />
         </Col>

@@ -37,8 +37,8 @@ function AllMoviesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('dateDesc');
   const [viewMode, setViewMode] = useState('grid'); 
+  
   const { themeMode } = useTheme();
-  const isDark = themeMode === 'dark';
 
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -228,7 +228,7 @@ function AllMoviesPage() {
 
               <div className="mt-auto text-end">
                 <Link to={`/movie/${movie.id}`}>
-                     <Button variant="outline-primary" size="sm">Детальніше</Button>
+                      <Button variant="outline-primary" size="sm">Детальніше</Button>
                 </Link>
               </div>
             </Card.Body>
@@ -249,23 +249,13 @@ function AllMoviesPage() {
                 placeholder="Введіть назву фільму..." 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                style={{
-                    backgroundColor: isDark ? '#2b3035' : '#fff',
-                    color: isDark ? '#fff' : '#000',
-                    borderColor: isDark ? '#495057' : '#ced4da'
-                }}
+                className="shadow-none"
               />
               
               <Form.Select 
                 value={selectedYear} 
                 onChange={handleYearChange}
-                style={{ 
-                    maxWidth: '150px',
-                    backgroundColor: isDark ? '#2b3035' : '#fff',
-                    color: isDark ? '#fff' : '#000',
-                    borderColor: isDark ? '#495057' : '#ced4da',
-                    cursor: 'pointer'
-                }}
+                style={{ maxWidth: '150px', cursor: 'pointer' }}
               >
                   <option value="">Всі роки</option>
                   {availableYears.map(year => (
@@ -285,18 +275,33 @@ function AllMoviesPage() {
 
       <Row className="mb-4">
         <Col md={12}>
-          <div className="d-flex flex-wrap gap-2 align-items-center p-3 bg-light rounded border">
-            <strong className="me-2 text-muted">Жанри:</strong>
+          <div 
+            className="d-flex flex-wrap gap-2 align-items-center p-3 rounded border"
+            style={{
+                backgroundColor: 'var(--bg-card)', 
+                borderColor: 'var(--border-color)' 
+            }}
+          >
+            <strong className="me-2" style={{ color: 'var(--text-secondary)' }}>Жанри:</strong>
             {availableGenres.length === 0 && <span className="text-muted small">Завантаження...</span>}
+            
             {availableGenres.map(genre => {
               const isActive = selectedGenres.includes(genre);
               return (
                 <Badge 
                   key={genre}
-                  bg={isActive ? "primary" : "light"} 
-                  text={isActive ? "white" : "dark"}
-                  className={`p-2 user-select-none border ${isActive ? '' : 'border-secondary'}`}
-                  style={{ cursor: 'pointer', fontSize: '0.9rem', fontWeight: 'normal' }}
+                  bg={isActive ? "primary" : ""} 
+                  
+                  className={`p-2 user-select-none border ${isActive ? '' : ''}`}
+                  
+                  style={{ 
+                      cursor: 'pointer', 
+                      fontSize: '0.9rem', 
+                      fontWeight: 'normal',
+                      backgroundColor: isActive ? 'var(--primary-color)' : 'var(--bg-card)',
+                      color: isActive ? 'var(--btn-text)' : 'var(--text-main)',
+                      borderColor: isActive ? 'var(--primary-color)' : 'var(--border-color)'
+                  }}
                   onClick={() => toggleGenre(genre)}
                 >
                   {genre.charAt(0).toUpperCase() + genre.slice(1)}
@@ -309,33 +314,23 @@ function AllMoviesPage() {
       </Row>
 
       <Row 
-        className={`mb-4 align-items-center justify-content-between p-2 rounded shadow-sm border mx-0 ${isDark ? 'bg-dark border-secondary' : 'bg-white'}`}
+        className="mb-4 align-items-center justify-content-between p-2 rounded shadow-sm border mx-0"
+        style={{
+            backgroundColor: 'var(--bg-card)',
+            borderColor: 'var(--border-color)'
+        }}
       >
         <Col xs="auto" className="d-flex align-items-center">
-            <span className={`me-2 ${isDark ? 'text-light' : 'text-muted'}`}>Сортувати за:</span>
+            <span className="me-2" style={{ color: 'var(--text-secondary)' }}>Сортувати за:</span>
             <Form.Select 
                 size="sm" 
                 value={sortBy} 
                 onChange={handleSortChange} 
-                style={{ 
-                    width: 'auto', 
-                    fontWeight: 'bold', 
-                    cursor: 'pointer',
-                    backgroundColor: isDark ? '#2b3035' : '#fff', 
-                    color: isDark ? '#fff' : '#dc3545',
-                    border: isDark ? '1px solid #495057' : 'none'
-                }}
+                style={{ width: 'auto', fontWeight: 'bold', cursor: 'pointer' }}
                 className="shadow-none form-select-sm"
             >
                 {SORT_OPTIONS.map(opt => (
-                    <option 
-                        key={opt.value} 
-                        value={opt.value}
-                        style={{
-                            backgroundColor: isDark ? '#2b3035' : '#fff',
-                            color: isDark ? '#fff' : '#000'
-                        }}
-                    >
+                    <option key={opt.value} value={opt.value}>
                         {opt.label}
                     </option>
                 ))}
@@ -345,7 +340,7 @@ function AllMoviesPage() {
         <Col xs="auto">
             <div className="btn-group">
                 <Button 
-                    variant={viewMode === 'grid' ? (isDark ? 'light' : 'secondary') : (isDark ? 'outline-light' : 'outline-secondary')} 
+                    variant={viewMode === 'grid' ? "primary" : "outline-secondary"} 
                     size="sm"
                     onClick={() => setViewMode('grid')}
                     title="Плитка"
@@ -354,13 +349,13 @@ function AllMoviesPage() {
                     <span style={{ fontSize: '1.2rem', lineHeight: 1 }}>⊞</span> 
                 </Button>
                 <Button 
-                    variant={viewMode === 'list' ? (isDark ? 'light' : 'secondary') : (isDark ? 'outline-light' : 'outline-secondary')} 
+                    variant={viewMode === 'list' ? "primary" : "outline-secondary"} 
                     size="sm"
                     onClick={() => setViewMode('list')}
                     title="Список"
                 >
-                     <i className="bi bi-list"></i>
-                     <span style={{ fontSize: '1.2rem', lineHeight: 1 }}>☰</span>
+                      <i className="bi bi-list"></i>
+                      <span style={{ fontSize: '1.2rem', lineHeight: 1 }}>☰</span>
                 </Button>
             </div>
         </Col>

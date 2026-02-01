@@ -20,6 +20,7 @@ import NotFoundPage from './pages/NotFoundPage';
 import AdminReportsPage from './pages/AdminReportsPage';
 import BlockedRoute from './components/BlockedRoute';
 import HistoryPage from './pages/HistoryPage';
+import TopMoviesPage from './pages/TopMoviesPage';
 
 function App() {
   return (
@@ -39,6 +40,7 @@ function App() {
             <Route path="/movies" element={<AllMoviesPage />} />
             <Route path="/my-lists" element={<MyListsPage />} />
             <Route path="/admin/reports" element={<AdminReportsPage />} />
+            <Route path="/top" element={<TopMoviesPage />} />
             <Route path="/chat" element={
                 <BlockedRoute>
                     <ChatPage />

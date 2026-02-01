@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Badge, Spinner, Button, Modal, Form, Alert } from 'react-bootstrap';
 import { useNavigate, Link } from 'react-router-dom';
 import { authAPI, friendsAPI, moviesAPI } from '../services/api'; 
@@ -7,6 +7,7 @@ import { useFriends } from '../contexts/FriendsContext';
 import { useChatConnection } from '../hooks/useChatConnection';
 import { usePresence } from '../contexts/PresenceContext';
 import { formatLastSeen } from '../utils/dateUtils';
+import { useTheme } from '../contexts/ThemeContext';
 import defaultAvatarImg from '../assets/NotFoundAvatar.png';
 
 const API_BASE_URL = 'http://localhost:5096'; 
@@ -31,6 +32,16 @@ function ProfilePage() {
   const { refreshRequests } = useFriends();
   const { connection: presenceConnection } = usePresence(); 
   const navigate = useNavigate();
+
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmNewPassword: ''
+  });
+  
+  const { themeMode } = useTheme();
+  const isDark = themeMode === 'dark';
 
   useEffect(() => {
     loadProfile();
@@ -102,6 +113,46 @@ function ProfilePage() {
       setFriends(res.data);
     } catch (e) {
       console.error(e);
+    }
+  };
+
+  const handleClosePasswordModal = () => {
+    setShowPasswordModal(false);
+    setPasswordData({ currentPassword: '', newPassword: '', confirmNewPassword: '' });
+  };
+
+  const handlePasswordChangeInput = (e) => {
+    setPasswordData({ ...passwordData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmitPasswordChange = async () => {
+    const { currentPassword, newPassword, confirmNewPassword } = passwordData;
+
+    if (!currentPassword || !newPassword || !confirmNewPassword) {
+      alert("Будь ласка, заповніть всі поля");
+      return;
+    }
+
+    if (newPassword !== confirmNewPassword) {
+      alert("Нові паролі не співпадають!");
+      return;
+    }
+
+    if (newPassword.length < 6) {
+        alert("Пароль має бути не менше 6 символів");
+        return;
+    }
+
+    try {
+      await authAPI.changePassword({
+        currentPassword,
+        newPassword
+      });
+      alert("Пароль успішно змінено! ✅");
+      handleClosePasswordModal();
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data || "Помилка зміни паролю. Перевірте поточний пароль.");
     }
   };
 
@@ -265,6 +316,15 @@ function ProfilePage() {
               
               <Button variant="outline-primary" onClick={handleOpenEdit} disabled={profile.isBlocked}>
                   {profile.isBlocked ? 'Редагування недоступне' : '✏️ Редагувати'}
+              </Button>
+
+              <Button 
+                variant="outline-warning" 
+                onClick={() => setShowPasswordModal(true)} 
+                disabled={profile.isBlocked}
+                className="mt-2"
+              >
+                  🔑 Змінити пароль
               </Button>
 
               <Button 
@@ -440,6 +500,64 @@ function ProfilePage() {
         <Modal.Footer style={{ backgroundColor: 'var(--bg-card)', borderTopColor: 'var(--border-color)' }}>
           <Button variant="secondary" onClick={() => setShowSettings(false)}>Скасувати</Button>
           <Button variant="danger" onClick={handleSaveSettings}>Зберегти обмеження</Button>
+        </Modal.Footer>
+      </Modal>
+
+      <Modal show={showPasswordModal} onHide={handleClosePasswordModal} centered>
+        <Modal.Header closeButton style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-main)', borderColor: 'var(--border-color)' }}>
+          <Modal.Title>🔐 Зміна паролю</Modal.Title>
+        </Modal.Header>
+        <Modal.Body style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-main)' }}>
+          <Form>
+            <Form.Group className="mb-3">
+              <Form.Label>Поточний пароль</Form.Label>
+              <Form.Control 
+                type="password"
+                name="currentPassword"
+                value={passwordData.currentPassword}
+                onChange={handlePasswordChangeInput}
+                style={{ 
+                    backgroundColor: isDark ? '#2b3035' : '#fff',
+                    color: isDark ? '#fff' : '#000',
+                    borderColor: 'var(--border-color)'
+                }}
+              />
+            </Form.Group>
+            
+            <Form.Group className="mb-3">
+              <Form.Label>Новий пароль</Form.Label>
+              <Form.Control 
+                type="password"
+                name="newPassword"
+                value={passwordData.newPassword}
+                onChange={handlePasswordChangeInput}
+                style={{ 
+                    backgroundColor: isDark ? '#2b3035' : '#fff',
+                    color: isDark ? '#fff' : '#000',
+                    borderColor: 'var(--border-color)'
+                }}
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+              <Form.Label>Підтвердіть новий пароль</Form.Label>
+              <Form.Control 
+                type="password"
+                name="confirmNewPassword"
+                value={passwordData.confirmNewPassword}
+                onChange={handlePasswordChangeInput}
+                style={{ 
+                    backgroundColor: isDark ? '#2b3035' : '#fff',
+                    color: isDark ? '#fff' : '#000',
+                    borderColor: 'var(--border-color)'
+                }}
+              />
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer style={{ backgroundColor: 'var(--bg-card)', borderTopColor: 'var(--border-color)' }}>
+          <Button variant="secondary" onClick={handleClosePasswordModal}>Скасувати</Button>
+          <Button variant="warning" onClick={handleSubmitPasswordChange}>Змінити</Button>
         </Modal.Footer>
       </Modal>
 

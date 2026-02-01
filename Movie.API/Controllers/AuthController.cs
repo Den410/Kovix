@@ -7,6 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 using Movie.API.Data;
 using Movie.API.DTOs;
 using Movie.API.Models;
+using Movie.API.Services;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -19,15 +20,17 @@ namespace Movie.API.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IConfiguration _configuration;
+        private readonly IEmailService _emailService;
 
-        public AuthController(ApplicationDbContext context, IConfiguration configuration)
+        public AuthController(ApplicationDbContext context, IConfiguration configuration, IEmailService emailService)
         {
             _context = context;
             _configuration = configuration;
+            _emailService = emailService;
         }
 
         [HttpPost("register")]
-        public async Task<ActionResult<User>> Register(RegisterDto request)
+        public async Task<IActionResult> Register([FromBody] RegisterDto request)
         {
             if (await _context.Users.AnyAsync(u => u.Email == request.Email))
             {
@@ -48,8 +51,26 @@ namespace Movie.API.Controllers
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
+            try
+            {
+                string subject = "Вітаємо у Kovix! 🎬";
+                string body = $@"
+            <h1>Привіт, {user.Username}!</h1>
+            <p>Дякуємо за реєстрацію у нашому кіно-додатку.</p>
+            <p>Тепер ви можете створювати списки, ставити оцінки та додавати друзів.</p>
+            <br>
+            <p>З повагою,<br>Команда Kovix</p>";
+
+                await _emailService.SendEmailAsync(user.Email, subject, body);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Не вдалося відправити email: {ex.Message}");
+            }
+
             return Ok(new { message = "Реєстрація успішна!" });
         }
+
 
         [HttpPost("login")]
         public async Task<ActionResult<string>> Login(LoginDto request)
@@ -245,6 +266,30 @@ namespace Movie.API.Controllers
             {
                 return BadRequest("Invalid Google token: " + ex.Message);
             }
+        }
+
+        [HttpPost("change-password")]
+        [Authorize]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto model)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null) return Unauthorized();
+
+            int userId = int.Parse(userIdClaim.Value);
+
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null) return Unauthorized("Користувача не знайдено");
+
+            if (!BCrypt.Net.BCrypt.Verify(model.CurrentPassword, user.PasswordHash))
+            {
+                return BadRequest("Поточний пароль невірний");
+            }
+
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(model.NewPassword);
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Пароль успішно змінено!" });
         }
 
     }

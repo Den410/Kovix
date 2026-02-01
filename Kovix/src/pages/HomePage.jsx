@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Container, Button, Spinner, Alert, Modal } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { moviesAPI } from '../services/api';
@@ -166,7 +166,7 @@ function HomePage() {
         )}
       </section>
 
-            <section className="mb-5 slider-section">
+      <section className="mb-5 slider-section">
         <div className="d-flex justify-content-between align-items-center mb-3 border-start border-4 border-danger ps-2">
             <h3 className="mb-0">🎬 Найкращі трейлери</h3>
             <Link to="/movies" className="text-decoration-none small">Дивитися всі &rarr;</Link>
@@ -217,9 +217,16 @@ function HomePage() {
         )}
       </section>
 
-      <div className="text-center mt-5 p-5 bg-light rounded shadow-sm">
+      <div 
+        className="text-center mt-5 p-5 rounded shadow-sm"
+        style={{
+            backgroundColor: 'var(--bg-card)', 
+            color: 'var(--text-main)',         
+            border: '1px solid var(--border-color)'
+        }}
+      >
         <h2>🎥 Шукаєте щось конкретне?</h2>
-        <p className="lead">Перегляньте повний каталог фільмів з пошуком.</p>
+        <p className="lead" style={{ color: 'var(--text-secondary)' }}>Перегляньте повний каталог фільмів з пошуком.</p>
         <Link to="/movies">
           <Button variant="primary" size="lg">Відкрити каталог фільмів</Button>
         </Link>

@@ -77,7 +77,15 @@ function Navigation() {
         <Navbar.Toggle />
 
         <Navbar.Collapse>
-          <Nav className="me-auto" />
+          <Nav className="me-auto">
+              <Nav.Link as={Link} to="/movies" className="fw-semibold">
+                  🎥 Каталог
+              </Nav.Link>
+              
+              <Nav.Link as={Link} to="/top" className="fw-bold text-warning">
+                  🏆 Топ-100
+              </Nav.Link>
+          </Nav>
           <Nav className="align-items-center gap-2">
 
             {user && <NotificationBell />}
