@@ -54,6 +54,11 @@ function LoginPage() {
               />
             </Form.Group>
             <Button className="w-100" type="submit">Увійти</Button>
+            <div className="text-center mt-3">
+                <Link to="/forgot-password" style={{ color: 'var(--primary-color)' }}>
+                    Забули пароль?
+                </Link>
+            </div>
           </Form>
 
           <div className="d-flex align-items-center my-3">

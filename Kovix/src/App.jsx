@@ -21,6 +21,8 @@ import AdminReportsPage from './pages/AdminReportsPage';
 import BlockedRoute from './components/BlockedRoute';
 import HistoryPage from './pages/HistoryPage';
 import TopMoviesPage from './pages/TopMoviesPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 
 function App() {
   return (
@@ -41,6 +43,8 @@ function App() {
             <Route path="/my-lists" element={<MyListsPage />} />
             <Route path="/admin/reports" element={<AdminReportsPage />} />
             <Route path="/top" element={<TopMoviesPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/chat" element={
                 <BlockedRoute>
                     <ChatPage />

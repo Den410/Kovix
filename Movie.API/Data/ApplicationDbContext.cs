@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Movie.API.DTOs;
 using Movie.API.Models;
 using Movie.API.Models.Enums;
@@ -160,6 +159,21 @@ namespace Movie.API.Data
                 .HasOne(r => r.ReportedUser)
                 .WithMany(u => u.ReportsReceived)
                 .HasForeignKey(r => r.ReportedUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<UserFollow>()
+                 .HasKey(k => new { k.ObserverId, k.TargetId }); 
+
+            modelBuilder.Entity<UserFollow>()
+                .HasOne(u => u.Observer)
+                .WithMany(u => u.Following)
+                .HasForeignKey(u => u.ObserverId)
+                .OnDelete(DeleteBehavior.Restrict); 
+
+            modelBuilder.Entity<UserFollow>()
+                .HasOne(u => u.Target)
+                .WithMany(u => u.Followers)
+                .HasForeignKey(u => u.TargetId)
                 .OnDelete(DeleteBehavior.Restrict);
 
 

@@ -6,6 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 using Movie.API.Data;
 using Movie.API.Hubs;
 using Movie.API.Services;
+using Movie.API.SignalR;
 using System.Text;
 using System.Text.Json.Serialization;
 
@@ -89,6 +90,8 @@ builder.Services.AddControllers().AddJsonOptions(x =>
 builder.Services.AddSingleton<IUserIdProvider, CustomUserIdProvider>();
 
 builder.Services.AddSignalR();
+
+builder.Services.AddSingleton<IUserIdProvider, NameIdentifierUserIdProvider>();
 
 var app = builder.Build();
 

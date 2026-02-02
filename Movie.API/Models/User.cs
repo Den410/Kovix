@@ -27,5 +27,9 @@ namespace Movie.API.Models
         public string? BlockedGenres { get; set; }
         public string? ExternalProvider { get; set; }
         public string? ExternalId { get; set; }
+        public string? PasswordResetToken { get; set; }
+        public DateTime? PasswordResetTokenExpires { get; set; }
+        public ICollection<UserFollow> Following { get; set; } = new List<UserFollow>();
+        public ICollection<UserFollow> Followers { get; set; } = new List<UserFollow>();
     }
 }

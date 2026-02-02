@@ -84,6 +84,16 @@ a {
   color: var(--primary-color);
 }
 
+.nav-tabs .nav-link:hover {
+    border-color: var(--border-color) var(--border-color) var(--border-color);
+    background-color: var(--bg-hover); 
+    color: var(--text-main);
+}
+
+.nav-tabs {
+    border-bottom: 1px solid var(--border-color);
+}
+
 .hover-bg:hover {
     background-color: var(--border-color); 
 }

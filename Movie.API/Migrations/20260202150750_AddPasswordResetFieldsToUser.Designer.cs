@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Movie.API.Data;
 
@@ -11,9 +12,11 @@ using Movie.API.Data;
 namespace Movie.API.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260202150750_AddPasswordResetFieldsToUser")]
+    partial class AddPasswordResetFieldsToUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -491,24 +494,6 @@ namespace Movie.API.Migrations
                     b.ToTable("UserBlocks");
                 });
 
-            modelBuilder.Entity("Movie.API.Models.UserFollow", b =>
-                {
-                    b.Property<int>("ObserverId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("TargetId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("ObserverId", "TargetId");
-
-                    b.HasIndex("TargetId");
-
-                    b.ToTable("UserFollow");
-                });
-
             modelBuilder.Entity("Movie.API.Models.WatchHistoryItem", b =>
                 {
                     b.Property<int>("Id")
@@ -594,9 +579,6 @@ namespace Movie.API.Migrations
 
                     b.Property<string>("Message")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("SenderId")
-                        .HasColumnType("int");
 
                     b.Property<int>("UserId")
                         .HasColumnType("int");
@@ -757,25 +739,6 @@ namespace Movie.API.Migrations
                     b.Navigation("Blocker");
                 });
 
-            modelBuilder.Entity("Movie.API.Models.UserFollow", b =>
-                {
-                    b.HasOne("Movie.API.Models.User", "Observer")
-                        .WithMany("Following")
-                        .HasForeignKey("ObserverId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Movie.API.Models.User", "Target")
-                        .WithMany("Followers")
-                        .HasForeignKey("TargetId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Observer");
-
-                    b.Navigation("Target");
-                });
-
             modelBuilder.Entity("Movie.API.Models.WatchHistoryItem", b =>
                 {
                     b.HasOne("Movie.API.Models.MovieEntity", "Movie")
@@ -844,10 +807,6 @@ namespace Movie.API.Migrations
 
             modelBuilder.Entity("Movie.API.Models.User", b =>
                 {
-                    b.Navigation("Followers");
-
-                    b.Navigation("Following");
-
                     b.Navigation("Notifications");
 
                     b.Navigation("ReportsReceived");

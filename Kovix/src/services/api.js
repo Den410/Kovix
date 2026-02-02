@@ -53,6 +53,8 @@ export const authAPI = {
   }),
   updateSettings: (data) => api.put('/auth/settings', data),
   changePassword: (data) => api.post('/auth/change-password', data),
+  forgotPassword: (email) => api.post('/auth/forgot-password', { email }),
+  resetPassword: (data) => api.post('/auth/reset-password', data),
 };
 
 export const watchlistAPI = {
@@ -65,6 +67,12 @@ export const usersAPI = {
   getPublicProfile: (id) =>
     api.get(`/users/${id}/profile`),
   toggleBlock: (id) => api.post(`/users/${id}/toggle-block`),
+  getPublicProfile: (id) => api.get(`/users/${id}/profile`),
+  
+  follow: (id) => api.post(`/users/${id}/follow`),
+  unfollow: (id) => api.delete(`/users/${id}/unfollow`),
+  getFollowers: (id) => api.get(`/users/${id}/followers`),
+  getFollowing: (id) => api.get(`/users/${id}/following`),
 };
 
 export const friendsAPI = {
@@ -73,6 +81,7 @@ export const friendsAPI = {
     remove: (userId) => api.delete(`/friends/remove/${userId}`),
     getMyFriends: () => api.get('/friends/my-friends'),
     checkStatus: (userId) => api.get(`/friends/status/${userId}`),
+    getRequests: () => api.get('/friends/requests'),
 };
 
 export const blocksAPI = {
@@ -92,6 +101,12 @@ export const chatAPI = {
 export const reportsAPI = {
   getAll: () => api.get('/reports'),
   create: (data) => api.post('/reports', data),
+};
+
+export const notificationsAPI = {
+    getAll: () => api.get('/notifications'),
+    delete: (id) => api.delete(`/notifications/${id}`),
+    clear: () => api.delete('/notifications/clear'),
 };
 
 export default api;

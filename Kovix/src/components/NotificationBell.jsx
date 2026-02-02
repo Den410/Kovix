@@ -1,175 +1,216 @@
-import React, { useState, useEffect } from 'react';
-import { HubConnectionBuilder } from '@microsoft/signalr';
+import { useState, useEffect } from 'react';
+import { HubConnectionBuilder, HubConnectionState } from '@microsoft/signalr';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useFriends } from '../contexts/FriendsContext';
-import { FiBell } from 'react-icons/fi';
+import { notificationsAPI, friendsAPI } from '../services/api'; 
+import { FiBell, FiTrash2, FiCheck, FiX } from 'react-icons/fi';
+import { Button } from 'react-bootstrap';
 import '../style/NotificationBell.css';
 
 const API_BASE_URL = 'http://localhost:5096';
 
 function NotificationBell() {
-    const { user } = useAuth(); 
-    const { incomingRequests, requestCount, refreshRequests } = useFriends(); 
+    const { user } = useAuth();
+    const { incomingRequests, requestCount, refreshRequests } = useFriends();
 
-    const [notifications, setNotifications] = useState([]);
+    const [simpleNotifications, setSimpleNotifications] = useState([]);
     const [connection, setConnection] = useState(null);
     const [isOpen, setIsOpen] = useState(false);
-    
+
     const navigate = useNavigate();
-    const location = useLocation(); 
+    const location = useLocation();
 
     useEffect(() => {
-        if ((isOpen || location.pathname) && user) {
+        if (user) {
             refreshRequests();
+            loadNotifications(); 
         }
-    }, [isOpen, location.pathname, user, refreshRequests]);
+    }, [user, requestCount]);
+
+    const loadNotifications = async () => {
+        try {
+            const res = await notificationsAPI.getAll();
+            setSimpleNotifications(res.data);
+        } catch (e) { console.error(e); }
+    };
 
     useEffect(() => {
         if (!user) return;
-
         const newConnection = new HubConnectionBuilder()
-            .withUrl(`${API_BASE_URL}/notificationHub`, {
-                accessTokenFactory: () => localStorage.getItem('token')
-            })
+            .withUrl(`${API_BASE_URL}/notificationHub`, { accessTokenFactory: () => localStorage.getItem('token') })
             .withAutomaticReconnect()
             .build();
-
         setConnection(newConnection);
     }, [user]);
 
     useEffect(() => {
-        if (connection) {
-            connection.start()
-                .then(() => {
-                    console.log('Notification Hub Connected');
-                    connection.on('ReceiveNotification', (notification) => {
-                        if (notification.message.includes("friend") || notification.message.includes("друзі")) {
-                            refreshRequests();
-                        }
-                        setNotifications(prev => [notification, ...prev]);
-                    });
-                })
-                .catch(err => console.error('Connection failed: ', err));
+        if (connection && connection.state === HubConnectionState.Disconnected) {
+            connection.start().then(() => {
+                connection.on('ReceiveNotification', (note) => {
+                    if (note.message.toLowerCase().includes("запит") || note.type === "FriendRequest") {
+                        refreshRequests();
+                    }
+                    const newNote = { ...note, createdAt: note.createdAt || new Date().toISOString() };
+                    setSimpleNotifications(prev => [newNote, ...prev]);
+                });
+            }).catch(console.error);
         }
     }, [connection, refreshRequests]);
+   
+    const removeFriendRequestNotification = (requesterId) => {
+        setSimpleNotifications(prev =>
+            prev.filter(n =>
+                !(n.type === "FriendRequest" && (n.senderId === requesterId || n.fromUserId === requesterId))
+            )
+        );
+    };
 
-    const handleNotificationClick = (note) => {
-        setNotifications(prev => prev.filter(n => n !== note)); 
-        if (note.message && note.message.includes("Скарга")) {
-            navigate('/admin/reports');
-            setIsOpen(false); 
+    const handleAccept = async (e, requesterId) => {
+        e.stopPropagation();
+        try {
+            await friendsAPI.accept(requesterId);
+
+            removeFriendRequestNotification(requesterId);
+
+            refreshRequests();
+        } catch (e) {
+            console.error(e);
         }
     };
 
-    const handleFriendRequestClick = () => {
-        navigate('/profile');
+
+   const handleReject = async (e, requesterId) => {
+        e.stopPropagation();
+        try {
+            await friendsAPI.remove(requesterId);
+
+            removeFriendRequestNotification(requesterId);
+
+            refreshRequests();
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
+
+    const handleDeleteNotification = async (e, id) => {
+        e.stopPropagation();
+        try {
+            await notificationsAPI.delete(id);
+            setSimpleNotifications(prev => prev.filter(n => n.id !== id));
+        } catch (error) { console.error(error); }
+    };
+
+    const handleClearAll = async () => {
+        try {
+            await notificationsAPI.clear();
+            setSimpleNotifications([]);
+        } catch (e) { console.error(e); }
+    };
+
+    const goToProfile = (userId) => {
+        navigate(`/users/${userId}`);
         setIsOpen(false);
     };
 
-    const totalCount = notifications.length + requestCount;
+    const handleNotificationClick = (note) => {
+        if (note.fromUserId || note.senderId) {
+             goToProfile(note.fromUserId || note.senderId);
+        }
+    };
+
+    const totalCount = incomingRequests.length + simpleNotifications.length;
 
     return (
         <div className="position-relative">
-           <button
-                className="btn position-relative p-0 border-0 notification-btn"
-                onClick={() => setIsOpen(!isOpen)}
-            >
-                <FiBell className="bell-icon solid" />
-
-                {totalCount > 0 && (
-                    <span className="badge-counter">
-                        {totalCount}
-                    </span>
-                )}
+            <button className="btn position-relative p-0 border-0 notification-btn" onClick={() => setIsOpen(!isOpen)}>
+                <FiBell className={`bell-icon ${totalCount > 0 ? 'text-primary' : ''}`} style={{ fontSize: '1.5rem', color: 'var(--text-main)' }} />
+                {totalCount > 0 && <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style={{ fontSize: '0.6rem' }}>{totalCount}</span>}
             </button>
 
             {isOpen && (
-                <div 
-                    className="card position-absolute end-0 mt-2 shadow" 
-                    style={{ 
-                        width: '350px', 
-                        zIndex: 1000,
-                        backgroundColor: 'var(--bg-card)', 
-                        color: 'var(--text-main)',
-                        border: '1px solid var(--border-color)'
-                    }}
-                >
-                    <div 
-                        className="card-header fw-bold"
-                        style={{
-                            backgroundColor: 'var(--bg-panel)',
-                            color: 'var(--text-main)',
-                            borderBottom: '1px solid var(--border-color)'
-                        }}
-                    >
-                        Сповіщення
+                <div className="card position-absolute end-0 mt-2 shadow" style={{ width: '350px', zIndex: 1050, backgroundColor: 'var(--bg-card)', color: 'var(--text-main)', border: '1px solid var(--border-color)' }}>
+                    <div className="card-header fw-bold d-flex justify-content-between align-items-center" style={{ backgroundColor: 'var(--bg-panel)', borderBottom: '1px solid var(--border-color)' }}>
+                        <span>Сповіщення</span>
+                        {simpleNotifications.length > 0 && <button onClick={handleClearAll} className="btn btn-link btn-sm p-0 text-decoration-none text-muted" style={{fontSize:'0.8rem'}}>Очистити все</button>}
                     </div>
-                    
-                    <ul className="list-group list-group-flush" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+
+                    <div className="list-group list-group-flush" style={{ maxHeight: '400px', overflowY: 'auto' }}>
                         
-                        {totalCount === 0 && (
-                            <li 
-                                className="list-group-item text-center"
-                                style={{
-                                    backgroundColor: 'var(--bg-card)',
-                                    color: 'var(--text-muted)',
-                                    borderBottom: '1px solid var(--border-color)'
-                                }}
+                        {incomingRequests.length > 0 && (
+                            <div className="p-2 bg-light bg-opacity-10 border-bottom border-secondary">
+                                <small className="text-uppercase fw-bold text-primary ms-2" style={{fontSize:'0.7rem'}}>Запити в друзі</small>
+                            </div>
+                        )}
+                        
+                        {incomingRequests.map(req => (
+                            <div 
+                                key={`req-${req.id}`} 
+                                className="list-group-item p-3 list-group-item-action" 
+                                style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-main)', borderBottom: '1px solid var(--border-color)', cursor: 'pointer' }}
+                                onClick={() => goToProfile(req.id)}
                             >
-                                Немає нових сповіщень
-                            </li>
+                                <div className="d-flex align-items-center gap-2 mb-2">
+                                    <div className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style={{ width: 32, height: 32 }}>
+                                        {req.username[0].toUpperCase()}
+                                    </div>
+                                    <div className="lh-1">
+                                        <div className="fw-bold">{req.username}</div>
+                                        <small className="text-muted">хоче додати вас у друзі</small>
+                                    </div>
+                                </div>
+                                <div className="d-flex gap-2 mt-2">
+                                    <Button size="sm" variant="success" className="flex-grow-1 d-flex align-items-center justify-content-center gap-1" onClick={(e) => handleAccept(e, req.id)}>
+                                        <FiCheck /> Прийняти
+                                    </Button>
+                                    <Button size="sm" variant="outline-danger" className="flex-grow-1 d-flex align-items-center justify-content-center gap-1" onClick={(e) => handleReject(e, req.id)}>
+                                        <FiX /> Відхилити
+                                    </Button>
+                                </div>
+                            </div>
+                        ))}
+
+                        {simpleNotifications.length > 0 && incomingRequests.length > 0 && (
+                             <div className="p-2 bg-light bg-opacity-10 border-bottom border-secondary mt-2">
+                                <small className="text-uppercase fw-bold text-muted ms-2" style={{fontSize:'0.7rem'}}>Інше</small>
+                            </div>
                         )}
 
-                        {incomingRequests.map(req => (
-                            <li 
-                                key={`friend-${req.id}`} 
-                                className="list-group-item" 
-                                style={{ 
-                                    cursor: 'pointer',
-                                    backgroundColor: 'var(--bg-card)', 
-                                    color: 'var(--text-main)',
-                                    borderBottom: '1px solid var(--border-color)'
-                                }}
-                                onClick={handleFriendRequestClick} 
-                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-secondary)'}
-                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-card)'}
-                            >
-                                <div className="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <small className="fw-bold text-primary">👤 Запит у друзі</small>
-                                        <div className="small">Від: {req.username}</div>
-                                    </div>
-                                    <span className="badge bg-primary rounded-pill">Переглянути</span>
-                                </div>
-                            </li>
-                        ))}
+                        {simpleNotifications.map((note) => {
+                            if (note.message.toLowerCase().includes("запит у друзі") && incomingRequests.some(r => note.message.includes(r.username))) return null;
 
-                        {notifications.map((note, index) => (
-                            <li 
-                                key={`note-${index}`} 
-                                className="list-group-item"
-                                style={{ 
-                                    cursor: 'pointer',
-                                    backgroundColor: 'var(--bg-card)',
-                                    color: 'var(--text-main)',
-                                    borderBottom: '1px solid var(--border-color)'
-                                }}
-                                onClick={() => handleNotificationClick(note)} 
-                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-secondary)'}
-                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-card)'}
-                            >
-                                <div className="d-flex flex-column">
-                                    <small>{note.message}</small>
-                                    {note.message.includes("Скарга") && (
-                                        <div className="text-end mt-1">
-                                            <span className="badge bg-danger" style={{fontSize: '0.6rem'}}>Деталі</span>
-                                        </div>
+                            const isClickable = !!(note.fromUserId || note.senderId);
+
+                            return (
+                                <div 
+                                    key={note.id || Math.random()} 
+                                    className={`list-group-item d-flex justify-content-between align-items-start p-3 ${isClickable ? 'list-group-item-action' : ''}`}
+                                    style={{ 
+                                        backgroundColor: 'var(--bg-card)', 
+                                        color: 'var(--text-main)', 
+                                        borderBottom: '1px solid var(--border-color)', 
+                                        cursor: isClickable ? 'pointer' : 'default' 
+                                    }}
+                                    onClick={() => isClickable && handleNotificationClick(note)}
+                                >
+                                    <div>
+                                        <div className="small">{note.message}</div>
+                                        <small className="text-muted" style={{fontSize:'0.7rem'}}>
+                                            {new Date(note.createdAt).toLocaleString()}
+                                        </small>
+                                    </div>
+                                    {note.id && (
+                                        <button className="btn btn-link text-danger p-0 ms-2" onClick={(e) => handleDeleteNotification(e, note.id)}>
+                                            <FiTrash2 />
+                                        </button>
                                     )}
                                 </div>
-                            </li>
-                        ))}
-                    </ul>
+                            )
+                        })}
+
+                        {totalCount === 0 && <div className="text-center py-4 text-muted">Сповіщень немає 🔕</div>}
+                    </div>
                 </div>
             )}
         </div>

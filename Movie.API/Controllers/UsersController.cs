@@ -106,7 +106,15 @@ namespace Movie.API.Controllers
         [HttpGet("{id}/profile")]
         public async Task<ActionResult<UserProfileDto>> GetUserProfile(int id)
         {
-            var user = await _context.Users
+            int? currentUserId = null;
+            if (User.Identity.IsAuthenticated)
+            {
+                var claimId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+                if (claimId != null) currentUserId = int.Parse(claimId.Value);
+            }
+
+            var userProfile = await _context.Users
+                .AsNoTracking()
                 .Where(u => u.Id == id)
                 .Select(u => new UserProfileDto
                 {
@@ -116,19 +124,117 @@ namespace Movie.API.Controllers
                     CreatedAt = u.CreatedAt,
                     IsBlocked = u.IsBlocked,
                     IsOnline = u.IsOnline,
-                    LastActive = u.LastActive
+                    LastActive = u.LastActive,
+
+                    FollowersCount = u.Followers.Count,
+                    FollowingCount = u.Following.Count,
+
+                    IsFollowingByMe = currentUserId.HasValue &&
+                                      u.Followers.Any(f => f.ObserverId == currentUserId)
                 })
                 .FirstOrDefaultAsync();
 
-            if (user == null)
+            if (userProfile == null)
                 return NotFound();
 
-            return Ok(user);
+            return Ok(userProfile);
         }
 
         private bool UserExists(int id)
         {
             return _context.Users.Any(e => e.Id == id);
+        }
+
+        [HttpPost("{id}/follow")]
+        [Authorize]
+        public async Task<IActionResult> FollowUser(int id)
+        {
+            var currentUserId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+
+            if (currentUserId == id) return BadRequest("Не можна підписатися на самого себе");
+
+            var existing = await _context.Set<UserFollow>()
+                .FirstOrDefaultAsync(f => f.ObserverId == currentUserId && f.TargetId == id);
+
+            if (existing != null) return BadRequest("Вже підписані");
+
+            var follow = new UserFollow
+            {
+                ObserverId = currentUserId,
+                TargetId = id
+            };
+
+            _context.Add(follow);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Підписано успішно" });
+        }
+
+        [HttpDelete("{id}/unfollow")]
+        [Authorize]
+        public async Task<IActionResult> UnfollowUser(int id)
+        {
+            var currentUserId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+
+            var follow = await _context.Set<UserFollow>()
+                .FirstOrDefaultAsync(f => f.ObserverId == currentUserId && f.TargetId == id);
+
+            if (follow == null) return NotFound("Підписку не знайдено");
+
+            _context.Remove(follow);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Відписано успішно" });
+        }
+
+        [HttpGet("{id}/followers")]
+        public async Task<ActionResult<List<UserShortDto>>> GetFollowers(int id)
+        {
+            int? currentUserId = null;
+            if (User.Identity.IsAuthenticated)
+            {
+                currentUserId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+            }
+
+            var followers = await _context.Set<UserFollow>()
+                .Where(f => f.TargetId == id)
+                .Include(f => f.Observer)
+                .Select(f => new UserShortDto
+                {
+                    Id = f.Observer.Id,
+                    Username = f.Observer.Username,
+                    AvatarUrl = f.Observer.AvatarUrl,
+                    IsFollowing = currentUserId.HasValue &&
+                                  _context.Set<UserFollow>().Any(x => x.ObserverId == currentUserId && x.TargetId == f.Observer.Id)
+                })
+                .ToListAsync();
+
+            return Ok(followers);
+        }
+
+        [HttpGet("{id}/following")]
+        public async Task<ActionResult<List<UserShortDto>>> GetFollowing(int id)
+        {
+            int? currentUserId = null;
+            if (User.Identity.IsAuthenticated)
+            {
+                currentUserId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+            }
+
+            var following = await _context.Set<UserFollow>()
+                .Where(f => f.ObserverId == id)
+                .Include(f => f.Target)
+                .Select(f => new UserShortDto
+                {
+                    Id = f.Target.Id,
+                    Username = f.Target.Username,
+                    AvatarUrl = f.Target.AvatarUrl,
+                    IsFollowing = currentUserId.HasValue &&
+                                  _context.Set<UserFollow>().Any(x => x.ObserverId == currentUserId && x.TargetId == f.Target.Id)
+                })
+                .ToListAsync();
+
+            return Ok(following);
         }
     }
 }

@@ -292,5 +292,84 @@ namespace Movie.API.Controllers
             return Ok(new { message = "Пароль успішно змінено!" });
         }
 
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto model)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == model.Email);
+
+            var responseMessage = new { message = "Якщо такий Email існує, ми відправили інструкції." };
+
+            if (user == null)
+                return Ok(responseMessage);
+
+            if (user.ExternalProvider == "Google")
+            {
+                string googleBody = $@"
+            <h1>Спосіб входу в Kovix</h1>
+            <p>Привіт, {user.Username}!</p>
+            <p>Ви надіслали запит на зміну пароля, але ваш акаунт зареєстровано через <strong>Google</strong>.</p>
+            <p>Вам не потрібен пароль. Просто натисніть кнопку 'Увійти через Google' на сайті.</p>
+            <br>
+            <a href='http://localhost:5173/login'>Перейти до входу</a>";
+
+                try
+                {
+                    await _emailService.SendEmailAsync(user.Email, "Нагадування про вхід - Kovix", googleBody);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Email send failed: {ex.Message}");
+                }
+
+                return Ok(responseMessage);
+            }
+
+            var token = Guid.NewGuid().ToString();
+
+            user.PasswordResetToken = token;
+            user.PasswordResetTokenExpires = DateTime.UtcNow.AddHours(1); 
+
+            await _context.SaveChangesAsync();
+
+            var callbackUrl = $"http://localhost:5173/reset-password?email={user.Email}&token={token}";
+
+            string resetBody = $@"
+        <h1>Відновлення паролю</h1>
+        <p>Натисніть на посилання нижче, щоб створити новий пароль:</p>
+        <a href='{callbackUrl}'>Скинути пароль</a>
+        <p>Посилання дійсне 1 годину.</p>";
+
+            try
+            {
+                await _emailService.SendEmailAsync(user.Email, "Скидання паролю - Kovix", resetBody);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Email send failed: {ex.Message}");
+            }
+
+            return Ok(responseMessage);
+        }
+
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto model)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u =>
+                u.Email == model.Email &&
+                u.PasswordResetToken == model.Token &&
+                u.PasswordResetTokenExpires > DateTime.UtcNow);
+
+            if (user == null)
+                return BadRequest("Посилання недійсне або термін дії закінчився.");
+
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(model.NewPassword);
+
+            user.PasswordResetToken = null;
+            user.PasswordResetTokenExpires = null;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Пароль успішно змінено! Тепер ви можете увійти." });
+        }
     }
 }

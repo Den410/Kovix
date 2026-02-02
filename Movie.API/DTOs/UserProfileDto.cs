@@ -9,5 +9,8 @@
         public bool IsOnline { get; set; }
         public DateTime? LastActive { get; set; }
         public DateTime CreatedAt { get; set; }
+        public int FollowersCount { get; set; }
+        public int FollowingCount { get; set; }
+        public bool IsFollowingByMe { get; set; }
     }
 }
