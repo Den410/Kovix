@@ -464,6 +464,7 @@ namespace Movie.API.Controllers
                     Title = h.Movie.Title,
                     PosterUrl = h.Movie.PosterUrl,
                     Year = h.Movie.Year,
+                    Description = h.Movie.Description,
                     AverageRating = h.Movie.AverageRating,
                     Genre = h.Movie.Genre
                 })
