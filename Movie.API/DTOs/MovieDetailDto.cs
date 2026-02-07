@@ -10,11 +10,13 @@
         public string? Director { get; set; }
         public string? PosterUrl { get; set; }
         public string? TrailerUrl { get; set; }
-
+        public bool IsSeries { get; set; }
         public double AverageRating { get; set; }
         public int TotalReviews { get; set; }
         public Dictionary<string, int> ReactionCounts { get; set; } = new Dictionary<string, int>();
         public int? CurrentUserVote { get; set; } 
         public int? CurrentUserEmotion { get; set; }
+        public string? Type { get; set; } 
+        public List<EpisodeDto> Episodes { get; set; } = new List<EpisodeDto>();
     }
 }

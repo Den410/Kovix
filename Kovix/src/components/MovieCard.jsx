@@ -14,13 +14,25 @@ function MovieCard({ movie, disableLink = false, hideMeta = false, isNew = false
 
   const CardContent = (
     <Card className="h-100 shadow-sm movie-card">
-      <div className="movie-card-img-wrapper">
-         {isNew && (
-            <div className="new-badge">
-              <span className="new-badge-dot" />
-              Новинка
-            </div>
-          )}
+      <div className="movie-card-img-wrapper position-relative"> 
+        
+        {isNew && (
+          <div className="new-badge">
+            <span className="new-badge-dot" />
+            Новинка
+          </div>
+        )}
+
+        {movie.isSeries && (
+            <Badge 
+                bg="primary" 
+                className="position-absolute top-0 start-0 m-2 shadow-sm" 
+                style={{ zIndex: 2 }}
+            >
+                📺 Серіал
+            </Badge>
+        )}
+
         <Card.Img
           variant="top"
           src={movie.posterUrl || 'https://via.placeholder.com/300x450'}

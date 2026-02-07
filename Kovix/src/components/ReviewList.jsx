@@ -68,11 +68,18 @@ function ReviewList({ reviews, onReviewUpdated }) {
     }
   };
 
-  if (!reviews || reviews.length === 0) {
+  if (reviews.length === 0) {
     return (
-      <Card className="text-center p-4 shadow-sm border-0 bg-light">
-        <p className="text-muted mb-0">Ще немає відгуків. Будьте першим!</p>
-      </Card>
+      <div 
+        className="text-center p-5 mt-3 rounded border"
+        style={{ 
+            backgroundColor: 'var(--bg-card)', 
+            borderColor: 'var(--border-color)', 
+            color: 'var(--text-secondary)' 
+        }}
+      >
+        <p className="mb-0 fs-5">Ще немає відгуків. Будьте першим!</p>
+      </div>
     );
   }
 

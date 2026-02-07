@@ -33,6 +33,20 @@ export const moviesAPI = {
   update: (id, movieData) => api.put(`/movies/${id}`, movieData),
   delete: (id) => api.delete(`/movies/${id}`),
   react: (movieId, type) => api.post(`/movies/${movieId}/react?type=${type}`),
+  rateEpisode: (episodeId, rating) => {
+        return api.post(`/movies/rate-episode/${episodeId}?rating=${rating}`);
+    },
+  addEpisode: (movieId, data) => {
+        return api.post(`/movies/${movieId}/add-episode`, data);
+    },
+
+  updateEpisode: (id, data) => {
+      return api.put(`/movies/episodes/${id}`, data);
+    },
+
+  deleteEpisode: (id) => {
+      return api.delete(`/movies/episodes/${id}`);
+    }
 };
 
 export const reviewsAPI = {

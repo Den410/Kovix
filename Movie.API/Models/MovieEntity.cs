@@ -10,10 +10,12 @@ namespace Movie.API.Models
         public string? Director { get; set; }
         public string? PosterUrl { get; set; }
         public string? TrailerUrl { get; set; }
+        public bool IsSeries { get; set; }
         public double AverageRating { get; set; }
         public int TotalReviews { get; set; }
         public DateTime CreatedAt { get; set; }
         public ICollection<Review>? Reviews { get; set; }
         public ICollection<Watchlist>? Watchlists { get; set; }
+        public ICollection<Episode> Episodes { get; set; } = new List<Episode>();
     }
 }

@@ -26,6 +26,9 @@ namespace Movie.API.Data
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<MessageReadStatus> MessageReadStatuses { get; set; }
         public DbSet<WatchHistoryItem> WatchHistory { get; set; }
+        public DbSet<Episode> Episodes { get; set; }
+        public DbSet<UserEpisodeRating> UserEpisodeRatings { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -175,6 +178,33 @@ namespace Movie.API.Data
                 .WithMany(u => u.Followers)
                 .HasForeignKey(u => u.TargetId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<UserEpisodeRating>()
+                .HasIndex(r => new { r.UserId, r.EpisodeId })
+                .IsUnique();
+
+            modelBuilder.Entity<Episode>()
+                .HasIndex(e => new { e.MovieId, e.SeasonNumber, e.EpisodeNumber })
+                .IsUnique();
+
+
+            modelBuilder.Entity<Episode>()
+                .HasOne(e => e.Movie)
+                .WithMany(m => m.Episodes)
+                .HasForeignKey(e => e.MovieId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<UserEpisodeRating>()
+                .HasOne(r => r.Episode)
+                .WithMany(e => e.Ratings)
+                .HasForeignKey(r => r.EpisodeId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<UserEpisodeRating>()
+                .HasOne(r => r.User)
+                .WithMany()
+                .HasForeignKey(r => r.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
 
 
             modelBuilder.Entity<MovieEntity>().HasData(

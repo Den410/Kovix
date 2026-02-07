@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Movie.API.Data;
 
@@ -11,9 +12,11 @@ using Movie.API.Data;
 namespace Movie.API.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260207102405_AddEpisodes")]
+    partial class AddEpisodes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -79,7 +82,7 @@ namespace Movie.API.Migrations
                     b.HasIndex("MovieId", "SeasonNumber", "EpisodeNumber")
                         .IsUnique();
 
-                    b.ToTable("Episodes");
+                    b.ToTable("Episode");
                 });
 
             modelBuilder.Entity("Movie.API.Models.Friendship", b =>
@@ -221,9 +224,6 @@ namespace Movie.API.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.Property<bool>("IsSeries")
-                        .HasColumnType("bit");
-
                     b.Property<string>("PosterUrl")
                         .HasColumnType("nvarchar(max)");
 
@@ -254,7 +254,6 @@ namespace Movie.API.Migrations
                             Description = "A thief who steals corporate secrets through the use of dream-sharing technology is given the inverse task of planting an idea into the mind of a C.E.O.",
                             Director = "Christopher Nolan",
                             Genre = "Sci-Fi",
-                            IsSeries = false,
                             PosterUrl = "https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_.jpg",
                             Title = "Inception",
                             TotalReviews = 2,
@@ -269,7 +268,6 @@ namespace Movie.API.Migrations
                             Description = "Two imprisoned men bond over a number of years, finding solace and eventual redemption through acts of common decency.",
                             Director = "Frank Darabont",
                             Genre = "Drama",
-                            IsSeries = false,
                             PosterUrl = "https://image.tmdb.org/t/p/original/q6y0Go1tsGEsmtFryDOJo3dEmqu.jpg",
                             Title = "The Shawshank Redemption",
                             TotalReviews = 1,
@@ -284,7 +282,6 @@ namespace Movie.API.Migrations
                             Description = "Paul Atreides unites with Chani and the Fremen while on a warpath of revenge against the conspirators who destroyed his family.",
                             Director = "Denis Villeneuve",
                             Genre = "Sci-Fi",
-                            IsSeries = false,
                             PosterUrl = "https://image.tmdb.org/t/p/original/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg",
                             Title = "Dune: Part Two",
                             TotalReviews = 1,
@@ -299,7 +296,6 @@ namespace Movie.API.Migrations
                             Description = "When the menace known as the Joker wreaks havoc and chaos on the people of Gotham, Batman must accept one of the greatest psychological and physical tests of his ability to fight injustice.",
                             Director = "Christopher Nolan",
                             Genre = "Action",
-                            IsSeries = false,
                             PosterUrl = "https://image.tmdb.org/t/p/original/qJ2tW6WMUDux911r6m7haRef0WH.jpg",
                             Title = "The Dark Knight",
                             TotalReviews = 0,

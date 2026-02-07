@@ -117,6 +117,7 @@ namespace Movie.API.Controllers
 
             var movie = await _context.Movies
                 .Include(m => m.Reviews)
+                .Include(m => m.Episodes)
                 .FirstOrDefaultAsync(m => m.Id == id);
 
             if (movie == null) return NotFound();
@@ -128,6 +129,28 @@ namespace Movie.API.Controllers
             var myReactions = currentUserId.HasValue
                 ? reactions.Where(r => r.UserId == currentUserId.Value).ToList()
                 : new List<MovieReaction>();
+
+            var episodeDtos = new List<EpisodeDto>();
+            if (movie.Episodes != null && movie.Episodes.Any())
+            {
+                var userRatings = currentUserId.HasValue
+                    ? await _context.UserEpisodeRatings
+                        .Where(r => r.UserId == currentUserId && r.Episode.MovieId == id)
+                        .ToDictionaryAsync(r => r.EpisodeId, r => r.Rating)
+                    : new Dictionary<int, int>();
+
+                episodeDtos = movie.Episodes.Select(e => new EpisodeDto
+                {
+                    Id = e.Id,
+                    SeasonNumber = e.SeasonNumber,
+                    EpisodeNumber = e.EpisodeNumber,
+                    Title = e.Title,
+                    AverageRating = e.AverageRating,
+                    CurrentUserRating = userRatings.ContainsKey(e.Id) ? userRatings[e.Id] : null
+                })
+                .OrderBy(e => e.SeasonNumber).ThenBy(e => e.EpisodeNumber)
+                .ToList();
+            }
 
             var dto = new MovieDetailDto
             {
@@ -150,7 +173,10 @@ namespace Movie.API.Controllers
                     .FirstOrDefault(r => r.Type == ReactionType.Like || r.Type == ReactionType.Dislike)?.Type,
 
                 CurrentUserEmotion = (int?)myReactions
-                    .FirstOrDefault(r => r.Type != ReactionType.Like && r.Type != ReactionType.Dislike)?.Type
+                    .FirstOrDefault(r => r.Type != ReactionType.Like && r.Type != ReactionType.Dislike)?.Type,
+                IsSeries = movie.IsSeries,
+                Type = movie.IsSeries ? "Series" : "Movie",
+                Episodes = episodeDtos
             };
 
             return Ok(dto);
@@ -274,6 +300,7 @@ namespace Movie.API.Controllers
                 Director = dto.Director,
                 PosterUrl = dto.PosterUrl,
                 TrailerUrl = dto.TrailerUrl,
+                IsSeries = dto.IsSeries,
                 CreatedAt = DateTime.UtcNow,
                 AverageRating = 0,
                 TotalReviews = 0
@@ -299,6 +326,7 @@ namespace Movie.API.Controllers
             movie.Director = dto.Director;
             movie.PosterUrl = dto.PosterUrl;
             movie.TrailerUrl = dto.TrailerUrl;
+            movie.IsSeries = dto.IsSeries;
 
             await _context.SaveChangesAsync();
 
@@ -471,6 +499,93 @@ namespace Movie.API.Controllers
                 .ToListAsync();
 
             return Ok(movies);
+        }
+
+        [HttpPost("rate-episode/{episodeId}")]
+        [Authorize]
+        public async Task<IActionResult> RateEpisode(int episodeId, [FromQuery] int rating)
+        {
+            if (rating < 1 || rating > 10) return BadRequest("Оцінка має бути від 1 до 10");
+
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+
+            var episode = await _context.Episodes.FindAsync(episodeId);
+            if (episode == null) return NotFound("Епізод не знайдено");
+
+            var userRating = await _context.UserEpisodeRatings
+                .FirstOrDefaultAsync(r => r.UserId == userId && r.EpisodeId == episodeId);
+
+            if (userRating != null)
+            {
+                userRating.Rating = rating;
+            }
+            else
+            {
+                _context.UserEpisodeRatings.Add(new UserEpisodeRating
+                {
+                    UserId = userId,
+                    EpisodeId = episodeId,
+                    Rating = rating
+                });
+            }
+
+            await _context.SaveChangesAsync();
+
+            var avg = await _context.UserEpisodeRatings
+                .Where(r => r.EpisodeId == episodeId)
+                .AverageAsync(r => r.Rating);
+
+            episode.AverageRating = avg;
+            await _context.SaveChangesAsync();
+
+            return Ok(new { averageRating = avg });
+        }
+
+        [HttpPost("{movieId}/add-episode")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> AddEpisode(int movieId, [FromBody] EpisodeDto dto)
+        {
+            var episode = new Episode
+            {
+                MovieId = movieId,
+                SeasonNumber = dto.SeasonNumber,
+                EpisodeNumber = dto.EpisodeNumber,
+                Title = dto.Title,
+                AverageRating = 0
+            };
+            _context.Episodes.Add(episode);
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
+        [HttpPut("episodes/{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UpdateEpisode(int id, [FromBody] EpisodeDto dto)
+        {
+            var episode = await _context.Episodes.FindAsync(id);
+            if (episode == null) return NotFound("Епізод не знайдено");
+
+            episode.SeasonNumber = dto.SeasonNumber;
+            episode.EpisodeNumber = dto.EpisodeNumber;
+            episode.Title = dto.Title ?? string.Empty;
+
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
+        [HttpDelete("episodes/{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DeleteEpisode(int id)
+        {
+            var episode = await _context.Episodes.FindAsync(id);
+            if (episode == null) return NotFound("Епізод не знайдено");
+
+            var ratings = _context.UserEpisodeRatings.Where(r => r.EpisodeId == id);
+            _context.UserEpisodeRatings.RemoveRange(ratings);
+
+            _context.Episodes.Remove(episode);
+            await _context.SaveChangesAsync();
+            return NoContent();
         }
     }
 }
