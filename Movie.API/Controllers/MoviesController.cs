@@ -509,36 +509,60 @@ namespace Movie.API.Controllers
 
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
 
-            var episode = await _context.Episodes.FindAsync(episodeId);
+            var episode = await _context.Episodes
+                .Include(e => e.Movie)
+                .FirstOrDefaultAsync(e => e.Id == episodeId);
+
             if (episode == null) return NotFound("Епізод не знайдено");
 
-            var userRating = await _context.UserEpisodeRatings
+            var currentRating = await _context.UserEpisodeRatings
                 .FirstOrDefaultAsync(r => r.UserId == userId && r.EpisodeId == episodeId);
 
-            if (userRating != null)
+
+            if (currentRating != null)
             {
-                userRating.Rating = rating;
+                currentRating.Rating = rating; 
             }
             else
             {
-                _context.UserEpisodeRatings.Add(new UserEpisodeRating
+                currentRating = new UserEpisodeRating
                 {
                     UserId = userId,
                     EpisodeId = episodeId,
                     Rating = rating
-                });
+                };
+                _context.UserEpisodeRatings.Add(currentRating);
+            }
+
+            await _context.SaveChangesAsync(); 
+
+            var episodeAvg = await _context.UserEpisodeRatings
+                .Where(r => r.EpisodeId == episodeId)
+                .AverageAsync(r => r.Rating);
+
+            episode.AverageRating = episodeAvg;
+
+            var allEpisodesRatings = await _context.Episodes
+                .Where(e => e.MovieId == episode.MovieId)
+                .Select(e => e.Id == episodeId ? episodeAvg : e.AverageRating)
+                .ToListAsync();
+
+            var activeEpisodes = allEpisodesRatings.Where(r => r > 0).ToList();
+
+            double seriesAvg = 0;
+            if (activeEpisodes.Any())
+            {
+                seriesAvg = activeEpisodes.Average();
+            }
+
+            if (episode.Movie != null)
+            {
+                episode.Movie.AverageRating = seriesAvg;
             }
 
             await _context.SaveChangesAsync();
 
-            var avg = await _context.UserEpisodeRatings
-                .Where(r => r.EpisodeId == episodeId)
-                .AverageAsync(r => r.Rating);
-
-            episode.AverageRating = avg;
-            await _context.SaveChangesAsync();
-
-            return Ok(new { averageRating = avg });
+            return Ok(new { episodeAverage = episodeAvg, seriesAverage = seriesAvg });
         }
 
         [HttpPost("{movieId}/add-episode")]

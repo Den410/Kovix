@@ -1,41 +1,45 @@
-import React, { useState } from 'react';
-import { Card, Form, Button, Alert } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
-import { reviewsAPI } from '../services/api';
+import { useState } from 'react';
+import { Form, Button, Alert } from 'react-bootstrap';
+import { reviewsAPI } from '../services/api'; 
 import { useAuth } from '../contexts/AuthContext';
 
 function ReviewForm({ movieId, onSubmit }) {
-  const [rating, setRating] = useState(10); 
-  const [comment, setComment] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  
   const { user } = useAuth();
+  
+  const [comment, setComment] = useState(''); 
+  const [rating, setRating] = useState(10);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!comment.trim()) return;
+
+    setLoading(true);
     setError('');
 
-    if (!comment.trim()) {
-      setError('Будь ласка, напишіть коментар');
-      return;
-    }
-
     try {
-      setLoading(true);
       await reviewsAPI.create({
-        movieId: parseInt(movieId),
-        rating: parseInt(rating),
-        comment: comment.trim()
+        movieId,
+        comment: comment, 
+        rating: parseInt(rating)
       });
-      
+
       setComment('');
       setRating(10);
+
+      if (onSubmit) {
+        await onSubmit(); 
+      }
+
+    } catch (err) {
+      console.error(err);
       
-      if (onSubmit) onSubmit(); 
-      
-    } catch (error) {
-      setError(error.response?.data || 'Помилка при додаванні відгуку. Можливо, ви вже залишили відгук.');
+      if (err.response && err.response.data) {
+          setError(typeof err.response.data === 'string' ? err.response.data : 'Помилка збереження');
+      } else {
+          setError('Не вдалося додати відгук. Спробуйте пізніше.');
+      }
     } finally {
       setLoading(false);
     }
@@ -43,54 +47,58 @@ function ReviewForm({ movieId, onSubmit }) {
 
   if (!user) {
     return (
-      <Card className="mb-4 text-center p-4">
-        <Card.Body>
-          <h5>Хочете залишити відгук?</h5>
-          <p className="text-muted">Тільки зареєстровані користувачі можуть писати рецензії.</p>
-          <Link to="/login" className="btn btn-primary">Увійти в акаунт</Link>
-        </Card.Body>
-      </Card>
+        <div className="p-3 mb-4 rounded text-center border" style={{ borderColor: 'var(--border-color)', backgroundColor: 'var(--bg-card)' }}>
+            <span className="text-muted">Увійдіть, щоб залишити відгук.</span>
+        </div>
     );
   }
 
   return (
-    <Card className="mb-4 shadow-sm">
-      <Card.Body>
-        <h5>✍️ Додати відгук</h5>
-        {error && <Alert variant="danger" className="mt-2">{error}</Alert>}
-        
-        <Form onSubmit={handleSubmit} className="mt-3">
-          <Form.Group className="mb-3">
-            <Form.Label className="fw-bold">Ваша оцінка: <span className="text-warning h5">{rating}/10</span></Form.Label>
-            <Form.Range
-              min="1"
-              max="10"
-              value={rating}
-              onChange={(e) => setRating(e.target.value)}
-            />
-          </Form.Group>
+    <div className="mb-4">
+      {error && <Alert variant="danger">{error}</Alert>}
+      
+      <Form onSubmit={handleSubmit}>
+        <Form.Group className="mb-3">
+          <Form.Label>Ваша оцінка</Form.Label>
+          <Form.Select 
+            value={rating} 
+            onChange={(e) => setRating(e.target.value)}
+            style={{ 
+                maxWidth: '150px',
+                backgroundColor: 'var(--bg-main)', 
+                color: 'var(--text-main)',
+                borderColor: 'var(--border-color)',
+                cursor: 'pointer'
+            }}
+          >
+            {[10, 9, 8, 7, 6, 5, 4, 3, 2, 1].map(num => (
+              <option key={num} value={num}>{num} ⭐</option>
+            ))}
+          </Form.Select>
+        </Form.Group>
 
-          <Form.Group className="mb-3">
-            <Form.Label>Коментар</Form.Label>
-            <Form.Control
-              as="textarea"
-              rows={3}
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              placeholder="Що ви думаєте про цей фільм?"
-              disabled={loading}
-              required
-            />
-          </Form.Group>
+        <Form.Group className="mb-3">
+          <Form.Label>Ваш відгук</Form.Label>
+          <Form.Control
+            as="textarea"
+            rows={3}
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            placeholder="Поділіться враженнями..."
+            required
+            style={{ 
+                backgroundColor: 'var(--bg-main)', 
+                color: 'var(--text-main)',
+                borderColor: 'var(--border-color)'
+            }}
+          />
+        </Form.Group>
 
-          <div className="d-flex justify-content-end">
-            <Button type="submit" variant="success" disabled={loading}>
-              {loading ? 'Публікація...' : 'Опублікувати відгук'}
-            </Button>
-          </div>
-        </Form>
-      </Card.Body>
-    </Card>
+        <Button variant="primary" type="submit" disabled={loading}>
+          {loading ? 'Відправка...' : 'Залишити відгук'}
+        </Button>
+      </Form>
+    </div>
   );
 }
 

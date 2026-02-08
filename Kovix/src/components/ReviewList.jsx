@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Card, Badge, Button, Form } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -101,7 +101,15 @@ function ReviewList({ reviews, onReviewUpdated }) {
           review.currentUserVote === -1 ? 'danger' : 'outline-secondary';
 
         return (
-          <Card key={review.id} className="mb-3 shadow-sm border-0">
+          <Card 
+            key={review.id} 
+            className="mb-3 shadow-sm"
+            style={{ 
+                backgroundColor: 'var(--bg-card)', 
+                color: 'var(--text-main)',
+                border: '1px solid var(--border-color)'
+            }}
+          >
             <Card.Body>
               <div className="d-flex justify-content-between align-items-start mb-2">
                 <div className="d-flex align-items-center">
@@ -131,12 +139,13 @@ function ReviewList({ reviews, onReviewUpdated }) {
                   <div>
                     <Link
                       to={profileUrl}
-                      className="fw-bold text-decoration-none text-dark"
+                      className="fw-bold text-decoration-none"
+                      style={{ color: 'var(--text-main)' }}
                     >
                       {review.userName || 'Користувач'}
                     </Link>
                     <br />
-                    <small className="text-muted">
+                    <small style={{ color: 'var(--text-secondary)' }}>
                       {formatDate(review.createdAt)}
                     </small>
                   </div>
@@ -158,7 +167,7 @@ function ReviewList({ reviews, onReviewUpdated }) {
               </div>
 
               {isEditing ? (
-                <div className="mt-3 p-3 bg-light rounded">
+                <div className="mt-3 p-3 rounded" style={{ border: '1px solid var(--border-color)' }}>
                   <Form.Group className="mb-3">
                     <Form.Label>
                       Змінити оцінку:{' '}
@@ -188,6 +197,11 @@ function ReviewList({ reviews, onReviewUpdated }) {
                           comment: e.target.value,
                         })
                       }
+                      style={{ 
+                          backgroundColor: 'var(--bg-main)', 
+                          color: 'var(--text-main)',
+                          borderColor: 'var(--border-color)'
+                      }}
                     />
                   </Form.Group>
 
@@ -214,7 +228,7 @@ function ReviewList({ reviews, onReviewUpdated }) {
                 </Card.Text>
               )}
 
-              <div className="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+              <div className="d-flex justify-content-between align-items-center mt-3 pt-2" style={{ borderTop: '1px solid var(--border-color)' }}>
                 <div className="d-flex gap-2">
                   <Button
                     variant={likeVariant}

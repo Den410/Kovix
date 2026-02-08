@@ -49,6 +49,7 @@ function MovieDetailPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showReactionPopup, setShowReactionPopup] = useState(false);
   const popupRef = useRef(null);
+  const userReview = user ? reviews.find(r => r.userId === user.id) : null;
 
   useEffect(() => {
     loadMovieData();
@@ -105,8 +106,21 @@ function MovieDetailPage() {
   };
 
   const handleReviewChange = async () => {
-    const reviewsRes = await reviewsAPI.getByMovie(id);
-    setReviews(reviewsRes.data);
+    try {
+      const reviewsRes = await reviewsAPI.getByMovie(id);
+      setReviews(reviewsRes.data);
+
+      const movieRes = await moviesAPI.getById(id);
+      
+      setMovie(prev => ({
+          ...prev,
+          averageRating: movieRes.data.averageRating,
+          totalReviews: movieRes.data.totalReviews,
+      }));
+      
+    } catch (error) {
+      console.error("Не вдалося оновити відгуки:", error);
+    }
   };
 
   const handleReaction = async (typeId) => {
@@ -178,12 +192,36 @@ function MovieDetailPage() {
       }
   };
 
-  const handleRateEpisode = async (episodeId, rating) => {
+const handleRateEpisode = async (episodeId, ratingValue) => {
+      const rating = parseInt(ratingValue);
+
+      setMovie(prevMovie => ({
+          ...prevMovie,
+          episodes: prevMovie.episodes.map(ep => 
+              ep.id === episodeId 
+                  ? { ...ep, currentUserRating: rating } 
+                  : ep
+          )
+      }));
+
       try {
-          await moviesAPI.rateEpisode(episodeId, rating); 
-          loadMovieData(); 
+          const response = await moviesAPI.rateEpisode(episodeId, rating);
+          
+          const { episodeAverage, seriesAverage } = response.data;
+
+          setMovie(prevMovie => ({
+              ...prevMovie,
+              averageRating: seriesAverage, 
+              episodes: prevMovie.episodes.map(ep => 
+                  ep.id === episodeId 
+                      ? { ...ep, averageRating: episodeAverage, currentUserRating: rating }
+                      : ep
+              )
+          }));
+
       } catch (error) {
           console.error("Помилка оцінки:", error);
+          alert("Не вдалося зберегти оцінку");
       }
   };
 
@@ -478,10 +516,16 @@ function MovieDetailPage() {
         </Col>
       </Row>
 
-      <Row>
+     <Row>
         <Col>
           <h3 className="mb-4 border-bottom pb-2" style={{ borderColor: 'var(--border-color)' }}>Відгуки глядачів</h3>
-          <ReviewForm movieId={movie.id} onSubmit={handleReviewChange} />
+          {userReview ? (
+             <div className="alert alert-info mb-4" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-color)', color: 'var(--text-main)' }}>
+                Ви вже залишили відгук до цього фільму/серіалу. Дякуємо! 
+             </div>
+          ) : (
+             <ReviewForm movieId={movie.id} onSubmit={handleReviewChange} />
+          )}
           <ReviewList reviews={reviews} onReviewUpdated={handleReviewChange} />
         </Col>
       </Row>
