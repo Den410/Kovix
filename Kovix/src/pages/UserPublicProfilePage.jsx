@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { usersAPI, reviewsAPI, friendsAPI } from '../services/api'; 
 import { useFriends } from '../contexts/FriendsContext';
 import { formatLastSeen } from '../utils/dateUtils';
+import defaultPosterImg from '../assets/NotFoundPoster.webp';
 
 const API_BASE_URL = 'http://localhost:5096';
 
@@ -69,6 +70,15 @@ function UserPublicProfilePage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const getImageUrl = (url, fallback = defaultPosterImg) => {
+      if (!url) return fallback;
+      if (url.startsWith('http')) return url;
+      
+      const cleanPath = url.replace(/\\/g, '/');
+      const separator = cleanPath.startsWith('/') ? '' : '/';
+      return `${API_BASE_URL}${separator}${cleanPath}`;
   };
 
   const handleFollowToggle = async () => {
@@ -185,10 +195,11 @@ function UserPublicProfilePage() {
         <div className="d-flex justify-content-center mb-3">
           {userProfile.avatarUrl ? (
             <img
-              src={`${API_BASE_URL}${userProfile.avatarUrl}`}
+              src={getImageUrl(userProfile.avatarUrl)}
               alt={userProfile.username}
               className="rounded-circle border"
               style={{ width: 120, height: 120, objectFit: 'cover', borderColor: 'var(--border-color)' }}
+              onError={(e) => {e.target.src = 'https://via.placeholder.com/120'}}
             />
           ) : (
             <div
@@ -296,17 +307,23 @@ function UserPublicProfilePage() {
                             <Card className="shadow-sm border-0" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-main)', border: '1px solid var(--border-color)' }}>
                                 <Card.Body>
                                     <div className="d-flex gap-3">
-                                        <Link to={`/movie/${review.movieId}`} className="flex-shrink-0">
-                                            <img src={review.moviePosterUrl || 'https://via.placeholder.com/60x90'} alt="Poster" className="rounded" style={{width: 60, height: 90, objectFit: 'cover'}}/>
-                                        </Link>
-                                        <div className="flex-grow-1">
-                                            <div className="d-flex justify-content-between">
-                                                <h6 className="mb-1"><Link to={`/movie/${review.movieId}`} className="text-decoration-none fw-bold" style={{ color: 'var(--text-main)' }}>{review.movieTitle}</Link></h6>
-                                                <Badge bg={review.rating >= 8 ? 'success' : 'warning'}>{review.rating}/10</Badge>
+                                            <Link to={`/movie/${review.movieId}`} className="flex-shrink-0">
+                                                <img 
+                                                    src={getImageUrl(review.moviePosterUrl || review.posterUrl)} 
+                                                    alt="Poster" 
+                                                    className="rounded" 
+                                                    style={{width: 60, height: 90, objectFit: 'cover'}}
+                                                    onError={(e) => {e.target.src = defaultPosterImg}}
+                                                />
+                                            </Link>
+                                            <div className="flex-grow-1">
+                                                <div className="d-flex justify-content-between">
+                                                    <h6 className="mb-1"><Link to={`/movie/${review.movieId}`} className="text-decoration-none fw-bold" style={{ color: 'var(--text-main)' }}>{review.movieTitle}</Link></h6>
+                                                    <Badge bg={review.rating >= 8 ? 'success' : 'warning'}>{review.rating}/10</Badge>
+                                                </div>
+                                                <small style={{ color: 'var(--text-secondary)' }}>{formatDate(review.createdAt)}</small>
+                                                <p className="mt-2 mb-2" style={{ whiteSpace: 'pre-wrap', opacity: 0.9 }}>{review.comment}</p>
                                             </div>
-                                            <small style={{ color: 'var(--text-secondary)' }}>{formatDate(review.createdAt)}</small>
-                                            <p className="mt-2 mb-2" style={{ whiteSpace: 'pre-wrap', opacity: 0.9 }}>{review.comment}</p>
-                                        </div>
                                     </div>
                                 </Card.Body>
                             </Card>
@@ -335,9 +352,9 @@ function UserPublicProfilePage() {
                             >
                                 <div className="d-flex align-items-center gap-2">
                                     <img 
-                                        src={u.avatarUrl ? `${API_BASE_URL}${u.avatarUrl}` : '/default-avatar.png'} 
-                                        style={{width: 40, height: 40, borderRadius: '50%', objectFit: 'cover'}}
-                                        onError={(e)=>{e.target.src='https://via.placeholder.com/40'}}
+                                            src={getImageUrl(u.avatarUrl, 'https://via.placeholder.com/40')} 
+                                            style={{width: 40, height: 40, borderRadius: '50%', objectFit: 'cover'}}
+                                            onError={(e)=>{e.target.src='https://via.placeholder.com/40'}}
                                     />
                                     <Link 
                                         to={`/users/${u.id}`} 

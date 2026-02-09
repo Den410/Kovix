@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Navbar, Nav, Container, Button, NavDropdown } from 'react-bootstrap';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -192,6 +192,7 @@ function Navigation() {
                     </>
                   )}
 
+                  <NavDropdown.Item as={Link} to="/my-reviews">📝 Мої відгуки</NavDropdown.Item>
 
                   <NavDropdown.Divider />
                   <NavDropdown.Item onClick={handleLogout} className="text-danger">

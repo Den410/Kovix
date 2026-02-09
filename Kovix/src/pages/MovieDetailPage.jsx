@@ -7,8 +7,10 @@ import ReviewForm from '../components/ReviewForm';
 import ReviewList from '../components/ReviewList';
 import AdminMovieModal from '../components/AdminMovieModal';
 import AdminEpisodeModal from '../components/AdminEpisodeModal';
+import defaultPosterImg from '../assets/NotFoundPoster.webp';
 import '../style/App.css'; 
 
+const API_BASE_URL = 'http://localhost:5096';
 const LIKE_ID = 6;
 const DISLIKE_ID = 7;
 
@@ -257,8 +259,20 @@ const handleRateEpisode = async (episodeId, ratingValue) => {
       )}
 
       <Row>
-        <Col md={4} className="mb-4">
-          <img src={movie.posterUrl} alt={movie.title} className="img-fluid rounded shadow w-100" style={{objectFit: 'cover'}} />
+       <Col md={4} className="mb-4">
+          <img 
+            src={
+                movie.posterUrl 
+                    ? (movie.posterUrl.startsWith('http') 
+                        ? movie.posterUrl 
+                        : `${API_BASE_URL}${movie.posterUrl}`) 
+                    : defaultPosterImg
+            } 
+            alt={movie.title} 
+            className="img-fluid rounded shadow w-100" 
+            style={{objectFit: 'cover'}} 
+            onError={(e) => { e.target.src = defaultPosterImg; }}
+          />
         </Col>
 
         <Col md={8}>

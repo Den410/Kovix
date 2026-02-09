@@ -6,6 +6,8 @@ using Movie.API.DTOs;
 using Movie.API.Models;
 using Movie.API.Models.Enums;
 using System.Security.Claims;
+using System.Net.Http;
+using Microsoft.AspNetCore.Hosting;
 
 namespace Movie.API.Controllers
 {
@@ -14,10 +16,12 @@ namespace Movie.API.Controllers
     public class MoviesController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IWebHostEnvironment _env;
 
-        public MoviesController(ApplicationDbContext context)
+        public MoviesController(ApplicationDbContext context, IWebHostEnvironment env)
         {
             _context = context;
+            _env = env;
         }
 
         [HttpGet]
@@ -286,6 +290,52 @@ namespace Movie.API.Controllers
             return Ok(movies);
         }
 
+        private async Task<string?> DownloadAndSaveImage(string imageUrl)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(imageUrl))
+                    return null;
+
+                if (imageUrl.StartsWith("/"))
+                    return imageUrl;
+
+                using var handler = new HttpClientHandler
+                {
+                    AllowAutoRedirect = true
+                };
+
+                using var client = new HttpClient(handler);
+
+                client.DefaultRequestHeaders.Add("User-Agent",
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
+
+                var response = await client.GetAsync(imageUrl);
+
+                if (!response.IsSuccessStatusCode)
+                    return null;
+
+                var imageBytes = await response.Content.ReadAsByteArrayAsync();
+
+                var fileName = $"{Guid.NewGuid()}.jpg";
+
+                var uploadsFolder = Path.Combine(_env.WebRootPath, "uploads");
+                if (!Directory.Exists(uploadsFolder))
+                    Directory.CreateDirectory(uploadsFolder);
+
+                var filePath = Path.Combine(uploadsFolder, fileName);
+
+                await System.IO.File.WriteAllBytesAsync(filePath, imageBytes);
+
+                return $"/uploads/{fileName}";
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Не вдалося завантажити картинку: {ex.Message}");
+                return null;
+            }
+        }
+
 
         [HttpPost]
         [Authorize(Roles = "Admin")]
@@ -298,10 +348,10 @@ namespace Movie.API.Controllers
                 Year = dto.Year,
                 Genre = dto.Genre,
                 Director = dto.Director,
-                PosterUrl = dto.PosterUrl,
                 TrailerUrl = dto.TrailerUrl,
                 IsSeries = dto.IsSeries,
                 CreatedAt = DateTime.UtcNow,
+                PosterUrl = await DownloadAndSaveImage(dto.PosterUrl) ?? dto.PosterUrl,
                 AverageRating = 0,
                 TotalReviews = 0
             };
@@ -324,9 +374,19 @@ namespace Movie.API.Controllers
             movie.Year = dto.Year;
             movie.Genre = dto.Genre;
             movie.Director = dto.Director;
-            movie.PosterUrl = dto.PosterUrl;
             movie.TrailerUrl = dto.TrailerUrl;
             movie.IsSeries = dto.IsSeries;
+            if (movie.PosterUrl != dto.PosterUrl)
+            {
+                if (!string.IsNullOrEmpty(dto.PosterUrl) && dto.PosterUrl.StartsWith("http"))
+                {
+                    movie.PosterUrl = await DownloadAndSaveImage(dto.PosterUrl);
+                }
+                else
+                {
+                    movie.PosterUrl = dto.PosterUrl;
+                }
+            }
 
             await _context.SaveChangesAsync();
 

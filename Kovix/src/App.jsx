@@ -23,6 +23,7 @@ import HistoryPage from './pages/HistoryPage';
 import TopMoviesPage from './pages/TopMoviesPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
+import UserReviewsPage from './pages/UserReviewsPage';
 
 function App() {
   return (
@@ -45,6 +46,7 @@ function App() {
             <Route path="/top" element={<TopMoviesPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/my-reviews" element={<UserReviewsPage />} />
             <Route path="/chat" element={
                 <BlockedRoute>
                     <ChatPage />

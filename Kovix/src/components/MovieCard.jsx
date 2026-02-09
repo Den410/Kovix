@@ -1,6 +1,9 @@
 import { Card, Badge } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
+import defaultPosterImg from '../assets/NotFoundPoster.webp'; 
 import '../style/MovieCard.css';
+
+const API_BASE_URL = 'http://localhost:5096';
 
 function MovieCard({ movie, disableLink = false, hideMeta = false, isNew = false }) {
   const getRatingColor = (rating) => {
@@ -11,6 +14,15 @@ function MovieCard({ movie, disableLink = false, hideMeta = false, isNew = false
 
   const ratingValue = movie.averageRating || movie.rating || 0;
   const genresValue = movie.genre || movie.genres || '';
+
+  let imageUrl = defaultPosterImg;
+  if (movie.posterUrl) {
+      if (movie.posterUrl.startsWith('http')) {
+          imageUrl = movie.posterUrl; 
+      } else {
+          imageUrl = `${API_BASE_URL}${movie.posterUrl}`; 
+      }
+  }
 
   const CardContent = (
     <Card className="h-100 shadow-sm movie-card">
@@ -35,9 +47,10 @@ function MovieCard({ movie, disableLink = false, hideMeta = false, isNew = false
 
         <Card.Img
           variant="top"
-          src={movie.posterUrl || 'https://via.placeholder.com/300x450'}
+          src={imageUrl} 
           className="movie-card-img"
           alt={movie.title}
+          onError={(e) => { e.target.src = defaultPosterImg; }}
         />
 
         {!hideMeta && (

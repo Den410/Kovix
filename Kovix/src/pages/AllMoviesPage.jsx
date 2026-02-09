@@ -157,44 +157,40 @@ function AllMoviesPage() {
     let rawPoster = movie.posterUrl || movie.PosterUrl;
 
     if (rawPoster) {
-        rawPoster = rawPoster.replace(/\\/g, '/');
-
-        if (rawPoster.startsWith('http')) {
-            imageUrl = rawPoster;
-        } else {
-            const separator = rawPoster.startsWith('/') ? '' : '/';
-            imageUrl = `${API_BASE_URL}${separator}${rawPoster}`;
-        }
+       if (rawPoster.startsWith('http')) {
+           imageUrl = rawPoster;
+       } else {
+           const cleanPath = rawPoster.startsWith('/') ? rawPoster : `/${rawPoster}`;
+           imageUrl = `${API_BASE_URL}${cleanPath}`;
+       }
     }
 
     const ratingValue = movie.averageRating || movie.rating || 0;
 
     return (
         <Col key={movie.id} xs={12} className="mb-3">
-          <Card className="flex-row shadow-sm h-100 overflow-hidden" style={{ minHeight: '180px' }}>
+          <Card className="flex-row shadow-sm h-100 overflow-hidden" style={{ minHeight: '180px', backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-color)' }}>
             <div style={{ width: '150px', minWidth: '150px', position: 'relative', backgroundColor: '#e9ecef' }}>
-              <img 
-                src={imageUrl} 
-                alt={movie.title}
-                style={{ 
-                    width: '100%', 
-                    height: '100%', 
-                    objectFit: 'cover',
-                    display: 'block' 
-                }}
-                onError={(e) => { 
-                    if (e.target.src !== PLACEHOLDER_IMG) {
-                        e.target.src = PLACEHOLDER_IMG;
-                    }
-                }} 
-              />
+              <Link to={`/movie/${movie.id}`}>
+                  <img 
+                    src={imageUrl} 
+                    alt={movie.title}
+                    style={{ 
+                        width: '100%', 
+                        height: '100%', 
+                        objectFit: 'cover',
+                        display: 'block' 
+                    }}
+                    onError={(e) => { e.target.src = PLACEHOLDER_IMG; }} 
+                  />
+              </Link>
             </div>
             
             <Card.Body className="d-flex flex-column py-2">
               <div className="d-flex justify-content-between align-items-start">
                  <div>
                     <h5 className="mb-1">
-                        <Link to={`/movie/${movie.id}`} className="text-decoration-none text-dark fw-bold">
+                        <Link to={`/movie/${movie.id}`} className="text-decoration-none fw-bold" style={{ color: 'var(--text-main)' }}>
                             {movie.title}
                         </Link>
                     </h5>
@@ -250,12 +246,13 @@ function AllMoviesPage() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="shadow-none"
+                style={{ backgroundColor: 'var(--bg-main)', color: 'var(--text-main)', borderColor: 'var(--border-color)' }}
               />
               
               <Form.Select 
                 value={selectedYear} 
                 onChange={handleYearChange}
-                style={{ maxWidth: '150px', cursor: 'pointer' }}
+                style={{ maxWidth: '150px', cursor: 'pointer', backgroundColor: 'var(--bg-main)', color: 'var(--text-main)', borderColor: 'var(--border-color)' }}
               >
                   <option value="">Всі роки</option>
                   {availableYears.map(year => (
@@ -298,7 +295,7 @@ function AllMoviesPage() {
                       cursor: 'pointer', 
                       fontSize: '0.9rem', 
                       fontWeight: 'normal',
-                      backgroundColor: isActive ? 'var(--primary-color)' : 'var(--bg-card)',
+                      backgroundColor: isActive ? 'var(--primary-color)' : 'transparent',
                       color: isActive ? 'var(--btn-text)' : 'var(--text-main)',
                       borderColor: isActive ? 'var(--primary-color)' : 'var(--border-color)'
                   }}
@@ -326,7 +323,7 @@ function AllMoviesPage() {
                 size="sm" 
                 value={sortBy} 
                 onChange={handleSortChange} 
-                style={{ width: 'auto', fontWeight: 'bold', cursor: 'pointer' }}
+                style={{ width: 'auto', fontWeight: 'bold', cursor: 'pointer', backgroundColor: 'var(--bg-main)', color: 'var(--text-main)', borderColor: 'var(--border-color)' }}
                 className="shadow-none form-select-sm"
             >
                 {SORT_OPTIONS.map(opt => (

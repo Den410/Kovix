@@ -7,8 +7,8 @@
       "RelativeMoniker": "D:0:0:{036E119C-DEA9-129D-9002-5E21F1EDBCB3}|Movie.API\\Movie.API.csproj|solutionrelative:movie.api\\controllers\\moviescontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{036E119C-DEA9-129D-9002-5E21F1EDBCB3}|Movie.API\\Movie.API.csproj|c:\\\u043D\u0430\u0432\u0447\u0430\u043D\u043D\u044F\\\u043A\u0443\u0440\u0441\u043E\u0432\u0430 (\u043C\u043E\u0434\u0435\u043B\u044E\u0432\u0430\u043D\u043D\u044F)\\kovix\\movie.api\\data\\applicationdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{036E119C-DEA9-129D-9002-5E21F1EDBCB3}|Movie.API\\Movie.API.csproj|solutionrelative:movie.api\\data\\applicationdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{036E119C-DEA9-129D-9002-5E21F1EDBCB3}|Movie.API\\Movie.API.csproj|c:\\\u043D\u0430\u0432\u0447\u0430\u043D\u043D\u044F\\\u043A\u0443\u0440\u0441\u043E\u0432\u0430 (\u043C\u043E\u0434\u0435\u043B\u044E\u0432\u0430\u043D\u043D\u044F)\\kovix\\movie.api\\dtos\\reviewwithvotesdto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{036E119C-DEA9-129D-9002-5E21F1EDBCB3}|Movie.API\\Movie.API.csproj|solutionrelative:movie.api\\dtos\\reviewwithvotesdto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -23,14 +23,14 @@
             {
               "$type": "Document",
               "DocumentIndex": 1,
-              "Title": "ApplicationDbContext.cs",
-              "DocumentMoniker": "C:\\\u041D\u0430\u0432\u0447\u0430\u043D\u043D\u044F\\\u041A\u0443\u0440\u0441\u043E\u0432\u0430 (\u041C\u043E\u0434\u0435\u043B\u044E\u0432\u0430\u043D\u043D\u044F)\\Kovix\\Movie.API\\Data\\ApplicationDbContext.cs",
-              "RelativeDocumentMoniker": "Movie.API\\Data\\ApplicationDbContext.cs",
-              "ToolTip": "C:\\\u041D\u0430\u0432\u0447\u0430\u043D\u043D\u044F\\\u041A\u0443\u0440\u0441\u043E\u0432\u0430 (\u041C\u043E\u0434\u0435\u043B\u044E\u0432\u0430\u043D\u043D\u044F)\\Kovix\\Movie.API\\Data\\ApplicationDbContext.cs*",
-              "RelativeToolTip": "Movie.API\\Data\\ApplicationDbContext.cs*",
-              "ViewState": "AgIAAK8AAAAAAAAAAAAswM8AAAAAAAAAAAAAAA==",
+              "Title": "ReviewWithVotesDto.cs",
+              "DocumentMoniker": "C:\\\u041D\u0430\u0432\u0447\u0430\u043D\u043D\u044F\\\u041A\u0443\u0440\u0441\u043E\u0432\u0430 (\u041C\u043E\u0434\u0435\u043B\u044E\u0432\u0430\u043D\u043D\u044F)\\Kovix\\Movie.API\\DTOs\\ReviewWithVotesDto.cs",
+              "RelativeDocumentMoniker": "Movie.API\\DTOs\\ReviewWithVotesDto.cs",
+              "ToolTip": "C:\\\u041D\u0430\u0432\u0447\u0430\u043D\u043D\u044F\\\u041A\u0443\u0440\u0441\u043E\u0432\u0430 (\u041C\u043E\u0434\u0435\u043B\u044E\u0432\u0430\u043D\u043D\u044F)\\Kovix\\Movie.API\\DTOs\\ReviewWithVotesDto.cs",
+              "RelativeToolTip": "Movie.API\\DTOs\\ReviewWithVotesDto.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-02-08T08:30:38.674Z",
+              "WhenOpened": "2026-02-09T05:44:35.059Z",
               "EditorCaption": ""
             },
             {
@@ -41,7 +41,7 @@
               "RelativeDocumentMoniker": "Movie.API\\Controllers\\MoviesController.cs",
               "ToolTip": "C:\\\u041D\u0430\u0432\u0447\u0430\u043D\u043D\u044F\\\u041A\u0443\u0440\u0441\u043E\u0432\u0430 (\u041C\u043E\u0434\u0435\u043B\u044E\u0432\u0430\u043D\u043D\u044F)\\Kovix\\Movie.API\\Controllers\\MoviesController.cs*",
               "RelativeToolTip": "Movie.API\\Controllers\\MoviesController.cs*",
-              "ViewState": "AgIAAPkBAAAAAAAAAIA+wAcCAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAABoBAAAAAAAAAAAowFEBAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-02-08T08:19:56.811Z",
               "EditorCaption": ""
