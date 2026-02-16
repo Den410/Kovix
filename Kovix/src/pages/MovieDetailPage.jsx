@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Container, Row, Col, Badge, Spinner, Button, Form } from 'react-bootstrap';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { Container, Row, Col, Badge, Spinner, Button, Form, Card } from 'react-bootstrap';
 import { moviesAPI, reviewsAPI, watchlistAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import ReviewForm from '../components/ReviewForm';
@@ -527,6 +527,81 @@ const handleRateEpisode = async (episodeId, ratingValue) => {
                </div>
             </div>
           )}
+
+          {movie?.cast?.length > 0 && (
+                <div className="mb-5">
+                  <h3 className="mb-3 border-start border-4 border-primary ps-2">
+                    Акторський склад
+                  </h3>
+
+                  <div
+                    className="d-flex overflow-auto pb-3 gap-3"
+                    style={{ scrollbarWidth: 'thin', scrollBehavior: 'smooth' }}
+                  >
+                    {movie.cast.map((actor, index) => {
+                      const actorCard = (
+                        <Card className="h-100 border-0 shadow-sm bg-card movie-card-hover">
+                          <div
+                            style={{ height: '150px', overflow: 'hidden' }}
+                            className="rounded-top"
+                          >
+                            <Card.Img
+                              variant="top"
+                              src={
+                                actor?.photoUrl
+                                  ? actor.photoUrl.startsWith('http')
+                                    ? actor.photoUrl
+                                    : `http://localhost:5096${actor.photoUrl}`
+                                  : 'https://via.placeholder.com/120x150?text=No+Photo'
+                              }
+                              className="w-100 h-100 object-fit-cover"
+                              onError={(e) =>
+                                (e.target.src =
+                                  'https://via.placeholder.com/120x150?text=No+Photo')
+                              }
+                            />
+                          </div>
+
+                          <Card.Body className="p-2 text-center">
+                            <div
+                              className="fw-bold text-truncate text-main"
+                              style={{ fontSize: '0.9rem' }}
+                              title={actor?.name}
+                            >
+                              {actor?.name}
+                            </div>
+
+                            <div
+                              className="text-muted small text-truncate"
+                              title={actor?.role}
+                            >
+                              {actor?.role}
+                            </div>
+                          </Card.Body>
+                        </Card>
+                      );
+
+                      return actor?.actorId > 0 ? (
+                        <Link
+                          key={actor.actorId}
+                          to={`/actors/${actor.actorId}`}
+                          className="text-decoration-none"
+                          style={{ minWidth: '120px', maxWidth: '120px' }}
+                        >
+                          {actorCard}
+                        </Link>
+                      ) : (
+                        <div
+                          key={`${actor?.name}-${index}`}
+                          style={{ minWidth: '120px', maxWidth: '120px' }}
+                        >
+                          {actorCard}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
         </Col>
       </Row>
 

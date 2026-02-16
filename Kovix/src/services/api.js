@@ -46,7 +46,10 @@ export const moviesAPI = {
 
   deleteEpisode: (id) => {
       return api.delete(`/movies/episodes/${id}`);
-    }
+    },
+  
+  searchTmdb: (query) => api.get(`/movies/tmdb/search?query=${encodeURIComponent(query)}`),
+  getTmdbDetails: (tmdbId) => api.get(`/movies/tmdb/details/${tmdbId}`),
 };
 
 export const reviewsAPI = {
@@ -121,6 +124,14 @@ export const notificationsAPI = {
     getAll: () => api.get('/notifications'),
     delete: (id) => api.delete(`/notifications/${id}`),
     clear: () => api.delete('/notifications/clear'),
+};
+
+export const actorsAPI = {
+    getAll: () => api.get('/actors'),
+    getById: (id) => api.get(`/actors/${id}`),
+    create: (data) => api.post('/actors', data),
+    update: (id, data) => api.put(`/actors/${id}`, data),
+    delete: (id) => api.delete(`/actors/${id}`),
 };
 
 export default api;

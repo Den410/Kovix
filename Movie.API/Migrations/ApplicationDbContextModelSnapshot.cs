@@ -48,6 +48,31 @@ namespace Movie.API.Migrations
                     b.ToTable("ReviewVotes");
                 });
 
+            modelBuilder.Entity("Movie.API.Models.Actor", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Bio")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("BirthDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PhotoUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Actors");
+                });
+
             modelBuilder.Entity("Movie.API.Models.Episode", b =>
                 {
                     b.Property<int>("Id")
@@ -193,6 +218,27 @@ namespace Movie.API.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("MessageReadStatuses");
+                });
+
+            modelBuilder.Entity("Movie.API.Models.MovieActor", b =>
+                {
+                    b.Property<int>("MovieId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ActorId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Role")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("MovieId", "ActorId");
+
+                    b.HasIndex("ActorId");
+
+                    b.ToTable("MovieActors");
                 });
 
             modelBuilder.Entity("Movie.API.Models.MovieEntity", b =>
@@ -762,6 +808,25 @@ namespace Movie.API.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Movie.API.Models.MovieActor", b =>
+                {
+                    b.HasOne("Movie.API.Models.Actor", "Actor")
+                        .WithMany("MovieActors")
+                        .HasForeignKey("ActorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Movie.API.Models.MovieEntity", "Movie")
+                        .WithMany("MovieActors")
+                        .HasForeignKey("MovieId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Actor");
+
+                    b.Navigation("Movie");
+                });
+
             modelBuilder.Entity("Movie.API.Models.MovieReaction", b =>
                 {
                     b.HasOne("Movie.API.Models.User", "User")
@@ -923,6 +988,11 @@ namespace Movie.API.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Movie.API.Models.Actor", b =>
+                {
+                    b.Navigation("MovieActors");
+                });
+
             modelBuilder.Entity("Movie.API.Models.Episode", b =>
                 {
                     b.Navigation("Ratings");
@@ -936,6 +1006,8 @@ namespace Movie.API.Migrations
             modelBuilder.Entity("Movie.API.Models.MovieEntity", b =>
                 {
                     b.Navigation("Episodes");
+
+                    b.Navigation("MovieActors");
 
                     b.Navigation("Reviews");
 

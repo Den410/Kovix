@@ -5,9 +5,8 @@ using Movie.API.Data;
 using Movie.API.DTOs;
 using Movie.API.Models;
 using Movie.API.Models.Enums;
+using Movie.API.Models.TMdb;
 using System.Security.Claims;
-using System.Net.Http;
-using Microsoft.AspNetCore.Hosting;
 
 namespace Movie.API.Controllers
 {
@@ -17,6 +16,8 @@ namespace Movie.API.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IWebHostEnvironment _env;
+        private const string TMDB_API_KEY = "f797261e58f7c171a30e466ce870cfbe";
+
 
         public MoviesController(ApplicationDbContext context, IWebHostEnvironment env)
         {
@@ -122,6 +123,8 @@ namespace Movie.API.Controllers
             var movie = await _context.Movies
                 .Include(m => m.Reviews)
                 .Include(m => m.Episodes)
+                .Include(m => m.MovieActors)
+                    .ThenInclude(ma => ma.Actor)
                 .FirstOrDefaultAsync(m => m.Id == id);
 
             if (movie == null) return NotFound();
@@ -180,7 +183,15 @@ namespace Movie.API.Controllers
                     .FirstOrDefault(r => r.Type != ReactionType.Like && r.Type != ReactionType.Dislike)?.Type,
                 IsSeries = movie.IsSeries,
                 Type = movie.IsSeries ? "Series" : "Movie",
-                Episodes = episodeDtos
+                Episodes = episodeDtos,
+
+                Cast = movie.MovieActors.Select(ma => new CastDto
+                {
+                    ActorId = ma.ActorId,
+                    Name = ma.Actor.Name,
+                    Role = ma.Role,
+                    PhotoUrl = ma.Actor.PhotoUrl
+                }).ToList()
             };
 
             return Ok(dto);
@@ -339,8 +350,16 @@ namespace Movie.API.Controllers
 
         [HttpPost]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<MovieEntity>> Create(CreateMovieDto dto)
+        public async Task<ActionResult<MovieEntity>> Create(MovieDetailDto dto)
         {
+            var exists = await _context.Movies.AnyAsync(m =>
+             m.Title.ToLower() == dto.Title.ToLower() &&
+             m.Year == dto.Year);
+
+            if (exists)
+            {
+                return BadRequest($"Фільм '{dto.Title}' ({dto.Year}) вже існує в базі даних!");
+            }
             var movie = new MovieEntity
             {
                 Title = dto.Title,
@@ -353,7 +372,12 @@ namespace Movie.API.Controllers
                 CreatedAt = DateTime.UtcNow,
                 PosterUrl = await DownloadAndSaveImage(dto.PosterUrl) ?? dto.PosterUrl,
                 AverageRating = 0,
-                TotalReviews = 0
+                TotalReviews = 0,
+                MovieActors = dto.Cast?.Select(c => new MovieActor
+                {
+                    ActorId = c.ActorId,
+                    Role = c.Role
+                }).ToList()
             };
 
             _context.Movies.Add(movie);
@@ -364,9 +388,12 @@ namespace Movie.API.Controllers
 
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Update(int id, CreateMovieDto dto)
+        public async Task<IActionResult> Update(int id, MovieDetailDto dto)
         {
-            var movie = await _context.Movies.FindAsync(id);
+            var movie = await _context.Movies
+                .Include(m => m.MovieActors)
+                .FirstOrDefaultAsync(m => m.Id == id);
+
             if (movie == null) return NotFound();
 
             movie.Title = dto.Title;
@@ -376,6 +403,7 @@ namespace Movie.API.Controllers
             movie.Director = dto.Director;
             movie.TrailerUrl = dto.TrailerUrl;
             movie.IsSeries = dto.IsSeries;
+
             if (movie.PosterUrl != dto.PosterUrl)
             {
                 if (!string.IsNullOrEmpty(dto.PosterUrl) && dto.PosterUrl.StartsWith("http"))
@@ -385,6 +413,21 @@ namespace Movie.API.Controllers
                 else
                 {
                     movie.PosterUrl = dto.PosterUrl;
+                }
+            }
+
+            if (dto.Cast != null)
+            {
+                _context.MovieActors.RemoveRange(movie.MovieActors);
+
+                foreach (var castMember in dto.Cast)
+                {
+                    _context.MovieActors.Add(new MovieActor
+                    {
+                        MovieId = movie.Id,
+                        ActorId = castMember.ActorId,
+                        Role = castMember.Role
+                    });
                 }
             }
 
@@ -418,7 +461,7 @@ namespace Movie.API.Controllers
             }
 
             var movies = await query
-                .OrderByDescending(m => m.CreatedAt) 
+                .OrderByDescending(m => m.CreatedAt)
                 .Take(10)
                .Select(m => new MovieDetailDto
                {
@@ -475,8 +518,8 @@ namespace Movie.API.Controllers
             if (string.IsNullOrEmpty(userSettings)) return new List<string>();
 
             return userSettings.ToLower().Split(',', StringSplitOptions.RemoveEmptyEntries)
-                               .Select(g => g.Trim())
-                               .ToList();
+                                       .Select(g => g.Trim())
+                                       .ToList();
         }
 
         [HttpGet("random")]
@@ -540,7 +583,7 @@ namespace Movie.API.Controllers
             var historyQuery = _context.WatchHistory
                 .AsNoTracking()
                 .Where(h => h.UserId == userId)
-                .OrderByDescending(h => h.ViewedAt) 
+                .OrderByDescending(h => h.ViewedAt)
                 .Include(h => h.Movie);
 
             var movies = await historyQuery
@@ -581,7 +624,7 @@ namespace Movie.API.Controllers
 
             if (currentRating != null)
             {
-                currentRating.Rating = rating; 
+                currentRating.Rating = rating;
             }
             else
             {
@@ -594,7 +637,7 @@ namespace Movie.API.Controllers
                 _context.UserEpisodeRatings.Add(currentRating);
             }
 
-            await _context.SaveChangesAsync(); 
+            await _context.SaveChangesAsync();
 
             var episodeAvg = await _context.UserEpisodeRatings
                 .Where(r => r.EpisodeId == episodeId)
@@ -670,6 +713,89 @@ namespace Movie.API.Controllers
             _context.Episodes.Remove(episode);
             await _context.SaveChangesAsync();
             return NoContent();
+        }
+
+        [HttpGet("tmdb/search")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<List<TmdbSearchResultDto>>> SearchTmdb([FromQuery] string query)
+        {
+            if (string.IsNullOrEmpty(query)) return BadRequest();
+
+            using var client = new HttpClient();
+            var searchUrl = $"https://api.themoviedb.org/3/search/movie?api_key={TMDB_API_KEY}&query={Uri.EscapeDataString(query)}";
+
+            var searchResponse = await client.GetFromJsonAsync<TmdbSearchResult>(searchUrl);
+
+            if (searchResponse?.Results == null) return Ok(new List<TmdbSearchResultDto>());
+
+            var results = searchResponse.Results.Select(m => new TmdbSearchResultDto
+            {
+                TmdbId = m.Id,
+                Title = m.Title,
+                ReleaseDate = m.Release_Date, 
+                PosterUrl = !string.IsNullOrEmpty(m.Poster_Path)
+                    ? $"https://image.tmdb.org/t/p/w92{m.Poster_Path}"
+                    : null
+            }).ToList();
+
+            return Ok(results);
+        }
+
+        [HttpGet("tmdb/details/{tmdbId}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<MovieDetailDto>> GetTmdbDetails(int tmdbId)
+        {
+            using var client = new HttpClient();
+
+            var url = $"https://api.themoviedb.org/3/movie/{tmdbId}?api_key={TMDB_API_KEY}&append_to_response=credits";
+            var response = await client.GetAsync(url);
+
+            if (!response.IsSuccessStatusCode) return NotFound("Film not found in TMDB");
+
+            var json = await response.Content.ReadAsStringAsync();
+
+            dynamic data = Newtonsoft.Json.JsonConvert.DeserializeObject(json);
+
+            var movieDto = new MovieDetailDto
+            {
+                Title = data.title,
+                Description = data.overview,
+                PosterUrl = data.poster_path != null ? $"https://image.tmdb.org/t/p/original{data.poster_path}" : null,
+                Year = 0, 
+                Cast = new List<CastDto>()
+            };
+
+            string releaseDate = data.release_date;
+            if (DateTime.TryParse(releaseDate, out DateTime date))
+            {
+                movieDto.Year = date.Year;
+            }
+
+            if (data.credits != null && data.credits.cast != null)
+            {
+                foreach (var person in data.credits.cast)
+                {
+                    if (movieDto.Cast.Count >= 10) break;
+
+                    string name = person.name;
+                    string role = person.character;
+                    string profilePath = person.profile_path;
+
+                    var existingActor = await _context.Actors.FirstOrDefaultAsync(a => a.Name == name);
+
+                    movieDto.Cast.Add(new CastDto
+                    {
+                        ActorId = existingActor?.Id ?? 0, 
+                        Name = name,
+                        Role = role,
+                        PhotoUrl = !string.IsNullOrEmpty(profilePath)
+                            ? $"https://image.tmdb.org/t/p/w500{profilePath}"
+                            : null
+                    });
+                }
+            }
+
+            return Ok(movieDto);
         }
     }
 }

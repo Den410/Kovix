@@ -28,6 +28,8 @@ namespace Movie.API.Data
         public DbSet<WatchHistoryItem> WatchHistory { get; set; }
         public DbSet<Episode> Episodes { get; set; }
         public DbSet<UserEpisodeRating> UserEpisodeRatings { get; set; }
+        public DbSet<Actor> Actors { get; set; }    
+        public DbSet<MovieActor> MovieActors { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -205,6 +207,19 @@ namespace Movie.API.Data
                 .WithMany()
                 .HasForeignKey(r => r.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<MovieActor>()
+                .HasKey(ma => new { ma.MovieId, ma.ActorId }); 
+
+            modelBuilder.Entity<MovieActor>()
+                .HasOne(ma => ma.Movie)
+                .WithMany(m => m.MovieActors)
+                .HasForeignKey(ma => ma.MovieId);
+
+            modelBuilder.Entity<MovieActor>()
+                .HasOne(ma => ma.Actor)
+                .WithMany(a => a.MovieActors)
+                .HasForeignKey(ma => ma.ActorId);
 
 
             modelBuilder.Entity<MovieEntity>().HasData(

@@ -1,4 +1,3 @@
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext'; 
 import Navigation from './components/Navigation';
@@ -24,6 +23,8 @@ import TopMoviesPage from './pages/TopMoviesPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import UserReviewsPage from './pages/UserReviewsPage';
+import ActorsPage from './pages/ActorsPage';
+import ActorDetailPage from './pages/ActorDetailPage';
 
 function App() {
   return (
@@ -47,6 +48,8 @@ function App() {
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/my-reviews" element={<UserReviewsPage />} />
+            <Route path="/actors" element={<ActorsPage />} />
+            <Route path="/actors/:id" element={<ActorDetailPage />} />
             <Route path="/chat" element={
                 <BlockedRoute>
                     <ChatPage />

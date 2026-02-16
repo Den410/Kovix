@@ -17,5 +17,6 @@ namespace Movie.API.Models
         public ICollection<Review>? Reviews { get; set; }
         public ICollection<Watchlist>? Watchlists { get; set; }
         public ICollection<Episode> Episodes { get; set; } = new List<Episode>();
+        public List<MovieActor> MovieActors { get; set; } = new List<MovieActor>();
     }
 }
