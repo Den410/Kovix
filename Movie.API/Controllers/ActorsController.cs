@@ -71,6 +71,14 @@ namespace Movie.API.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ActorDto>> CreateActor(ActorDto actorDto)
         {
+            var existingActor = await _context.Actors
+             .FirstOrDefaultAsync(a => a.Name.ToLower() == actorDto.Name.ToLower());
+
+            if (existingActor != null)
+            {
+                return Ok(existingActor);
+            }
+
             string localPhotoUrl = await DownloadAndSaveImage(actorDto.PhotoUrl);
 
             var actor = new Actor

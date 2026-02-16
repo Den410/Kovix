@@ -8,9 +8,11 @@ import ReviewList from '../components/ReviewList';
 import AdminMovieModal from '../components/AdminMovieModal';
 import AdminEpisodeModal from '../components/AdminEpisodeModal';
 import defaultPosterImg from '../assets/NotFoundPoster.webp';
-import '../style/App.css'; 
+import defaultAvatarImg from '../assets/NotFoundAvatar.png';
+import '../style/App.css';
 
 const API_BASE_URL = 'http://localhost:5096';
+const DEFAULT_AVATAR = defaultAvatarImg
 const LIKE_ID = 6;
 const DISLIKE_ID = 7;
 
@@ -38,7 +40,7 @@ function MovieDetailPage() {
   const [movie, setMovie] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
-  
+
   const [watchStatus, setWatchStatus] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
 
@@ -69,11 +71,11 @@ function MovieDetailPage() {
 
   useEffect(() => {
     if (user && !user.isBlocked) {
-        const timer = setTimeout(() => {
-            moviesAPI.addToHistory(id).catch(err => console.error("History error", err));
-        }, 2000);
+      const timer = setTimeout(() => {
+        moviesAPI.addToHistory(id).catch(err => console.error("History error", err));
+      }, 2000);
 
-        return () => clearTimeout(timer);
+      return () => clearTimeout(timer);
     }
   }, [id, user]);
 
@@ -91,10 +93,10 @@ function MovieDetailPage() {
           const watchlistRes = await watchlistAPI.getStatus(id);
           setWatchStatus(watchlistRes.data.status);
           setIsFavorite(watchlistRes.data.isFavorite);
-          
+
           if (movieRes.data.isSeries) {
-             setCurrentSeason(watchlistRes.data.season || 1);
-             setCurrentEpisode(watchlistRes.data.episode || 1);
+            setCurrentSeason(watchlistRes.data.season || 1);
+            setCurrentEpisode(watchlistRes.data.episode || 1);
           }
         } catch (err) {
           console.error("Помилка завантаження списку", err);
@@ -113,13 +115,13 @@ function MovieDetailPage() {
       setReviews(reviewsRes.data);
 
       const movieRes = await moviesAPI.getById(id);
-      
+
       setMovie(prev => ({
-          ...prev,
-          averageRating: movieRes.data.averageRating,
-          totalReviews: movieRes.data.totalReviews,
+        ...prev,
+        averageRating: movieRes.data.averageRating,
+        totalReviews: movieRes.data.totalReviews,
       }));
-      
+
     } catch (error) {
       console.error("Не вдалося оновити відгуки:", error);
     }
@@ -137,8 +139,8 @@ function MovieDetailPage() {
     }
   };
 
-  const handleWatchlistUpdate = async ({ 
-    newStatus = watchStatus, 
+  const handleWatchlistUpdate = async ({
+    newStatus = watchStatus,
     newFavorite = isFavorite,
     newSeason = currentSeason,
     newEpisode = currentEpisode
@@ -173,112 +175,112 @@ function MovieDetailPage() {
   };
 
   const handleEditEpisode = (episode) => {
-      setSelectedEpisode(episode);
-      setShowEpisodeModal(true);
+    setSelectedEpisode(episode);
+    setShowEpisodeModal(true);
   };
 
   const handleAddEpisode = () => {
-      setSelectedEpisode(null); 
-      setShowEpisodeModal(true);
+    setSelectedEpisode(null);
+    setShowEpisodeModal(true);
   };
 
   const handleDeleteEpisode = async (episodeId) => {
-      if(window.confirm("Видалити цей епізод?")) {
-          try {
-              await moviesAPI.deleteEpisode(episodeId);
-              loadMovieData();
-          } catch (error) {
-              console.error(error);
-              alert("Не вдалося видалити епізод");
-          }
+    if (window.confirm("Видалити цей епізод?")) {
+      try {
+        await moviesAPI.deleteEpisode(episodeId);
+        loadMovieData();
+      } catch (error) {
+        console.error(error);
+        alert("Не вдалося видалити епізод");
       }
+    }
   };
 
-const handleRateEpisode = async (episodeId, ratingValue) => {
-      const rating = parseInt(ratingValue);
+  const handleRateEpisode = async (episodeId, ratingValue) => {
+    const rating = parseInt(ratingValue);
+
+    setMovie(prevMovie => ({
+      ...prevMovie,
+      episodes: prevMovie.episodes.map(ep =>
+        ep.id === episodeId
+          ? { ...ep, currentUserRating: rating }
+          : ep
+      )
+    }));
+
+    try {
+      const response = await moviesAPI.rateEpisode(episodeId, rating);
+
+      const { episodeAverage, seriesAverage } = response.data;
 
       setMovie(prevMovie => ({
-          ...prevMovie,
-          episodes: prevMovie.episodes.map(ep => 
-              ep.id === episodeId 
-                  ? { ...ep, currentUserRating: rating } 
-                  : ep
-          )
+        ...prevMovie,
+        averageRating: seriesAverage,
+        episodes: prevMovie.episodes.map(ep =>
+          ep.id === episodeId
+            ? { ...ep, averageRating: episodeAverage, currentUserRating: rating }
+            : ep
+        )
       }));
 
-      try {
-          const response = await moviesAPI.rateEpisode(episodeId, rating);
-          
-          const { episodeAverage, seriesAverage } = response.data;
-
-          setMovie(prevMovie => ({
-              ...prevMovie,
-              averageRating: seriesAverage, 
-              episodes: prevMovie.episodes.map(ep => 
-                  ep.id === episodeId 
-                      ? { ...ep, averageRating: episodeAverage, currentUserRating: rating }
-                      : ep
-              )
-          }));
-
-      } catch (error) {
-          console.error("Помилка оцінки:", error);
-          alert("Не вдалося зберегти оцінку");
-      }
+    } catch (error) {
+      console.error("Помилка оцінки:", error);
+      alert("Не вдалося зберегти оцінку");
+    }
   };
 
   const getRatingColor = (rating) => {
-    if (rating >= 8) return "success"; 
-    if (rating >= 5) return "warning"; 
-    return "danger";                  
+    if (rating >= 8) return "success";
+    if (rating >= 5) return "warning";
+    return "danger";
   };
 
   if (loading) return <Container className="text-center mt-5"><Spinner animation="border" /></Container>;
   if (!movie) return <Container className="mt-5 text-center"><h2>Фільм не знайдено</h2></Container>;
 
   const likesCount = movie.reactionCounts['Like'] || 0;
-  const dislikesCount = movie.reactionCounts['Dislike'] || 0; 
+  const dislikesCount = movie.reactionCounts['Dislike'] || 0;
 
   return (
     <Container className="mt-4">
       {user && isAdmin() && (
-        <div className="alert alert-secondary d-flex justify-content-between align-items-center mb-4 shadow-sm" 
-             style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-color)', color: 'var(--text-main)' }}>
+        <div className="alert alert-secondary d-flex justify-content-between align-items-center mb-4 shadow-sm"
+          style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-color)', color: 'var(--text-main)' }}>
           <span className="fw-bold">🛠️ Адмін-панель</span>
-          
-          <div className="d-flex gap-2"> 
+
+          <div className="d-flex gap-2">
             {movie.isSeries && (
-               <Button variant="success" size="sm" onClick={handleAddEpisode}>
-                 + Епізод
-               </Button>
+              <Button variant="success" size="sm" onClick={handleAddEpisode}>
+                + Епізод
+              </Button>
             )}
             <Button variant="primary" size="sm" onClick={() => setShowEditModal(true)}>✏️ Редагувати</Button>
             <Button variant="danger" size="sm" onClick={handleDeleteMovie}>🗑️ Видалити</Button>
-          </div>          
+          </div>
         </div>
       )}
 
       <Row>
-       <Col md={4} className="mb-4">
-          <img 
+        <Col md={4} className="mb-4">
+          <img
             src={
-                movie.posterUrl 
-                    ? (movie.posterUrl.startsWith('http') 
-                        ? movie.posterUrl 
-                        : `${API_BASE_URL}${movie.posterUrl}`) 
-                    : defaultPosterImg
-            } 
-            alt={movie.title} 
-            className="img-fluid rounded shadow w-100" 
-            style={{objectFit: 'cover'}} 
+              movie.posterUrl
+                ? (movie.posterUrl.startsWith('http')
+                  ? movie.posterUrl
+                  : `${API_BASE_URL}${movie.posterUrl}`)
+                : defaultPosterImg
+            }
+            alt={movie.title}
+            className="img-fluid rounded shadow w-100"
+            style={{ objectFit: 'cover' }}
             onError={(e) => { e.target.src = defaultPosterImg; }}
           />
         </Col>
 
         <Col md={8}>
           <div className="d-flex align-items-center mb-1 gap-2">
-             <h1 className="mb-0">{movie.title}</h1>
-             {movie.isSeries && <Badge bg="primary">TV Series</Badge>}
+            <h1 className="mb-0">{movie.title}</h1>
+            {movie.isSeries && <Badge bg="primary">TV Series</Badge>}
           </div>
 
           {movie.director && (
@@ -286,7 +288,7 @@ const handleRateEpisode = async (episodeId, ratingValue) => {
               <span className="fw-bold" style={{ color: 'var(--text-main)' }}>Режисер:</span> {movie.director}
             </div>
           )}
-          
+
           <div className="mb-4">
             <Badge bg={getRatingColor(movie.averageRating)} className="me-2 fs-5 p-2">
               ⭐ {movie.averageRating.toFixed(1)}
@@ -316,7 +318,7 @@ const handleRateEpisode = async (episodeId, ratingValue) => {
 
           <p className="lead">{movie.description}</p>
           <hr style={{ borderColor: 'var(--border-color)' }} />
-          
+
           {movie.trailerUrl && (
             <div className="mb-4">
               <div className="ratio ratio-16x9 shadow-sm rounded overflow-hidden">
@@ -325,306 +327,318 @@ const handleRateEpisode = async (episodeId, ratingValue) => {
             </div>
           )}
 
-          <div 
+          <div
             className="d-flex flex-wrap align-items-center p-3 shadow-sm mb-5 gap-3"
-            style={{ 
-                backgroundColor: 'var(--bg-card)', 
-                border: '1px solid var(--border-color)',
-                color: 'var(--text-main)',
-                borderRadius: '25px' 
+            style={{
+              backgroundColor: 'var(--bg-card)',
+              border: '1px solid var(--border-color)',
+              color: 'var(--text-main)',
+              borderRadius: '25px'
             }}
           >
             <div className="d-flex align-items-center gap-2">
-                <Button 
-                    variant={movie.currentUserVote === LIKE_ID ? "success" : "outline-secondary"}
-                    size="sm"
-                    onClick={() => handleReaction(LIKE_ID)}
-                    style={{ borderRadius: '20px', padding: '5px 15px' }}
-                >
-                    👍 {likesCount > 0 && <span className="ms-1">{likesCount}</span>}
-                </Button>
-                <Button 
-                    variant={movie.currentUserVote === DISLIKE_ID ? "danger" : "outline-secondary"}
-                    size="sm"
-                    onClick={() => handleReaction(DISLIKE_ID)}
-                    style={{ borderRadius: '20px', padding: '5px 15px' }}
-                >
-                    👎 {dislikesCount > 0 && <span className="ms-1">{dislikesCount}</span>}
-                </Button>
+              <Button
+                variant={movie.currentUserVote === LIKE_ID ? "success" : "outline-secondary"}
+                size="sm"
+                onClick={() => handleReaction(LIKE_ID)}
+                style={{ borderRadius: '20px', padding: '5px 15px' }}
+              >
+                👍 {likesCount > 0 && <span className="ms-1">{likesCount}</span>}
+              </Button>
+              <Button
+                variant={movie.currentUserVote === DISLIKE_ID ? "danger" : "outline-secondary"}
+                size="sm"
+                onClick={() => handleReaction(DISLIKE_ID)}
+                style={{ borderRadius: '20px', padding: '5px 15px' }}
+              >
+                👎 {dislikesCount > 0 && <span className="ms-1">{dislikesCount}</span>}
+              </Button>
             </div>
 
             <div className="vr mx-2" style={{ backgroundColor: 'var(--border-color)', opacity: 1 }}></div>
 
             <div className="d-flex align-items-center gap-2">
-                <Form.Select 
-                    size="sm"
-                    value={watchStatus}
-                    onChange={(e) => handleWatchlistUpdate({ newStatus: e.target.value })}
-                    style={{ maxWidth: '160px', cursor: 'pointer', borderRadius: '20px' }}
-                    className="shadow-none"
-                >
-                    {WATCH_STATUSES.map(s => (
-                        <option key={s.id} value={s.id}>{s.label}</option>
-                    ))}
-                </Form.Select>
+              <Form.Select
+                size="sm"
+                value={watchStatus}
+                onChange={(e) => handleWatchlistUpdate({ newStatus: e.target.value })}
+                style={{ maxWidth: '160px', cursor: 'pointer', borderRadius: '20px' }}
+                className="shadow-none"
+              >
+                {WATCH_STATUSES.map(s => (
+                  <option key={s.id} value={s.id}>{s.label}</option>
+                ))}
+              </Form.Select>
 
-                <Button 
-                    variant={isFavorite ? "warning" : "outline-secondary"}
-                    size="sm"
-                    onClick={() => handleWatchlistUpdate({ newFavorite: !isFavorite })}
-                    title={isFavorite ? "Видалити з улюблених" : "Додати в улюблене"}
-                    style={{ color: !isFavorite ? 'var(--text-main)' : '#fff', borderRadius: '20px', padding: '5px 12px' }}
-                >
-                    ★
-                </Button>
+              <Button
+                variant={isFavorite ? "warning" : "outline-secondary"}
+                size="sm"
+                onClick={() => handleWatchlistUpdate({ newFavorite: !isFavorite })}
+                title={isFavorite ? "Видалити з улюблених" : "Додати в улюблене"}
+                style={{ color: !isFavorite ? 'var(--text-main)' : '#fff', borderRadius: '20px', padding: '5px 12px' }}
+              >
+                ★
+              </Button>
             </div>
 
             <div className="vr mx-2 d-none d-md-block" style={{ backgroundColor: 'var(--border-color)', opacity: 1 }}></div>
 
             <div className="position-relative" ref={popupRef}>
-               {(() => {
-                 const activeEmotion = EMOTIONS.find(e => e.id === movie.currentUserEmotion);
-                 return (
-                   <Button 
-                      variant="outline-secondary" size="sm" onClick={() => setShowReactionPopup(!showReactionPopup)}
-                      style={{
-                          color: activeEmotion ? '#e2264d' : 'var(--text-main)', 
-                          borderColor: activeEmotion ? '#e2264d' : 'var(--border-color)',
-                          backgroundColor: activeEmotion ? 'rgba(226, 38, 77, 0.1)' : 'transparent',
-                          borderRadius: '20px', padding: '5px 15px'
-                      }}
-                   >
-                      {activeEmotion ? <>{activeEmotion.icon} {activeEmotion.label}</> : <>☺</>}
-                   </Button>
-                 );
-               })()}
-               {showReactionPopup && (
-                 <div className="position-absolute bottom-100 start-50 translate-middle-x mb-2 p-2 rounded shadow d-flex gap-2"
-                    style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', zIndex: 1000, width: 'max-content', borderRadius: '20px' }}
-                 >
-                    {EMOTIONS.map((emo) => (
-                      <div key={emo.id} className="d-flex flex-column align-items-center p-2 rounded reaction-hover" 
-                        onClick={() => handleReaction(emo.id)} style={{ cursor: 'pointer', transition: 'transform 0.2s' }}>
-                        <span style={{ fontSize: '1.5rem' }}>{emo.icon}</span>
-                        <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{emo.label}</span>
-                      </div>
-                    ))}
-                 </div>
-               )}
+              {(() => {
+                const activeEmotion = EMOTIONS.find(e => e.id === movie.currentUserEmotion);
+                return (
+                  <Button
+                    variant="outline-secondary" size="sm" onClick={() => setShowReactionPopup(!showReactionPopup)}
+                    style={{
+                      color: activeEmotion ? '#e2264d' : 'var(--text-main)',
+                      borderColor: activeEmotion ? '#e2264d' : 'var(--border-color)',
+                      backgroundColor: activeEmotion ? 'rgba(226, 38, 77, 0.1)' : 'transparent',
+                      borderRadius: '20px', padding: '5px 15px'
+                    }}
+                  >
+                    {activeEmotion ? <>{activeEmotion.icon} {activeEmotion.label}</> : <>☺</>}
+                  </Button>
+                );
+              })()}
+              {showReactionPopup && (
+                <div className="position-absolute bottom-100 start-50 translate-middle-x mb-2 p-2 rounded shadow d-flex gap-2"
+                  style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', zIndex: 1000, width: 'max-content', borderRadius: '20px' }}
+                >
+                  {EMOTIONS.map((emo) => (
+                    <div key={emo.id} className="d-flex flex-column align-items-center p-2 rounded reaction-hover"
+                      onClick={() => handleReaction(emo.id)} style={{ cursor: 'pointer', transition: 'transform 0.2s' }}>
+                      <span style={{ fontSize: '1.5rem' }}>{emo.icon}</span>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{emo.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="d-flex gap-2 flex-wrap">
-                {Object.entries(movie.reactionCounts).map(([key, count]) => {
-                    if (key === 'Like' || key === 'Dislike' || count === 0) return null;
-                    const emo = EMOTIONS.find(e => e.key === key);
-                    if (!emo) return null;
-                    const isActive = movie.currentUserEmotion === emo.id;
-                    return (
-                        <div key={key} onClick={() => handleReaction(emo.id)}
-                           className={`d-flex align-items-center gap-1 px-2 py-1 border ${isActive ? 'border-danger bg-light-danger' : 'border-secondary'}`}
-                           style={{ cursor: 'pointer', backgroundColor: isActive ? 'rgba(220, 53, 69, 0.1)' : 'transparent', borderColor: isActive ? '#dc3545' : 'var(--border-color)', borderRadius: '15px' }}
-                           title={emo.label}
-                        >
-                            <span>{emo.icon}</span>
-                            <span style={{ fontSize: '0.8rem', color: 'var(--text-main)' }}>{count}</span>
-                        </div>
-                    );
-                })}
+              {Object.entries(movie.reactionCounts).map(([key, count]) => {
+                if (key === 'Like' || key === 'Dislike' || count === 0) return null;
+                const emo = EMOTIONS.find(e => e.key === key);
+                if (!emo) return null;
+                const isActive = movie.currentUserEmotion === emo.id;
+                return (
+                  <div key={key} onClick={() => handleReaction(emo.id)}
+                    className={`d-flex align-items-center gap-1 px-2 py-1 border ${isActive ? 'border-danger bg-light-danger' : 'border-secondary'}`}
+                    style={{ cursor: 'pointer', backgroundColor: isActive ? 'rgba(220, 53, 69, 0.1)' : 'transparent', borderColor: isActive ? '#dc3545' : 'var(--border-color)', borderRadius: '15px' }}
+                    title={emo.label}
+                  >
+                    <span>{emo.icon}</span>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-main)' }}>{count}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
           {movie.isSeries && movie.episodes && movie.episodes.length > 0 && (
             <div className="mb-5">
-               <h3 className="mb-3 border-start border-4 border-primary ps-2">Список епізодів</h3>
-               
-               <div className="d-flex flex-column gap-2">
-                  {movie.episodes.map((ep) => (
-                    <div 
-                      key={ep.id} 
-                      className="p-3 rounded"
-                      style={{ 
-                          backgroundColor: 'var(--bg-card)', 
-                          border: '1px solid var(--border-color)',
-                      }}
-                    >
-                        <Row className="align-items-center g-2">
-                            
-                            <Col xs={5} md={5} className="d-flex align-items-center gap-2 overflow-hidden">
-                                <div className="text-secondary fw-bold flex-shrink-0" style={{ minWidth: '60px' }}>
-                                    S{ep.seasonNumber} E{ep.episodeNumber}
-                                </div>
-                                <div className="fw-semibold text-truncate" title={ep.title}>
-                                    {ep.title || `Епізод ${ep.episodeNumber}`}
-                                </div>
-                            </Col>
+              <h3 className="mb-3 border-start border-4 border-primary ps-2">Список епізодів</h3>
 
-                            <Col xs={3} md={4} className="d-flex justify-content-center">
-                                <div className="d-flex align-items-center gap-2 w-100 justify-content-center">
-                                    <small className="text-secondary d-none d-lg-inline text-nowrap" style={{ fontSize: '0.75rem' }}>Ваша:</small>
-                                    <Form.Select 
-                                        size="sm"
-                                        value={ep.currentUserRating || ""}
-                                        onChange={(e) => handleRateEpisode(ep.id, e.target.value)}
-                                        style={{ 
-                                            width: '100%',
-                                            minWidth: '60px',
-                                            maxWidth: '400px',
-                                            cursor: 'pointer',
-                                            backgroundColor: 'var(--bg-main)',
-                                            color: 'var(--text-main)',
-                                            borderColor: 'var(--border-color)',
-                                            fontSize: '0.9rem',
-                                            textAlign: 'center',
-                                            padding: '0.2rem 0.5rem'
-                                        }}
-                                    >
-                                        <option value="" disabled>-</option>
-                                        {[10, 9, 8, 7, 6, 5, 4, 3, 2, 1].map(r => (
-                                            <option key={r} value={r}>{r}</option>
-                                        ))}
-                                    </Form.Select>
-                                </div>
-                            </Col>
+              <div className="d-flex flex-column gap-2">
+                {movie.episodes.map((ep) => (
+                  <div
+                    key={ep.id}
+                    className="p-3 rounded"
+                    style={{
+                      backgroundColor: 'var(--bg-card)',
+                      border: '1px solid var(--border-color)',
+                    }}
+                  >
+                    <Row className="align-items-center g-2">
 
-                            <Col xs={4} md={3} className="d-flex justify-content-end">
-                                <div className="d-flex align-items-center gap-2 flex-nowrap"> 
-                                    
-                                    <div className="d-flex align-items-center gap-1 text-warning text-nowrap">
-                                        <span>★</span>
-                                        <span className="fw-bold fs-6">{ep.averageRating > 0 ? ep.averageRating.toFixed(1) : '-'}</span>
-                                    </div>
+                      <Col xs={5} md={5} className="d-flex align-items-center gap-2 overflow-hidden">
+                        <div className="text-secondary fw-bold flex-shrink-0" style={{ minWidth: '60px' }}>
+                          S{ep.seasonNumber} E{ep.episodeNumber}
+                        </div>
+                        <div className="fw-semibold text-truncate" title={ep.title}>
+                          {ep.title || `Епізод ${ep.episodeNumber}`}
+                        </div>
+                      </Col>
 
-                                    {user && isAdmin() && (
-                                        <div className="d-flex gap-1 ms-1">
-                                            <Button 
-                                                variant="outline-primary" 
-                                                size="sm" 
-                                                className="p-0 d-flex align-items-center justify-content-center"
-                                                style={{ width: '24px', height: '24px' }}
-                                                onClick={() => handleEditEpisode(ep)}
-                                                title="Редагувати"
-                                            >
-                                                <span style={{ fontSize: '0.7rem' }}>✏️</span>
-                                            </Button>
-                                            <Button 
-                                                variant="outline-danger" 
-                                                size="sm" 
-                                                className="p-0 d-flex align-items-center justify-content-center"
-                                                style={{ width: '24px', height: '24px' }}
-                                                onClick={() => handleDeleteEpisode(ep.id)}
-                                                title="Видалити"
-                                            >
-                                                <span style={{ fontSize: '0.7rem' }}>🗑️</span>
-                                            </Button>
-                                        </div>
-                                    )}
-                                </div>
-                            </Col>
+                      <Col xs={3} md={4} className="d-flex justify-content-center">
+                        <div className="d-flex align-items-center gap-2 w-100 justify-content-center">
+                          <small className="text-secondary d-none d-lg-inline text-nowrap" style={{ fontSize: '0.75rem' }}>Ваша:</small>
+                          <Form.Select
+                            size="sm"
+                            value={ep.currentUserRating || ""}
+                            onChange={(e) => handleRateEpisode(ep.id, e.target.value)}
+                            style={{
+                              width: '100%',
+                              minWidth: '60px',
+                              maxWidth: '400px',
+                              cursor: 'pointer',
+                              backgroundColor: 'var(--bg-main)',
+                              color: 'var(--text-main)',
+                              borderColor: 'var(--border-color)',
+                              fontSize: '0.9rem',
+                              textAlign: 'center',
+                              padding: '0.2rem 0.5rem'
+                            }}
+                          >
+                            <option value="" disabled>-</option>
+                            {[10, 9, 8, 7, 6, 5, 4, 3, 2, 1].map(r => (
+                              <option key={r} value={r}>{r}</option>
+                            ))}
+                          </Form.Select>
+                        </div>
+                      </Col>
 
-                        </Row>
-                    </div>
-                  ))}
-               </div>
+                      <Col xs={4} md={3} className="d-flex justify-content-end">
+                        <div className="d-flex align-items-center gap-2 flex-nowrap">
+
+                          <div className="d-flex align-items-center gap-1 text-warning text-nowrap">
+                            <span>★</span>
+                            <span className="fw-bold fs-6">{ep.averageRating > 0 ? ep.averageRating.toFixed(1) : '-'}</span>
+                          </div>
+
+                          {user && isAdmin() && (
+                            <div className="d-flex gap-1 ms-1">
+                              <Button
+                                variant="outline-primary"
+                                size="sm"
+                                className="p-0 d-flex align-items-center justify-content-center"
+                                style={{ width: '24px', height: '24px' }}
+                                onClick={() => handleEditEpisode(ep)}
+                                title="Редагувати"
+                              >
+                                <span style={{ fontSize: '0.7rem' }}>✏️</span>
+                              </Button>
+                              <Button
+                                variant="outline-danger"
+                                size="sm"
+                                className="p-0 d-flex align-items-center justify-content-center"
+                                style={{ width: '24px', height: '24px' }}
+                                onClick={() => handleDeleteEpisode(ep.id)}
+                                title="Видалити"
+                              >
+                                <span style={{ fontSize: '0.7rem' }}>🗑️</span>
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      </Col>
+
+                    </Row>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
           {movie?.cast?.length > 0 && (
-                <div className="mb-5">
-                  <h3 className="mb-3 border-start border-4 border-primary ps-2">
-                    Акторський склад
-                  </h3>
+            <div className="mb-5">
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <h3 className="border-start border-4 border-primary ps-2 mb-0">
+                  Акторський склад
+                </h3>
+                {movie.cast.length > 6 && (
+                  <Link to={`/movie/${movie.id}/cast`} className="btn btn-sm btn-outline-primary rounded-pill">
+                    Дивитися всіх ({movie.cast.length})
+                  </Link>
+                )}
+              </div>
 
-                  <div
-                    className="d-flex overflow-auto pb-3 gap-3"
-                    style={{ scrollbarWidth: 'thin', scrollBehavior: 'smooth' }}
-                  >
-                    {movie.cast.map((actor, index) => {
-                      const actorCard = (
-                        <Card className="h-100 border-0 shadow-sm bg-card movie-card-hover">
-                          <div
-                            style={{ height: '150px', overflow: 'hidden' }}
-                            className="rounded-top"
-                          >
-                            <Card.Img
-                              variant="top"
-                              src={
-                                actor?.photoUrl
-                                  ? actor.photoUrl.startsWith('http')
-                                    ? actor.photoUrl
-                                    : `http://localhost:5096${actor.photoUrl}`
-                                  : 'https://via.placeholder.com/120x150?text=No+Photo'
-                              }
-                              className="w-100 h-100 object-fit-cover"
-                              onError={(e) =>
-                                (e.target.src =
-                                  'https://via.placeholder.com/120x150?text=No+Photo')
-                              }
-                            />
-                          </div>
-
-                          <Card.Body className="p-2 text-center">
-                            <div
-                              className="fw-bold text-truncate text-main"
-                              style={{ fontSize: '0.9rem' }}
-                              title={actor?.name}
-                            >
-                              {actor?.name}
-                            </div>
-
-                            <div
-                              className="text-muted small text-truncate"
-                              title={actor?.role}
-                            >
-                              {actor?.role}
-                            </div>
-                          </Card.Body>
-                        </Card>
-                      );
-
-                      return actor?.actorId > 0 ? (
-                        <Link
-                          key={actor.actorId}
-                          to={`/actors/${actor.actorId}`}
-                          className="text-decoration-none"
-                          style={{ minWidth: '120px', maxWidth: '120px' }}
-                        >
-                          {actorCard}
-                        </Link>
-                      ) : (
-                        <div
-                          key={`${actor?.name}-${index}`}
-                          style={{ minWidth: '120px', maxWidth: '120px' }}
-                        >
-                          {actorCard}
+              <div
+                className="d-flex overflow-auto pb-3 gap-3"
+                style={{ scrollbarWidth: 'thin', scrollBehavior: 'smooth' }}
+              >
+                {movie.cast.slice(0, 6).map((actor, index) => {
+                  const actorCard = (
+                    <Card className="h-100 border-0 shadow-sm bg-card movie-card-hover">
+                      <div style={{ height: '150px', overflow: 'hidden' }} className="rounded-top">
+                        <Card.Img
+                          variant="top"
+                          src={
+                            actor?.photoUrl
+                              ? (actor.photoUrl.startsWith('http')
+                                ? actor.photoUrl
+                                : `${API_BASE_URL}${actor.photoUrl}`)
+                              : defaultAvatarImg
+                          }
+                          className="w-100 h-100 object-fit-cover"
+                          onError={(e) => (e.target.src = defaultAvatarImg)}
+                        />
+                      </div>
+                      <Card.Body className="p-2 text-center">
+                        <div className="fw-bold text-truncate text-main" style={{ fontSize: '0.9rem' }} title={actor?.name}>
+                          {actor?.name}
                         </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
+                        <div className="text-muted small text-truncate" title={actor?.role}>
+                          {actor?.role}
+                        </div>
+                      </Card.Body>
+                    </Card>
+                  );
+
+                  return actor?.actorId > 0 ? (
+                    <Link
+                      key={actor.actorId}
+                      to={`/actors/${actor.actorId}`}
+                      className="text-decoration-none"
+                      style={{ minWidth: '120px', maxWidth: '120px' }}
+                    >
+                      {actorCard}
+                    </Link>
+                  ) : (
+                    <div
+                      key={`${actor?.name}-${index}`}
+                      style={{ minWidth: '120px', maxWidth: '120px' }}
+                    >
+                      {actorCard}
+                    </div>
+                  );
+                })}
+
+                {movie.cast.length > 6 && (
+                  <Link
+                    to={`/movie/${movie.id}/cast`}
+                    className="text-decoration-none"
+                    style={{ minWidth: '120px', maxWidth: '120px' }}
+                  >
+                    <Card className="h-100 border-0 shadow-sm bg-card movie-card-hover d-flex align-items-center justify-content-center text-center p-2">
+                      <div className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mb-2" style={{ width: '50px', height: '50px' }}>
+                        <span className="fs-4">➜</span>
+                      </div>
+                      <div className="fw-bold text-main" style={{ fontSize: '0.9rem' }}>
+                        Всі актори
+                      </div>
+                      <div className="text-muted small">
+                        +{movie.cast.length - 6} більше
+                      </div>
+                    </Card>
+                  </Link>
+                )}
+              </div>
+            </div>
+          )}
         </Col>
       </Row>
 
-     <Row>
+      <Row>
         <Col>
           <h3 className="mb-4 border-bottom pb-2" style={{ borderColor: 'var(--border-color)' }}>Відгуки глядачів</h3>
           {userReview ? (
-             <div className="alert alert-info mb-4" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-color)', color: 'var(--text-main)' }}>
-                Ви вже залишили відгук до цього фільму/серіалу. Дякуємо! 
-             </div>
+            <div className="alert alert-info mb-4" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-color)', color: 'var(--text-main)' }}>
+              Ви вже залишили відгук до цього фільму/серіалу. Дякуємо!
+            </div>
           ) : (
-             <ReviewForm movieId={movie.id} onSubmit={handleReviewChange} />
+            <ReviewForm movieId={movie.id} onSubmit={handleReviewChange} />
           )}
           <ReviewList reviews={reviews} onReviewUpdated={handleReviewChange} />
         </Col>
       </Row>
 
-      <AdminEpisodeModal 
-          show={showEpisodeModal} 
-          onHide={() => setShowEpisodeModal(false)} 
-          movieId={movie.id} 
-          episodeToEdit={selectedEpisode} 
-          onSuccess={loadMovieData} 
+      <AdminEpisodeModal
+        show={showEpisodeModal}
+        onHide={() => setShowEpisodeModal(false)}
+        movieId={movie.id}
+        episodeToEdit={selectedEpisode}
+        onSuccess={loadMovieData}
       />
 
       <AdminMovieModal show={showEditModal} onHide={() => setShowEditModal(false)} movieToEdit={movie} onSuccess={loadMovieData} />

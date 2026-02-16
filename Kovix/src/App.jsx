@@ -25,6 +25,7 @@ import ResetPasswordPage from './pages/ResetPasswordPage';
 import UserReviewsPage from './pages/UserReviewsPage';
 import ActorsPage from './pages/ActorsPage';
 import ActorDetailPage from './pages/ActorDetailPage';
+import MovieCastPage from './pages/MovieCastPage';
 
 function App() {
   return (
@@ -50,6 +51,7 @@ function App() {
             <Route path="/my-reviews" element={<UserReviewsPage />} />
             <Route path="/actors" element={<ActorsPage />} />
             <Route path="/actors/:id" element={<ActorDetailPage />} />
+            <Route path="/movie/:id/cast" element={<MovieCastPage />} />
             <Route path="/chat" element={
                 <BlockedRoute>
                     <ChatPage />

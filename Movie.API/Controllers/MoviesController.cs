@@ -722,7 +722,7 @@ namespace Movie.API.Controllers
             if (string.IsNullOrEmpty(query)) return BadRequest();
 
             using var client = new HttpClient();
-            var searchUrl = $"https://api.themoviedb.org/3/search/movie?api_key={TMDB_API_KEY}&query={Uri.EscapeDataString(query)}";
+            var searchUrl = $"https://api.themoviedb.org/3/search/movie?api_key={TMDB_API_KEY}&query={Uri.EscapeDataString(query)}&language=uk-UA";
 
             var searchResponse = await client.GetFromJsonAsync<TmdbSearchResult>(searchUrl);
 
@@ -732,7 +732,7 @@ namespace Movie.API.Controllers
             {
                 TmdbId = m.Id,
                 Title = m.Title,
-                ReleaseDate = m.Release_Date, 
+                ReleaseDate = m.Release_Date,
                 PosterUrl = !string.IsNullOrEmpty(m.Poster_Path)
                     ? $"https://image.tmdb.org/t/p/w92{m.Poster_Path}"
                     : null
@@ -747,13 +747,12 @@ namespace Movie.API.Controllers
         {
             using var client = new HttpClient();
 
-            var url = $"https://api.themoviedb.org/3/movie/{tmdbId}?api_key={TMDB_API_KEY}&append_to_response=credits";
+            var url = $"https://api.themoviedb.org/3/movie/{tmdbId}?api_key={TMDB_API_KEY}&append_to_response=credits&language=uk-UA";
             var response = await client.GetAsync(url);
 
             if (!response.IsSuccessStatusCode) return NotFound("Film not found in TMDB");
 
             var json = await response.Content.ReadAsStringAsync();
-
             dynamic data = Newtonsoft.Json.JsonConvert.DeserializeObject(json);
 
             var movieDto = new MovieDetailDto
@@ -761,7 +760,7 @@ namespace Movie.API.Controllers
                 Title = data.title,
                 Description = data.overview,
                 PosterUrl = data.poster_path != null ? $"https://image.tmdb.org/t/p/original{data.poster_path}" : null,
-                Year = 0, 
+                Year = 0,
                 Cast = new List<CastDto>()
             };
 
@@ -773,21 +772,36 @@ namespace Movie.API.Controllers
 
             if (data.credits != null && data.credits.cast != null)
             {
-                foreach (var person in data.credits.cast)
-                {
-                    if (movieDto.Cast.Count >= 10) break;
+                var castMembers = ((IEnumerable<dynamic>)data.credits.cast).Take(100);
 
+                foreach (var person in castMembers)
+                {
                     string name = person.name;
                     string role = person.character;
                     string profilePath = person.profile_path;
+                    int personId = person.id;
 
                     var existingActor = await _context.Actors.FirstOrDefaultAsync(a => a.Name == name);
 
+                    string biography = "";
+                    if (existingActor == null)
+                    {
+                        var personUrl = $"https://api.themoviedb.org/3/person/{personId}?api_key={TMDB_API_KEY}&language=uk-UA";
+                        var personResponse = await client.GetAsync(personUrl);
+                        if (personResponse.IsSuccessStatusCode)
+                        {
+                            var personJson = await personResponse.Content.ReadAsStringAsync();
+                            dynamic personData = Newtonsoft.Json.JsonConvert.DeserializeObject(personJson);
+                            biography = personData.biography ?? "";
+                        }
+                    }
+
                     movieDto.Cast.Add(new CastDto
                     {
-                        ActorId = existingActor?.Id ?? 0, 
+                        ActorId = existingActor?.Id ?? 0,
                         Name = name,
                         Role = role,
+                        Biography = existingActor?.Bio ?? biography,
                         PhotoUrl = !string.IsNullOrEmpty(profilePath)
                             ? $"https://image.tmdb.org/t/p/w500{profilePath}"
                             : null
