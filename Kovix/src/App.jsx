@@ -26,6 +26,8 @@ import UserReviewsPage from './pages/UserReviewsPage';
 import ActorsPage from './pages/ActorsPage';
 import ActorDetailPage from './pages/ActorDetailPage';
 import MovieCastPage from './pages/MovieCastPage';
+import TermsPage from './pages/TermsPage';
+import CookiePopup from './components/CookiePopup';
 
 function App() {
   return (
@@ -52,6 +54,7 @@ function App() {
             <Route path="/actors" element={<ActorsPage />} />
             <Route path="/actors/:id" element={<ActorDetailPage />} />
             <Route path="/movie/:id/cast" element={<MovieCastPage />} />
+            <Route path="/terms" element={<TermsPage />} />
             <Route path="/chat" element={
                 <BlockedRoute>
                     <ChatPage />
@@ -70,6 +73,7 @@ function App() {
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </div>
+        <CookiePopup />
       </Router>
       </FriendsProvider> 
       </ThemeProvider>

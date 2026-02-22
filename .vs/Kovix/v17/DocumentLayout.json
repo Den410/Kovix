@@ -28,7 +28,7 @@
               "RelativeDocumentMoniker": "Movie.API\\Controllers\\ActorsController.cs",
               "ToolTip": "C:\\\u041D\u0430\u0432\u0447\u0430\u043D\u043D\u044F\\\u041A\u0443\u0440\u0441\u043E\u0432\u0430 (\u041C\u043E\u0434\u0435\u043B\u044E\u0432\u0430\u043D\u043D\u044F)\\Kovix\\Movie.API\\Controllers\\ActorsController.cs",
               "RelativeToolTip": "Movie.API\\Controllers\\ActorsController.cs",
-              "ViewState": "AgIAAEkAAAAAAAAAAAAkwFAAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAAHUAAAAAAAAAAADgv4IAAAAyAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-02-16T16:45:58.087Z",
               "EditorCaption": ""
@@ -43,8 +43,7 @@
               "RelativeToolTip": "Movie.API\\Controllers\\MoviesController.cs",
               "ViewState": "AgIAAH4CAAAAAAAAAAAQwAYDAABTAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-02-16T16:43:23.451Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-02-16T16:43:23.451Z"
             }
           ]
         }
