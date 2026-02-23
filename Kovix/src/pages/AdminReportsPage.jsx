@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button, Card, Container, Badge, Alert } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { reportsAPI } from '../services/api';
@@ -42,29 +42,29 @@ function AdminReportsPage() {
             </div>
 
             {report.messageSnapshot && (
-               <div className="p-2 bg-secondary bg-opacity-10 rounded mb-3 fst-italic border-start border-4 border-danger">
-                  <small className="text-muted d-block mb-1">Зміст повідомлення:</small>
-                  "{report.messageSnapshot}"
-               </div>
+              <div className="p-2 bg-secondary bg-opacity-10 rounded mb-3 fst-italic border-start border-4 border-danger">
+                <small className="text-muted d-block mb-1">Зміст повідомлення:</small>
+                "{report.messageSnapshot}"
+              </div>
             )}
 
             <div className="d-flex justify-content-end">
-                <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={() => {
-                        let url = `/chat?highlight=${report.messageId}`;
-                        
-                        if (!report.isGeneralChat) {
-                            url += `&activeChat=${report.reportedUserId}`;
-                        }
-                        
-                        navigate(url);
-                    }}
-                    disabled={!report.messageId}
-                    >
-                    🔗 Перейти до повідомлення в чаті
-                </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => {
+                  let url = `/chat?highlight=${report.messageId}`;
+
+                  if (!report.isGeneralChat) {
+                    url += `&activeChat=${report.reportedUserId}`;
+                  }
+
+                  navigate(url);
+                }}
+                disabled={!report.messageId}
+              >
+                🔗 Перейти до повідомлення в чаті
+              </Button>
             </div>
           </Card.Body>
         </Card>

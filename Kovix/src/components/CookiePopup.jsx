@@ -31,7 +31,10 @@ function CookiePopup() {
                 <div className="flex-grow-1 text-center text-md-start">
                     <p className="mb-0 text-main small lh-sm">
                         Ми використовуємо файли cookie, щоб зробити ваш досвід на <strong>Kovix</strong> приємнішим. 
-                        Продовжуючи, ви погоджуєтеся з нашими <Link to="/terms" className="text-warning text-decoration-none">правилами користування</Link>.
+                        Продовжуючи, ви погоджуєтеся з нашими{' '}
+                        <Link to="/terms" className="text-warning text-decoration-none fw-bold">правилами користування</Link>
+                        {' '}та{' '}
+                        <Link to="/privacy" className="text-warning text-decoration-none fw-bold">політикою конфіденційності</Link>.
                     </p>
                 </div>
 
@@ -77,7 +80,7 @@ function CookiePopup() {
                     .cookie-popup-container {
                         left: 30px;
                         right: auto;
-                        width: 600px;
+                        width: 650px;
                     }
                 }
 

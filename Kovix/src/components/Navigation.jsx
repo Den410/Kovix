@@ -89,7 +89,6 @@ function Navigation() {
               <Nav.Link as={Link} to="/top" className="fw-bold text-warning">
                 🏆 Топ-100
               </Nav.Link>
-              <Nav.Link as={Link} to="/terms">Правила сайту</Nav.Link>
             </Nav>
             <Nav className="align-items-center gap-2">
 

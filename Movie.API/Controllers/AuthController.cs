@@ -32,6 +32,18 @@ namespace Movie.API.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto request)
         {
+
+            if (string.IsNullOrEmpty(request.CaptchaToken))
+            {
+                return BadRequest("Капча обов'язкова");
+            }
+
+            bool isCaptchaValid = await VerifyCaptchaAsync(request.CaptchaToken);
+            if (!isCaptchaValid)
+            {
+                return BadRequest("Перевірка капчі не пройдена. Ви бот?");
+            }
+
             if (await _context.Users.AnyAsync(u => u.Email == request.Email))
             {
                 return BadRequest("Користувач з таким Email вже існує.");
@@ -370,6 +382,24 @@ namespace Movie.API.Controllers
             await _context.SaveChangesAsync();
 
             return Ok(new { message = "Пароль успішно змінено! Тепер ви можете увійти." });
+        }
+
+        private async Task<bool> VerifyCaptchaAsync(string token)
+        {
+            using var client = new HttpClient();
+
+            var secretKey = "6LcFI3UsAAAAAGkQhHzy-pri_rHxlygZs2wt2hMO";
+
+            var response = await client.PostAsync($"https://www.google.com/recaptcha/api/siteverify?secret={secretKey}&response={token}", null);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var jsonString = await response.Content.ReadAsStringAsync();
+                dynamic jsonData = Newtonsoft.Json.JsonConvert.DeserializeObject(jsonString);
+                return jsonData.success == true;
+            }
+
+            return false;
         }
     }
 }
