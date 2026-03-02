@@ -30,6 +30,7 @@ namespace Movie.API.Data
         public DbSet<UserEpisodeRating> UserEpisodeRatings { get; set; }
         public DbSet<Actor> Actors { get; set; }    
         public DbSet<MovieActor> MovieActors { get; set; }
+        public DbSet<UserBlockedActor> UserBlockedActors { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -220,6 +221,9 @@ namespace Movie.API.Data
                 .HasOne(ma => ma.Actor)
                 .WithMany(a => a.MovieActors)
                 .HasForeignKey(ma => ma.ActorId);
+
+            modelBuilder.Entity<UserBlockedActor>()
+                .HasKey(uba => new { uba.UserId, uba.ActorId });
 
 
             modelBuilder.Entity<MovieEntity>().HasData(

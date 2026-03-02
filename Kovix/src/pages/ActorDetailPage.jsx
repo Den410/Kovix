@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Container, Row, Col, Button, Spinner } from 'react-bootstrap';
-import { actorsAPI } from '../services/api';
+import { actorsAPI, contentFilterAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import defaultPosterImg from '../assets/NotFoundPoster.webp';
 import { Link } from 'react-router-dom';
@@ -14,12 +14,18 @@ function ActorDetailPage() {
     const { user, isAdmin } = useAuth();
     const [actor, setActor] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [isBlocked, setIsBlocked] = useState(false);
 
     useEffect(() => {
         const fetchActor = async () => {
             try {
                 const res = await actorsAPI.getById(id);
                 setActor(res.data);
+                if (user) {
+                    const blockedRes = await contentFilterAPI.getBlockedActors();
+                    const blockedIds = blockedRes.data.map(a => a.actorId);
+                    setIsBlocked(blockedIds.includes(parseInt(id)));
+                }
             } catch (error) {
                 console.error(error);
             } finally {
@@ -29,8 +35,23 @@ function ActorDetailPage() {
         fetchActor();
     }, [id]);
 
+    const handleToggleBlock = async () => {
+        try {
+            if (isBlocked) {
+                await contentFilterAPI.unblockActor(id);
+                setIsBlocked(false);
+            } else {
+                if (!window.confirm(`Ви впевнені? Фільми з актором ${actor.name} зникнуть з вашої стрічки.`)) return;
+                await contentFilterAPI.blockActor(id);
+                setIsBlocked(true);
+            }
+        } catch (error) {
+            alert("Помилка при зміні статусу фільтра");
+        }
+    };
+
     const handleDelete = async () => {
-        if(window.confirm("Видалити актора? Це незворотня дія!")) {
+        if (window.confirm("Видалити актора? Це незворотня дія!")) {
             await actorsAPI.delete(id);
             navigate('/actors');
         }
@@ -49,13 +70,25 @@ function ActorDetailPage() {
         <Container className="mt-5">
             <Row>
                 <Col md={4} className="mb-4">
-                    <img 
-                        src={getPhotoUrl(actor.photoUrl)} 
-                        alt={actor.name} 
+                    <img
+                        src={getPhotoUrl(actor.photoUrl)}
+                        alt={actor.name}
                         className="img-fluid rounded shadow w-100"
-                        style={{ objectFit: 'cover', maxHeight: '500px' }}
+                        style={{ objectFit: 'cover', maxHeight: '500px', filter: isBlocked ? 'grayscale(100%) opacity(0.7)' : 'none'}}
                         onError={(e) => e.target.src = defaultPosterImg}
                     />
+                    
+                    {user && (
+                        <div className="d-grid gap-2 mt-3">
+                            <Button 
+                                variant={isBlocked ? "success" : "outline-danger"} 
+                                onClick={handleToggleBlock}
+                            >
+                                {isBlocked ? "✅ Розблокувати актора" : "🚫 Блокувати контент з ним"}
+                            </Button>
+                        </div>
+                    )}
+
                     {isAdmin() && (
                         <div className="d-grid gap-2 mt-3">
                             <Button variant="danger" onClick={handleDelete}>Видалити актора</Button>
@@ -64,7 +97,7 @@ function ActorDetailPage() {
                 </Col>
                 <Col md={8}>
                     <h1 className="display-4 fw-bold mb-3">{actor.name}</h1>
-                    
+
                     {actor.birthDate && (
                         <p className="text-muted fs-5">
                             📅 Дата народження: {new Date(actor.birthDate).toLocaleDateString('uk-UA')}
@@ -82,11 +115,11 @@ function ActorDetailPage() {
                                     <Col xs={6} md={3} lg={2} key={movie.movieId} className="mb-4">
                                         <Link to={`/movie/${movie.movieId}`} className="text-decoration-none">
                                             <div className="position-relative shadow-sm rounded overflow-hidden movie-card-hover">
-                                                <img 
+                                                <img
                                                     src={
-                                                        movie.posterUrl 
-                                                        ? (movie.posterUrl.startsWith('http') ? movie.posterUrl : `${API_BASE_URL}${movie.posterUrl}`) 
-                                                        : defaultPosterImg
+                                                        movie.posterUrl
+                                                            ? (movie.posterUrl.startsWith('http') ? movie.posterUrl : `${API_BASE_URL}${movie.posterUrl}`)
+                                                            : defaultPosterImg
                                                     }
                                                     alt={movie.title}
                                                     className="w-100"

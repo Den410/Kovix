@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Movie.API.Data;
 
@@ -11,9 +12,11 @@ using Movie.API.Data;
 namespace Movie.API.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260302101605_AddUrlToNotifications")]
+    partial class AddUrlToNotifications
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -578,24 +581,6 @@ namespace Movie.API.Migrations
                     b.ToTable("UserBlocks");
                 });
 
-            modelBuilder.Entity("Movie.API.Models.UserBlockedActor", b =>
-                {
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ActorId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("BlockedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("UserId", "ActorId");
-
-                    b.HasIndex("ActorId");
-
-                    b.ToTable("UserBlockedActors");
-                });
-
             modelBuilder.Entity("Movie.API.Models.UserEpisodeRating", b =>
                 {
                     b.Property<int>("Id")
@@ -920,25 +905,6 @@ namespace Movie.API.Migrations
                     b.Navigation("Blocked");
 
                     b.Navigation("Blocker");
-                });
-
-            modelBuilder.Entity("Movie.API.Models.UserBlockedActor", b =>
-                {
-                    b.HasOne("Movie.API.Models.Actor", "Actor")
-                        .WithMany()
-                        .HasForeignKey("ActorId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Movie.API.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Actor");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Movie.API.Models.UserEpisodeRating", b =>

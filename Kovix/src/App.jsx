@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext'; 
+import { AuthProvider } from './contexts/AuthContext';
 import Navigation from './components/Navigation';
 import HomePage from './pages/HomePage';
 import MovieDetailPage from './pages/MovieDetailPage';
@@ -30,56 +30,65 @@ import TermsPage from './pages/TermsPage';
 import CookiePopup from './components/CookiePopup';
 import PrivacyPage from './pages/PrivacyPage';
 import Footer from './components/Footer';
+import PromoBanner from './components/PromoBanner';
+import ProtectedRoute from './components/ProtectedRoute';
+import BlacklistPage from './pages/BlacklistPage';
 
 function App() {
   return (
     <AuthProvider>
       <ThemeProvider>
-      <FriendsProvider>
-      <Router>
-        <div className="App">
-          <Navigation />
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/movie/:id" element={<MovieDetailPage />} />
-            <Route path="/search" element={<SearchPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/movies" element={<AllMoviesPage />} />
-            <Route path="/my-lists" element={<MyListsPage />} />
-            <Route path="/admin/reports" element={<AdminReportsPage />} />
-            <Route path="/top" element={<TopMoviesPage />} />
-            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-            <Route path="/reset-password" element={<ResetPasswordPage />} />
-            <Route path="/my-reviews" element={<UserReviewsPage />} />
-            <Route path="/actors" element={<ActorsPage />} />
-            <Route path="/actors/:id" element={<ActorDetailPage />} />
-            <Route path="/movie/:id/cast" element={<MovieCastPage />} />
-            <Route path="/privacy" element={<PrivacyPage />} />
-            <Route path="/terms" element={<TermsPage />} />
-            <Route path="/chat" element={
-                <BlockedRoute>
+        <FriendsProvider>
+          <Router>
+            <div className="App">
+              <PromoBanner />
+              <Navigation />
+              <Routes>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/movie/:id" element={<MovieDetailPage />} />
+                <Route path="/search" element={<SearchPage />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/register" element={<RegisterPage />} />
+                <Route path="/profile" element={<ProfilePage />} />
+                <Route path="/movies" element={<AllMoviesPage />} />
+                <Route path="/my-lists" element={<MyListsPage />} />
+                <Route path="/admin/reports" element={<AdminReportsPage />} />
+                <Route path="/top" element={<TopMoviesPage />} />
+                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                <Route path="/reset-password" element={<ResetPasswordPage />} />
+                <Route path="/my-reviews" element={<UserReviewsPage />} />
+                <Route path="/actors" element={<ActorsPage />} />
+                <Route path="/actors/:id" element={<ActorDetailPage />} />
+                <Route path="/movie/:id/cast" element={<MovieCastPage />} />
+                <Route path="/privacy" element={<PrivacyPage />} />
+                <Route path="/terms" element={<TermsPage />} />
+                <Route path="/blacklist" element={
+                  <ProtectedRoute>
+                    <BlacklistPage />
+                  </ProtectedRoute>
+                } />
+                <Route path="/chat" element={
+                  <BlockedRoute>
                     <ChatPage />
-                </BlockedRoute>
-            } />
-            <Route path="/users/:id" element={
-                <BlockedRoute>
+                  </BlockedRoute>
+                } />
+                <Route path="/users/:id" element={
+                  <BlockedRoute>
                     <UserPublicProfilePage />
-                </BlockedRoute>
-            } />
-            <Route path="/history" element={
-                <BlockedRoute>
+                  </BlockedRoute>
+                } />
+                <Route path="/history" element={
+                  <BlockedRoute>
                     <HistoryPage />
-                </BlockedRoute>
-            } />
-            <Route path="*" element={<NotFoundPage />} />
-          </Routes>
-        </div>
-        <CookiePopup />
-        <Footer />
-      </Router>
-      </FriendsProvider> 
+                  </BlockedRoute>
+                } />
+                <Route path="*" element={<NotFoundPage />} />
+              </Routes>
+            </div>
+            <CookiePopup />
+            <Footer />
+          </Router>
+        </FriendsProvider>
       </ThemeProvider>
     </AuthProvider>
   );

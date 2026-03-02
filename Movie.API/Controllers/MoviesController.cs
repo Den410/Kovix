@@ -34,7 +34,9 @@ namespace Movie.API.Controllers
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 8)
         {
-            var query = _context.Movies.AsQueryable();
+            var query = _context.Movies
+                .Include(m => m.MovieActors)
+                .AsQueryable();
 
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (userIdClaim != null)
@@ -51,6 +53,15 @@ namespace Movie.API.Controllers
                         var b = blocked.Trim();
                         query = query.Where(m => m.Genre == null || !m.Genre.ToLower().Contains(b));
                     }
+                }
+                var blockedActorIds = await _context.UserBlockedActors
+                .Where(uba => uba.UserId == userId)
+                .Select(uba => uba.ActorId)
+                .ToListAsync();
+
+                if (blockedActorIds.Any())
+                {
+                    query = query.Where(m => !m.MovieActors.Any(ma => blockedActorIds.Contains(ma.ActorId)));
                 }
             }
 
@@ -243,45 +254,48 @@ namespace Movie.API.Controllers
         public async Task<ActionResult<IEnumerable<MovieEntity>>> GetTrending()
         {
             var blockedGenres = await GetUserBlockedGenres();
-            var moviesQuery = _context.Movies.AsNoTracking().AsQueryable();
+            var blockedActorIds = await GetUserBlockedActorIds();
+
+            var moviesQuery = _context.Movies.Include(m => m.MovieActors).AsNoTracking().AsQueryable();
 
             foreach (var genre in blockedGenres)
             {
                 moviesQuery = moviesQuery.Where(m => m.Genre == null || !m.Genre.ToLower().Contains(genre));
             }
 
+            if (blockedActorIds.Any())
+            {
+                moviesQuery = moviesQuery.Where(m => !m.MovieActors.Any(ma => blockedActorIds.Contains(ma.ActorId)));
+            }
+
             var trendingMovies = await _context.MovieReactions
                 .Where(r => r.Type == ReactionType.Like)
                 .GroupBy(r => r.MovieId)
-                .Select(g => new
-                {
-                    MovieId = g.Key,
-                    LikesCount = g.Count()
-                })
+                .Select(g => new { MovieId = g.Key, LikesCount = g.Count() })
                 .OrderByDescending(x => x.LikesCount)
                 .Take(10)
-                .Join(
-                    moviesQuery,
-                    r => r.MovieId,
-                    m => m.Id,
-                    (r, m) => m
-                )
+                .Join(moviesQuery, r => r.MovieId, m => m.Id, (r, m) => m)
                 .Where(m => !string.IsNullOrEmpty(m.TrailerUrl))
                 .ToListAsync();
 
             return Ok(trendingMovies);
         }
 
-
         [HttpGet("top-rated")]
         public async Task<ActionResult<IEnumerable<MovieDetailDto>>> GetTopRated()
         {
-            var query = _context.Movies.AsNoTracking();
+            var query = _context.Movies.Include(m => m.MovieActors).AsNoTracking().AsQueryable();
 
             var blockedGenres = await GetUserBlockedGenres();
             foreach (var genre in blockedGenres)
             {
                 query = query.Where(m => m.Genre == null || !m.Genre.ToLower().Contains(genre));
+            }
+
+            var blockedActorIds = await GetUserBlockedActorIds();
+            if (blockedActorIds.Any())
+            {
+                query = query.Where(m => !m.MovieActors.Any(ma => blockedActorIds.Contains(ma.ActorId)));
             }
 
             var movies = await query
@@ -452,7 +466,7 @@ namespace Movie.API.Controllers
         [HttpGet("new")]
         public async Task<ActionResult<IEnumerable<MovieDetailDto>>> GetNew()
         {
-            var query = _context.Movies.AsNoTracking();
+            var query = _context.Movies.Include(m => m.MovieActors).AsNoTracking().AsQueryable();
 
             var blockedGenres = await GetUserBlockedGenres();
             foreach (var genre in blockedGenres)
@@ -460,18 +474,24 @@ namespace Movie.API.Controllers
                 query = query.Where(m => m.Genre == null || !m.Genre.ToLower().Contains(genre));
             }
 
+            var blockedActorIds = await GetUserBlockedActorIds();
+            if (blockedActorIds.Any())
+            {
+                query = query.Where(m => !m.MovieActors.Any(ma => blockedActorIds.Contains(ma.ActorId)));
+            }
+
             var movies = await query
                 .OrderByDescending(m => m.CreatedAt)
                 .Take(10)
-               .Select(m => new MovieDetailDto
-               {
-                   Id = m.Id,
-                   Title = m.Title,
-                   PosterUrl = m.PosterUrl,
-                   Year = m.Year,
-                   AverageRating = m.AverageRating,
-                   Genre = m.Genre
-               })
+                .Select(m => new MovieDetailDto
+                {
+                    Id = m.Id,
+                    Title = m.Title,
+                    PosterUrl = m.PosterUrl,
+                    Year = m.Year,
+                    AverageRating = m.AverageRating,
+                    Genre = m.Genre
+                })
                 .ToListAsync();
 
             return Ok(movies);
@@ -520,6 +540,19 @@ namespace Movie.API.Controllers
             return userSettings.ToLower().Split(',', StringSplitOptions.RemoveEmptyEntries)
                                        .Select(g => g.Trim())
                                        .ToList();
+        }
+
+        private async Task<List<int>> GetUserBlockedActorIds()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null) return new List<int>();
+
+            var userId = int.Parse(userIdClaim.Value);
+
+            return await _context.UserBlockedActors
+                .Where(uba => uba.UserId == userId)
+                .Select(uba => uba.ActorId)
+                .ToListAsync();
         }
 
         [HttpGet("random")]
@@ -810,6 +843,27 @@ namespace Movie.API.Controllers
             }
 
             return Ok(movieDto);
+        }
+
+        [HttpGet("latest")]
+        [AllowAnonymous] 
+        public async Task<IActionResult> GetLatestMovie()
+        {
+            var latestMovie = await _context.Movies
+                .OrderByDescending(m => m.Id) 
+                .Select(m => new
+                {
+                    m.Id,
+                    m.Title
+                })
+                .FirstOrDefaultAsync();
+
+            if (latestMovie == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(latestMovie);
         }
     }
 }

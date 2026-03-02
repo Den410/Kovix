@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Movie.API.Data;
 using Movie.API.DTOs;
 using Movie.API.Models;
+using System.Security.Claims;
 
 namespace Movie.API.Controllers
 {
@@ -109,7 +110,7 @@ namespace Movie.API.Controllers
             int? currentUserId = null;
             if (User.Identity.IsAuthenticated)
             {
-                var claimId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+                var claimId = User.FindFirst(ClaimTypes.NameIdentifier);
                 if (claimId != null) currentUserId = int.Parse(claimId.Value);
             }
 
@@ -174,7 +175,7 @@ namespace Movie.API.Controllers
         [Authorize]
         public async Task<IActionResult> UnfollowUser(int id)
         {
-            var currentUserId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+            var currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
 
             var follow = await _context.Set<UserFollow>()
                 .FirstOrDefaultAsync(f => f.ObserverId == currentUserId && f.TargetId == id);
@@ -193,7 +194,7 @@ namespace Movie.API.Controllers
             int? currentUserId = null;
             if (User.Identity.IsAuthenticated)
             {
-                currentUserId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+                currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
             }
 
             var followers = await _context.Set<UserFollow>()
@@ -218,7 +219,7 @@ namespace Movie.API.Controllers
             int? currentUserId = null;
             if (User.Identity.IsAuthenticated)
             {
-                currentUserId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+                currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
             }
 
             var following = await _context.Set<UserFollow>()
@@ -235,6 +236,95 @@ namespace Movie.API.Controllers
                 .ToListAsync();
 
             return Ok(following);
+        }
+
+        [HttpPut("{id}/block")]
+        [Authorize]
+        public async Task<IActionResult> BlockUser(int id)
+        {
+            var userRole = User.FindFirstValue(ClaimTypes.Role);
+            if (userRole != "Admin") return Forbid();
+
+            var userToBlock = await _context.Users.FindAsync(id);
+            if (userToBlock == null) return NotFound("Користувача не знайдено.");
+
+            userToBlock.IsBlocked = true; 
+            await _context.SaveChangesAsync();
+
+            var activeReports = await _context.Reports
+                                              .Where(r => r.ReportedUserId == id && !r.IsResolved)
+                                              .ToListAsync();
+            foreach (var r in activeReports)
+            {
+                r.IsResolved = true;
+            }
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Користувача заблоковано" });
+        }
+
+        [HttpGet("blocked-actors")]
+        [Authorize]
+        public async Task<IActionResult> GetBlockedActors()
+        {
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+            var blockedActors = await _context.UserBlockedActors
+                .Where(uba => uba.UserId == userId)
+                .Include(uba => uba.Actor) 
+                .Select(uba => new
+                {
+                    uba.ActorId,
+                    uba.Actor.Name, 
+                    uba.BlockedAt
+                })
+                .ToListAsync();
+
+            return Ok(blockedActors);
+        }
+
+        [HttpPost("block-actor/{actorId}")]
+        [Authorize]
+        public async Task<IActionResult> BlockActorContent(int actorId) 
+        {
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+            var actorExists = await _context.Actors.AnyAsync(a => a.Id == actorId);
+            if (!actorExists) return NotFound("Актора не знайдено.");
+
+            var alreadyBlocked = await _context.UserBlockedActors
+                .AnyAsync(uba => uba.UserId == userId && uba.ActorId == actorId);
+
+            if (alreadyBlocked) return BadRequest("Цей актор вже у вашому чорному списку.");
+
+            var blockedActor = new UserBlockedActor
+            {
+                UserId = userId,
+                ActorId = actorId,
+                BlockedAt = DateTime.UtcNow
+            };
+
+            _context.UserBlockedActors.Add(blockedActor);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Актора додано до чорного списку. Ви більше не побачите фільмів з ним." });
+        }
+
+        [HttpDelete("unblock-actor/{actorId}")]
+        [Authorize]
+        public async Task<IActionResult> UnblockActorContent(int actorId)
+        {
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+            var blockedActor = await _context.UserBlockedActors
+                .FirstOrDefaultAsync(uba => uba.UserId == userId && uba.ActorId == actorId);
+
+            if (blockedActor == null) return NotFound("Цей актор не був заблокований.");
+
+            _context.UserBlockedActors.Remove(blockedActor);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Актора розблоковано." });
         }
     }
 }

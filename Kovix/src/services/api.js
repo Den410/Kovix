@@ -50,6 +50,7 @@ export const moviesAPI = {
   
   searchTmdb: (query) => api.get(`/movies/tmdb/search?query=${encodeURIComponent(query)}`),
   getTmdbDetails: (tmdbId) => api.get(`/movies/tmdb/details/${tmdbId}`),
+  getLatest: () => api.get('/movies/latest')
 };
 
 export const reviewsAPI = {
@@ -90,6 +91,7 @@ export const usersAPI = {
   unfollow: (id) => api.delete(`/users/${id}/unfollow`),
   getFollowers: (id) => api.get(`/users/${id}/followers`),
   getFollowing: (id) => api.get(`/users/${id}/following`),
+  block: (id) => api.put(`/users/${id}/block`)
 };
 
 export const friendsAPI = {
@@ -118,6 +120,7 @@ export const chatAPI = {
 export const reportsAPI = {
   getAll: () => api.get('/reports'),
   create: (data) => api.post('/reports', data),
+  resolve: (id) => api.put(`/reports/${id}/resolve`)
 };
 
 export const notificationsAPI = {
@@ -132,6 +135,12 @@ export const actorsAPI = {
     create: (data) => api.post('/actors', data),
     update: (id, data) => api.put(`/actors/${id}`, data),
     delete: (id) => api.delete(`/actors/${id}`),
+};
+
+export const contentFilterAPI = {
+    getBlockedActors: () => api.get('/contentfilter/blocked-actors'),
+    blockActor: (actorId) => api.post(`/contentfilter/block-actor/${actorId}`),
+    unblockActor: (actorId) => api.delete(`/contentfilter/unblock-actor/${actorId}`)
 };
 
 export default api;

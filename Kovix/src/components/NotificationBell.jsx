@@ -19,8 +19,7 @@ function NotificationBell() {
     const [isOpen, setIsOpen] = useState(false);
 
     const navigate = useNavigate();
-    const location = useLocation();
-
+    
     useEffect(() => {
         if (user) {
             refreshRequests();
@@ -115,7 +114,11 @@ function NotificationBell() {
     };
 
     const handleNotificationClick = (note) => {
-        if (note.fromUserId || note.senderId) {
+        if (note.url) {
+            navigate(note.url);
+            setIsOpen(false);
+        } 
+        else if (note.fromUserId || note.senderId) {
              goToProfile(note.fromUserId || note.senderId);
         }
     };
@@ -180,7 +183,7 @@ function NotificationBell() {
                         {simpleNotifications.map((note) => {
                             if (note.message.toLowerCase().includes("запит у друзі") && incomingRequests.some(r => note.message.includes(r.username))) return null;
 
-                            const isClickable = !!(note.fromUserId || note.senderId);
+                            const isClickable = !!(note.url || note.fromUserId || note.senderId);
 
                             return (
                                 <div 
@@ -195,7 +198,9 @@ function NotificationBell() {
                                     onClick={() => isClickable && handleNotificationClick(note)}
                                 >
                                     <div>
-                                        <div className="small">{note.message}</div>
+                                        <div className={`small ${note.message.toLowerCase().includes('скарга') ? 'fw-bold text-danger' : ''}`}>
+                                            {note.message}
+                                        </div>
                                         <small className="text-muted" style={{fontSize:'0.7rem'}}>
                                             {new Date(note.createdAt).toLocaleString()}
                                         </small>

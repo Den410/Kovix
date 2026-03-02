@@ -7,6 +7,7 @@ using Movie.API.DTOs;
 using Movie.API.Hubs;
 using Movie.API.Models;
 using System.Security.Claims;
+
 namespace Movie.API.Controllers
 {
     [Route("api/[controller]")]
@@ -32,7 +33,7 @@ namespace Movie.API.Controllers
             var reports = await _context.Reports
                 .Include(r => r.Sender)
                 .Include(r => r.ReportedUser)
-                .Include(r => r.Message) 
+                .Include(r => r.Message)
                 .OrderByDescending(r => r.CreatedAt)
                 .Select(r => new
                 {
@@ -53,7 +54,6 @@ namespace Movie.API.Controllers
             return Ok(reports);
         }
 
-
         [HttpPost]
         [Authorize]
         public async Task<IActionResult> CreateReport([FromBody] ReportDto model)
@@ -71,7 +71,7 @@ namespace Movie.API.Controllers
 
                 var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier)
                                    ?? User.FindFirstValue("UserId")
-                                   ?? User.FindFirstValue("sub"); 
+                                   ?? User.FindFirstValue("sub");
 
                 if (string.IsNullOrEmpty(userIdString))
                 {
@@ -90,10 +90,11 @@ namespace Movie.API.Controllers
                 if (reportedUser == null)
                     return BadRequest(new { message = "Користувача для скарги не знайдено." });
 
+                Message reportedMessage = null;
                 if (model.MessageId.HasValue)
                 {
-                    var messageExists = await _context.Messages.AnyAsync(m => m.Id == model.MessageId.Value);
-                    if (!messageExists) return BadRequest(new { message = "Повідомлення для скарги не знайдено." });
+                    reportedMessage = await _context.Messages.FindAsync(model.MessageId.Value);
+                    if (reportedMessage == null) return BadRequest(new { message = "Повідомлення для скарги не знайдено." });
                 }
 
                 var report = new Report
@@ -103,7 +104,7 @@ namespace Movie.API.Controllers
                     Reason = model.Reason,
                     MessageId = model.MessageId,
                     MessageSnapshot = model.Content,
-                    CreatedAt = DateTime.UtcNow 
+                    CreatedAt = DateTime.UtcNow
                 };
 
                 _context.Reports.Add(report);
@@ -114,11 +115,23 @@ namespace Movie.API.Controllers
 
                 var adminMessage = $"Скарга на: '{model.Content}'. Причина: {model.Reason}";
 
-
                 if (admins == null || !admins.Any())
                 {
                     await _context.SaveChangesAsync();
                     return Ok(new { message = "Скаргу збережено (адмінів не знайдено)." });
+                }
+
+                string targetUrl = null;
+                if (reportedMessage != null)
+                {
+                    if (reportedMessage.ReceiverId == null)
+                    {
+                        targetUrl = $"/chat?messageId={model.MessageId}";
+                    }
+                    else
+                    {
+                        targetUrl = $"/admin/reports";
+                    }
                 }
 
                 foreach (var admin in admins)
@@ -126,13 +139,14 @@ namespace Movie.API.Controllers
                     var notification = new Notification
                     {
                         UserId = admin.Id,
+                        SenderId = senderId,
                         Message = adminMessage,
+                        Url = targetUrl, 
                         CreatedAt = DateTime.UtcNow,
                         IsRead = false
                     };
 
                     _context.Notifications.Add(notification);
-
                     await _context.SaveChangesAsync();
 
                     if (_hubContext != null)
@@ -142,6 +156,7 @@ namespace Movie.API.Controllers
                             notification.Id,
                             notification.UserId,
                             notification.Message,
+                            notification.Url,
                             notification.IsRead,
                             notification.CreatedAt
                         };
@@ -156,7 +171,6 @@ namespace Movie.API.Controllers
             catch (Exception ex)
             {
                 Console.WriteLine($"Error in CreateReport: {ex.Message}");
-
                 return StatusCode(500, new
                 {
                     message = ex.Message,
@@ -164,6 +178,22 @@ namespace Movie.API.Controllers
                     stackTrace = ex.StackTrace
                 });
             }
+        }
+
+        [HttpPut("{id}/resolve")]
+        [Authorize]
+        public async Task<IActionResult> ResolveReport(int id)
+        {
+            var userRole = User.FindFirstValue(ClaimTypes.Role);
+            if (userRole != "Admin") return Forbid("Тільки адміністратори мають доступ.");
+
+            var report = await _context.Reports.FindAsync(id);
+            if (report == null) return NotFound("Скаргу не знайдено.");
+
+            report.IsResolved = true;
+            await _context.SaveChangesAsync();
+
+            return Ok();
         }
     }
 }

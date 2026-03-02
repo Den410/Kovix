@@ -171,6 +171,10 @@ function Navigation() {
                       🗂️ Мої списки
                     </NavDropdown.Item>
 
+                    <NavDropdown.Item as={Link} to="/blacklist">
+                      🚫 Чорний список
+                    </NavDropdown.Item>
+
                     <NavDropdown.Item as={Link} to="/history">
                       🕰️ Історія
                     </NavDropdown.Item>
