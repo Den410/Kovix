@@ -1,8 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Movie.API.Data;
 using Movie.API.DTOs;
+using Movie.API.Hubs;
 using Movie.API.Models;
 using System.Security.Claims;
 
@@ -13,10 +15,11 @@ namespace Movie.API.Controllers
     public class UsersController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
-
-        public UsersController(ApplicationDbContext context)
+        private readonly IHubContext<NotificationHub> _hubContext;
+        public UsersController(ApplicationDbContext context, IHubContext<NotificationHub> hubContext)
         {
             _context = context;
+            _hubContext = hubContext;
         }
 
         [HttpGet]
@@ -239,17 +242,24 @@ namespace Movie.API.Controllers
         }
 
         [HttpPut("{id}/block")]
-        [Authorize]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> BlockUser(int id)
         {
-            var userRole = User.FindFirstValue(ClaimTypes.Role);
-            if (userRole != "Admin") return Forbid();
-
             var userToBlock = await _context.Users.FindAsync(id);
             if (userToBlock == null) return NotFound("Користувача не знайдено.");
 
-            userToBlock.IsBlocked = true; 
-            await _context.SaveChangesAsync();
+            userToBlock.IsBlocked = true;
+
+            var notification = new Notification
+            {
+                UserId = id,
+                SenderId = 0, 
+                Message = "Ваш акаунт було заблоковано адміністратором за порушення правил.",
+                Url = "/appeal", 
+                CreatedAt = DateTime.UtcNow,
+                IsRead = false
+            };
+            _context.Notifications.Add(notification);
 
             var activeReports = await _context.Reports
                                               .Where(r => r.ReportedUserId == id && !r.IsResolved)
@@ -258,9 +268,22 @@ namespace Movie.API.Controllers
             {
                 r.IsResolved = true;
             }
+
             await _context.SaveChangesAsync();
 
-            return Ok(new { message = "Користувача заблоковано" });
+            if (_hubContext != null)
+            {
+                await _hubContext.Clients.User(id.ToString()).SendAsync("ReceiveNotification", new
+                {
+                    id = notification.Id,
+                    message = notification.Message,
+                    url = notification.Url,
+                    createdAt = notification.CreatedAt,
+                    isRead = false
+                });
+            }
+
+            return Ok(new { message = "Користувача заблоковано, сповіщення надіслано." });
         }
 
         [HttpGet("blocked-actors")]

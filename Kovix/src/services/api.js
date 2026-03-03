@@ -18,11 +18,11 @@ api.interceptors.request.use((config) => {
 });
 
 export const moviesAPI = {
-  getAll: (page = 1, pageSize = 8, search = '', genres = '', year = '', sort = '') => 
-      api.get('/movies', { params: { page, pageSize, search, genres, year, sort } }),
+  getAll: (page = 1, pageSize = 8, search = '', genres = '', year = '', sort = '') =>
+    api.get('/movies', { params: { page, pageSize, search, genres, year, sort } }),
   getFilters: () => api.get('/movies/filters'),
   getNew: (days = 45, limit = 10) =>
-      api.get(`/movies/new?days=${days}&limit=${limit}`),
+    api.get(`/movies/new?days=${days}&limit=${limit}`),
   getById: (id) => api.get(`/movies/${id}`),
   getTrending: () => api.get('/movies/trending'),
   getTopRated: () => api.get('/movies/top-rated'),
@@ -34,20 +34,20 @@ export const moviesAPI = {
   delete: (id) => api.delete(`/movies/${id}`),
   react: (movieId, type) => api.post(`/movies/${movieId}/react?type=${type}`),
   rateEpisode: (episodeId, rating) => {
-        return api.post(`/movies/rate-episode/${episodeId}?rating=${rating}`);
-    },
+    return api.post(`/movies/rate-episode/${episodeId}?rating=${rating}`);
+  },
   addEpisode: (movieId, data) => {
-        return api.post(`/movies/${movieId}/add-episode`, data);
-    },
+    return api.post(`/movies/${movieId}/add-episode`, data);
+  },
 
   updateEpisode: (id, data) => {
-      return api.put(`/movies/episodes/${id}`, data);
-    },
+    return api.put(`/movies/episodes/${id}`, data);
+  },
 
   deleteEpisode: (id) => {
-      return api.delete(`/movies/episodes/${id}`);
-    },
-  
+    return api.delete(`/movies/episodes/${id}`);
+  },
+
   searchTmdb: (query) => api.get(`/movies/tmdb/search?query=${encodeURIComponent(query)}`),
   getTmdbDetails: (tmdbId) => api.get(`/movies/tmdb/details/${tmdbId}`),
   getLatest: () => api.get('/movies/latest')
@@ -55,7 +55,7 @@ export const moviesAPI = {
 
 export const reviewsAPI = {
   getByMovie: (movieId) => api.get(`/reviews/movie/${movieId}`),
-  create: (reviewData) => api.post('/reviews', reviewData), 
+  create: (reviewData) => api.post('/reviews', reviewData),
   update: (id, reviewData) => api.put(`/reviews/${id}`, reviewData),
   delete: (id) => api.delete(`/reviews/${id}`),
   vote: (reviewId, isLike) => api.post(`/reviews/${reviewId}/vote?isLike=${isLike}`),
@@ -76,9 +76,9 @@ export const authAPI = {
 };
 
 export const watchlistAPI = {
-    getStatus: (movieId) => api.get(`/watchlist/movie/${movieId}`),
-    update: (movieId, data) => api.post(`/watchlist/movie/${movieId}`, data),
-    getMyList: () => api.get('/watchlist/my-list'),
+  getStatus: (movieId) => api.get(`/watchlist/movie/${movieId}`),
+  update: (movieId, data) => api.post(`/watchlist/movie/${movieId}`, data),
+  getMyList: () => api.get('/watchlist/my-list'),
 };
 
 export const usersAPI = {
@@ -86,7 +86,7 @@ export const usersAPI = {
     api.get(`/users/${id}/profile`),
   toggleBlock: (id) => api.post(`/users/${id}/toggle-block`),
   getPublicProfile: (id) => api.get(`/users/${id}/profile`),
-  
+
   follow: (id) => api.post(`/users/${id}/follow`),
   unfollow: (id) => api.delete(`/users/${id}/unfollow`),
   getFollowers: (id) => api.get(`/users/${id}/followers`),
@@ -95,26 +95,26 @@ export const usersAPI = {
 };
 
 export const friendsAPI = {
-    add: (userId) => api.post(`/friends/add/${userId}`),
-    accept: (userId) => api.post(`/friends/accept/${userId}`),
-    remove: (userId) => api.delete(`/friends/remove/${userId}`),
-    getMyFriends: () => api.get('/friends/my-friends'),
-    checkStatus: (userId) => api.get(`/friends/status/${userId}`),
-    getRequests: () => api.get('/friends/requests'),
+  add: (userId) => api.post(`/friends/add/${userId}`),
+  accept: (userId) => api.post(`/friends/accept/${userId}`),
+  remove: (userId) => api.delete(`/friends/remove/${userId}`),
+  getMyFriends: () => api.get('/friends/my-friends'),
+  checkStatus: (userId) => api.get(`/friends/status/${userId}`),
+  getRequests: () => api.get('/friends/requests'),
 };
 
 export const blocksAPI = {
-    block: (userId) => api.post(`/blocks/${userId}`),
-    unblock: (userId) => api.delete(`/blocks/${userId}`),
-    check: (userId) => api.get(`/blocks/check/${userId}`),
+  block: (userId) => api.post(`/blocks/${userId}`),
+  unblock: (userId) => api.delete(`/blocks/${userId}`),
+  check: (userId) => api.get(`/blocks/check/${userId}`),
 };
 
 export const chatAPI = {
-    getGeneralHistory: () => api.get('/chat/general'),
-    getPrivateHistory: (userId) => api.get(`/chat/private/${userId}`),
-    markAsRead: (senderId) => api.post(`/chat/messages/read/${senderId}`),
-    getGeneralChatInfo: () => api.get('/chat/general'),
-    markGeneralAsRead: () => api.post('/chat/general/read'),
+  getGeneralHistory: () => api.get('/chat/general'),
+  getPrivateHistory: (userId) => api.get(`/chat/private/${userId}`),
+  markAsRead: (senderId) => api.post(`/chat/messages/read/${senderId}`),
+  getGeneralChatInfo: () => api.get('/chat/general'),
+  markGeneralAsRead: () => api.post('/chat/general/read'),
 };
 
 export const reportsAPI = {
@@ -124,23 +124,33 @@ export const reportsAPI = {
 };
 
 export const notificationsAPI = {
-    getAll: () => api.get('/notifications'),
-    delete: (id) => api.delete(`/notifications/${id}`),
-    clear: () => api.delete('/notifications/clear'),
+  getAll: () => api.get('/notifications'),
+  delete: (id) => api.delete(`/notifications/${id}`),
+  clear: () => api.delete('/notifications/clear'),
+  markAsRead: (id) => api.put(`/notifications/${id}/read`),
 };
 
 export const actorsAPI = {
-    getAll: () => api.get('/actors'),
-    getById: (id) => api.get(`/actors/${id}`),
-    create: (data) => api.post('/actors', data),
-    update: (id, data) => api.put(`/actors/${id}`, data),
-    delete: (id) => api.delete(`/actors/${id}`),
+  getAll: () => api.get('/actors'),
+  getById: (id) => api.get(`/actors/${id}`),
+  create: (data) => api.post('/actors', data),
+  update: (id, data) => api.put(`/actors/${id}`, data),
+  delete: (id) => api.delete(`/actors/${id}`),
 };
 
 export const contentFilterAPI = {
-    getBlockedActors: () => api.get('/contentfilter/blocked-actors'),
-    blockActor: (actorId) => api.post(`/contentfilter/block-actor/${actorId}`),
-    unblockActor: (actorId) => api.delete(`/contentfilter/unblock-actor/${actorId}`)
+  getBlockedActors: () => api.get('/contentfilter/blocked-actors'),
+  blockActor: (actorId) => api.post(`/contentfilter/block-actor/${actorId}`),
+  unblockActor: (actorId) => api.delete(`/contentfilter/unblock-actor/${actorId}`)
+};
+
+export const appealsAPI = {
+  create: (content) => api.post('/appeals', JSON.stringify(content), {
+    headers: { 'Content-Type': 'application/json' }
+  }),
+  getMyAppeal: () => api.get('/appeals/my-appeal'),
+  getAll: () => api.get('/appeals'),
+  process: (id, data) => api.put(`/appeals/${id}/process`, data),
 };
 
 export default api;

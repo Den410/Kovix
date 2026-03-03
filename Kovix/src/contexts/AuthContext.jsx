@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { jwtDecode } from 'jwt-decode';
+import { authAPI } from '../services/api';
 
 const AuthContext = createContext();
 
@@ -14,22 +15,12 @@ export function AuthProvider({ children }) {
   const parseUserFromToken = (token) => {
     try {
       const decoded = jwtDecode(token);
-      
       return {
-        id: decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'] || 
-            decoded.nameid || 
-            decoded.sub || 
-            decoded.id,
-            
-        username: decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] || 
-                  decoded.unique_name || 
-                  decoded.name,
-                  
-        role: decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || 
-              decoded.role,
-              
+        id: decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'] || decoded.nameid || decoded.sub || decoded.id,
+        username: decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] || decoded.unique_name || decoded.name,
+        role: decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || decoded.role,
         avatarUrl: decoded.avatarUrl,
-        
+        isBlocked: decoded.isBlocked === "True" || decoded.isBlocked === true,
         exp: decoded.exp
       };
     } catch (error) {
@@ -38,14 +29,24 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const refreshUser = async () => {
+    try {
+      const res = await authAPI.getProfile();
+      setUser(prev => ({ ...prev, ...res.data }));
+    } catch (err) {
+      console.error("Помилка оновлення профілю", err);
+    }
+  };
+
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
       const userData = parseUserFromToken(token);
       if (userData && userData.exp * 1000 > Date.now()) {
-          setUser(userData);
+        setUser(userData);
+        refreshUser();
       } else {
-          logout();
+        logout();
       }
     }
     setLoading(false);
@@ -55,6 +56,7 @@ export function AuthProvider({ children }) {
     localStorage.setItem('token', token);
     const userData = parseUserFromToken(token);
     setUser(userData);
+    refreshUser();
   };
 
   const logout = () => {
@@ -62,12 +64,10 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
-  const isAdmin = () => {
-    return user?.role === 'Admin';
-  };
+  const isAdmin = () => user?.role === 'Admin';
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isAdmin, loading }}>
+    <AuthContext.Provider value={{ user, setUser, login, logout, isAdmin, loading, refreshUser }}>
       {!loading && children}
     </AuthContext.Provider>
   );

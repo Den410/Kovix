@@ -197,6 +197,10 @@ function Navigation() {
                         >
                           🛡️ Скарги
                         </NavDropdown.Item>
+
+                        <NavDropdown.Item as={Link} to="/admin/appeals" className="text-info">
+                          ⚖️ Апеляції
+                        </NavDropdown.Item>
                       </>
                     )}
 

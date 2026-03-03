@@ -56,5 +56,26 @@ namespace Movie.API.Controllers
             await _context.SaveChangesAsync();
             return Ok();
         }
+
+        [HttpPut("{id}/read")]
+        public async Task<IActionResult> MarkAsRead(int id)
+        {
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
+            var userId = int.Parse(userIdStr);
+
+            var notification = await _context.Notifications
+                .FirstOrDefaultAsync(n => n.Id == id && n.UserId == userId);
+
+            if (notification == null)
+            {
+                return NotFound($"Сповіщення з ID {id} не знайдено для вашого профілю.");
+            }
+
+            notification.IsRead = true;
+            await _context.SaveChangesAsync();
+
+            return Ok();
+        }
     }
 }

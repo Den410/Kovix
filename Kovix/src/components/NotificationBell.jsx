@@ -3,7 +3,7 @@ import { HubConnectionBuilder, HubConnectionState } from '@microsoft/signalr';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useFriends } from '../contexts/FriendsContext';
-import { notificationsAPI, friendsAPI } from '../services/api'; 
+import { notificationsAPI, friendsAPI } from '../services/api';
 import { FiBell, FiTrash2, FiCheck, FiX } from 'react-icons/fi';
 import { Button } from 'react-bootstrap';
 import '../style/NotificationBell.css';
@@ -19,11 +19,11 @@ function NotificationBell() {
     const [isOpen, setIsOpen] = useState(false);
 
     const navigate = useNavigate();
-    
+
     useEffect(() => {
         if (user) {
             refreshRequests();
-            loadNotifications(); 
+            loadNotifications();
         }
     }, [user, requestCount]);
 
@@ -44,19 +44,45 @@ function NotificationBell() {
     }, [user]);
 
     useEffect(() => {
-        if (connection && connection.state === HubConnectionState.Disconnected) {
-            connection.start().then(() => {
-                connection.on('ReceiveNotification', (note) => {
-                    if (note.message.toLowerCase().includes("запит") || note.type === "FriendRequest") {
-                        refreshRequests();
-                    }
-                    const newNote = { ...note, createdAt: note.createdAt || new Date().toISOString() };
-                    setSimpleNotifications(prev => [newNote, ...prev]);
-                });
-            }).catch(console.error);
-        }
-    }, [connection, refreshRequests]);
-   
+        if (!user) return;
+
+        const connection = new HubConnectionBuilder()
+            .withUrl(`${API_BASE_URL}/notificationHub`, {
+                accessTokenFactory: () => localStorage.getItem('token')
+            })
+            .withAutomaticReconnect()
+            .build();
+
+        const handler = (note) => {
+            if (note.message.toLowerCase().includes("запит") || note.type === "FriendRequest") {
+                refreshRequests();
+            }
+
+            setSimpleNotifications(prev => {
+                if (prev.some(n => n.id === note.id)) return prev;
+
+                return [{
+                    ...note,
+                    createdAt: note.createdAt || new Date().toISOString(),
+                    isRead: false
+                }, ...prev];
+            });
+        };
+
+        connection.start()
+            .then(() => {
+                console.log("✅ Notification connected");
+                connection.on('ReceiveNotification', handler);
+            })
+            .catch(console.error);
+
+        return () => {
+            connection.off('ReceiveNotification', handler);
+            connection.stop();
+        };
+
+    }, [user]);
+
     const removeFriendRequestNotification = (requesterId) => {
         setSimpleNotifications(prev =>
             prev.filter(n =>
@@ -69,29 +95,19 @@ function NotificationBell() {
         e.stopPropagation();
         try {
             await friendsAPI.accept(requesterId);
-
             removeFriendRequestNotification(requesterId);
-
             refreshRequests();
-        } catch (e) {
-            console.error(e);
-        }
+        } catch (e) { console.error(e); }
     };
 
-
-   const handleReject = async (e, requesterId) => {
+    const handleReject = async (e, requesterId) => {
         e.stopPropagation();
         try {
             await friendsAPI.remove(requesterId);
-
             removeFriendRequestNotification(requesterId);
-
             refreshRequests();
-        } catch (e) {
-            console.error(e);
-        }
+        } catch (e) { console.error(e); }
     };
-
 
     const handleDeleteNotification = async (e, id) => {
         e.stopPropagation();
@@ -113,44 +129,54 @@ function NotificationBell() {
         setIsOpen(false);
     };
 
-    const handleNotificationClick = (note) => {
-        if (note.url) {
-            navigate(note.url);
-            setIsOpen(false);
-        } 
-        else if (note.fromUserId || note.senderId) {
-             goToProfile(note.fromUserId || note.senderId);
+    const handleNotificationClick = async (notification) => {
+        try {
+            if (!notification.isRead) {
+                await notificationsAPI.markAsRead(notification.id);
+
+                setSimpleNotifications(prev =>
+                    prev.map(n => n.id === notification.id ? { ...n, isRead: true } : n)
+                );
+            }
+
+            if (notification.url) {
+                setIsOpen(false);
+                navigate(notification.url);
+            }
+        } catch (err) {
+            console.error("Помилка при кліку на сповіщення:", err);
         }
     };
 
-    const totalCount = incomingRequests.length + simpleNotifications.length;
+    const unreadCount = simpleNotifications.filter(n => !n.isRead).length;
+    const totalBadgeCount = incomingRequests.length + unreadCount;
 
     return (
         <div className="position-relative">
             <button className="btn position-relative p-0 border-0 notification-btn" onClick={() => setIsOpen(!isOpen)}>
-                <FiBell className={`bell-icon ${totalCount > 0 ? 'text-primary' : ''}`} style={{ fontSize: '1.5rem', color: 'var(--text-main)' }} />
-                {totalCount > 0 && <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style={{ fontSize: '0.6rem' }}>{totalCount}</span>}
+                <FiBell className={`bell-icon ${totalBadgeCount > 0 ? 'text-primary' : ''}`} style={{ fontSize: '1.5rem', color: 'var(--text-main)' }} />
+                {totalBadgeCount > 0 && <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style={{ fontSize: '0.6rem' }}>{totalBadgeCount}</span>}
             </button>
 
             {isOpen && (
                 <div className="card position-absolute end-0 mt-2 shadow" style={{ width: '350px', zIndex: 1050, backgroundColor: 'var(--bg-card)', color: 'var(--text-main)', border: '1px solid var(--border-color)' }}>
                     <div className="card-header fw-bold d-flex justify-content-between align-items-center" style={{ backgroundColor: 'var(--bg-panel)', borderBottom: '1px solid var(--border-color)' }}>
                         <span>Сповіщення</span>
-                        {simpleNotifications.length > 0 && <button onClick={handleClearAll} className="btn btn-link btn-sm p-0 text-decoration-none text-muted" style={{fontSize:'0.8rem'}}>Очистити все</button>}
+                        {simpleNotifications.length > 0 && <button onClick={handleClearAll} className="btn btn-link btn-sm p-0 text-decoration-none text-muted" style={{ fontSize: '0.8rem' }}>Очистити все</button>}
                     </div>
 
                     <div className="list-group list-group-flush" style={{ maxHeight: '400px', overflowY: 'auto' }}>
-                        
+
                         {incomingRequests.length > 0 && (
                             <div className="p-2 bg-light bg-opacity-10 border-bottom border-secondary">
-                                <small className="text-uppercase fw-bold text-primary ms-2" style={{fontSize:'0.7rem'}}>Запити в друзі</small>
+                                <small className="text-uppercase fw-bold text-primary ms-2" style={{ fontSize: '0.7rem' }}>Запити в друзі</small>
                             </div>
                         )}
-                        
+
                         {incomingRequests.map(req => (
-                            <div 
-                                key={`req-${req.id}`} 
-                                className="list-group-item p-3 list-group-item-action" 
+                            <div
+                                key={`friend-req-${req.id}`}
+                                className="list-group-item p-3 list-group-item-action"
                                 style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-main)', borderBottom: '1px solid var(--border-color)', cursor: 'pointer' }}
                                 onClick={() => goToProfile(req.id)}
                             >
@@ -175,8 +201,8 @@ function NotificationBell() {
                         ))}
 
                         {simpleNotifications.length > 0 && incomingRequests.length > 0 && (
-                             <div className="p-2 bg-light bg-opacity-10 border-bottom border-secondary mt-2">
-                                <small className="text-uppercase fw-bold text-muted ms-2" style={{fontSize:'0.7rem'}}>Інше</small>
+                            <div className="p-2 bg-light bg-opacity-10 border-bottom border-secondary mt-2">
+                                <small className="text-uppercase fw-bold text-muted ms-2" style={{ fontSize: '0.7rem' }}>Інше</small>
                             </div>
                         )}
 
@@ -186,35 +212,46 @@ function NotificationBell() {
                             const isClickable = !!(note.url || note.fromUserId || note.senderId);
 
                             return (
-                                <div 
-                                    key={note.id || Math.random()} 
+                                <div
+                                    key={`sys-note-${note.id}`}
                                     className={`list-group-item d-flex justify-content-between align-items-start p-3 ${isClickable ? 'list-group-item-action' : ''}`}
-                                    style={{ 
-                                        backgroundColor: 'var(--bg-card)', 
-                                        color: 'var(--text-main)', 
-                                        borderBottom: '1px solid var(--border-color)', 
-                                        cursor: isClickable ? 'pointer' : 'default' 
+                                    style={{
+                                        backgroundColor: !note.isRead ? 'rgba(13, 110, 253, 0.08)' : 'var(--bg-card)',
+                                        color: 'var(--text-main)',
+                                        borderBottom: '1px solid var(--border-color)',
+                                        cursor: isClickable ? 'pointer' : 'default',
+                                        transition: 'background-color 0.2s'
                                     }}
                                     onClick={() => isClickable && handleNotificationClick(note)}
                                 >
-                                    <div>
-                                        <div className={`small ${note.message.toLowerCase().includes('скарга') ? 'fw-bold text-danger' : ''}`}>
-                                            {note.message}
+                                    <div className="d-flex gap-2 w-100">
+                                        {!note.isRead && (
+                                            <div style={{
+                                                width: '8px', height: '8px', backgroundColor: '#0d6efd',
+                                                borderRadius: '50%', marginTop: '6px', flexShrink: 0
+                                            }} />
+                                        )}
+
+                                        <div className="flex-grow-1">
+                                            <div className={`small ${!note.isRead ? 'fw-bold' : ''} ${note.message.toLowerCase().includes('скарга') ? 'text-danger' : ''}`}>
+                                                {note.message}
+                                            </div>
+                                            <small className="text-muted" style={{ fontSize: '0.7rem' }}>
+                                                {new Date(note.createdAt).toLocaleString()}
+                                            </small>
                                         </div>
-                                        <small className="text-muted" style={{fontSize:'0.7rem'}}>
-                                            {new Date(note.createdAt).toLocaleString()}
-                                        </small>
+
+                                        {note.id && (
+                                            <button className="btn btn-link text-danger p-0 ms-2" onClick={(e) => handleDeleteNotification(e, note.id)}>
+                                                <FiTrash2 />
+                                            </button>
+                                        )}
                                     </div>
-                                    {note.id && (
-                                        <button className="btn btn-link text-danger p-0 ms-2" onClick={(e) => handleDeleteNotification(e, note.id)}>
-                                            <FiTrash2 />
-                                        </button>
-                                    )}
                                 </div>
                             )
                         })}
 
-                        {totalCount === 0 && <div className="text-center py-4 text-muted">Сповіщень немає 🔕</div>}
+                        {totalBadgeCount === 0 && <div className="text-center py-4 text-muted">Сповіщень немає 🔕</div>}
                     </div>
                 </div>
             )}
