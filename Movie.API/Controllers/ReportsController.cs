@@ -6,6 +6,7 @@ using Movie.API.Data;
 using Movie.API.DTOs;
 using Movie.API.Hubs;
 using Movie.API.Models;
+using Movie.API.Models.Enums;
 using System.Security.Claims;
 
 namespace Movie.API.Controllers
@@ -24,12 +25,9 @@ namespace Movie.API.Controllers
         }
 
         [HttpGet]
-        [Authorize]
+        [Authorize(Roles = "Admin")] 
         public async Task<IActionResult> GetAllReports()
         {
-            var userRole = User.FindFirstValue(ClaimTypes.Role);
-            if (userRole != "Admin") return Forbid("Тільки адміністратори мають доступ.");
-
             var reports = await _context.Reports
                 .Include(r => r.Sender)
                 .Include(r => r.ReportedUser)
@@ -46,7 +44,9 @@ namespace Movie.API.Controllers
                     r.MessageId,
                     r.MessageSnapshot,
                     r.CreatedAt,
-                    r.IsResolved,
+                    Status = (int)r.Resolution,
+                    r.AdminComment,
+                    IsResolved = r.Resolution != AppealStatus.Pending,
                     IsGeneralChat = r.Message != null && r.Message.ReceiverId == null
                 })
                 .ToListAsync();
@@ -181,18 +181,40 @@ namespace Movie.API.Controllers
         }
 
         [HttpPut("{id}/resolve")]
-        [Authorize]
-        public async Task<IActionResult> ResolveReport(int id)
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> ResolveReport(int id, [FromBody] AppealProcessDto dto)
         {
-            var userRole = User.FindFirstValue(ClaimTypes.Role);
-            if (userRole != "Admin") return Forbid("Тільки адміністратори мають доступ.");
-
+            var adminId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
             var report = await _context.Reports.FindAsync(id);
-            if (report == null) return NotFound("Скаргу не знайдено.");
 
-            report.IsResolved = true;
+            if (report == null) return NotFound();
+
+            report.Resolution = dto.Status; 
+            report.AdminComment = dto.AdminComment;
+            report.ResolvedByAdminId = adminId;
+            report.ResolvedAt = DateTime.UtcNow;
+
+            if (dto.Status == AppealStatus.Blocked)
+            {
+                var targetUser = await _context.Users.FindAsync(report.ReportedUserId);
+                if (targetUser != null)
+                {
+                    targetUser.IsBlocked = true;
+
+                    var otherReports = await _context.Reports
+                        .Where(r => r.ReportedUserId == report.ReportedUserId && r.Resolution == AppealStatus.Pending)
+                        .ToListAsync();
+
+                    foreach (var r in otherReports)
+                    {
+                        r.Resolution = AppealStatus.Blocked;
+                        r.AdminComment = "Автоматично закрито через блокування користувача за іншою скаргою.";
+                        r.ResolvedAt = DateTime.UtcNow;
+                    }
+                }
+            }
+
             await _context.SaveChangesAsync();
-
             return Ok();
         }
     }

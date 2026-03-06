@@ -50,7 +50,8 @@ export const moviesAPI = {
 
   searchTmdb: (query) => api.get(`/movies/tmdb/search?query=${encodeURIComponent(query)}`),
   getTmdbDetails: (tmdbId) => api.get(`/movies/tmdb/details/${tmdbId}`),
-  getLatest: () => api.get('/movies/latest')
+  getLatest: () => api.get('/movies/latest'),
+  incrementView: (id) => api.post(`/movies/${id}/increment-view`),
 };
 
 export const reviewsAPI = {
@@ -120,7 +121,11 @@ export const chatAPI = {
 export const reportsAPI = {
   getAll: () => api.get('/reports'),
   create: (data) => api.post('/reports', data),
-  resolve: (id) => api.put(`/reports/${id}/resolve`)
+  resolve: (id, data) => api.put(`/reports/${id}/resolve`, JSON.stringify(data), {
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    }),
 };
 
 export const notificationsAPI = {
@@ -151,6 +156,10 @@ export const appealsAPI = {
   getMyAppeal: () => api.get('/appeals/my-appeal'),
   getAll: () => api.get('/appeals'),
   process: (id, data) => api.put(`/appeals/${id}/process`, data),
+};
+
+export const statsAPI = {
+  getStats: () => api.get('/users/stats'),
 };
 
 export default api;

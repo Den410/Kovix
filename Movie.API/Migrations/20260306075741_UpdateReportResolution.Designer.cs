@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Movie.API.Data;
 
@@ -11,9 +12,11 @@ using Movie.API.Data;
 namespace Movie.API.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260306075741_UpdateReportResolution")]
+    partial class UpdateReportResolution
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -319,9 +322,6 @@ namespace Movie.API.Migrations
                     b.Property<string>("TrailerUrl")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("ViewsCount")
-                        .HasColumnType("int");
-
                     b.Property<int>("Year")
                         .HasColumnType("int");
 
@@ -343,7 +343,6 @@ namespace Movie.API.Migrations
                             Title = "Inception",
                             TotalReviews = 2,
                             TrailerUrl = "https://www.youtube.com/embed/YoHD9XEInc0",
-                            ViewsCount = 0,
                             Year = 2010
                         },
                         new
@@ -359,7 +358,6 @@ namespace Movie.API.Migrations
                             Title = "The Shawshank Redemption",
                             TotalReviews = 1,
                             TrailerUrl = "https://www.youtube.com/embed/6hB3S9bIaco",
-                            ViewsCount = 0,
                             Year = 1994
                         },
                         new
@@ -375,7 +373,6 @@ namespace Movie.API.Migrations
                             Title = "Dune: Part Two",
                             TotalReviews = 1,
                             TrailerUrl = "https://www.youtube.com/embed/Way9Dexny3w",
-                            ViewsCount = 0,
                             Year = 2024
                         },
                         new
@@ -391,7 +388,6 @@ namespace Movie.API.Migrations
                             Title = "The Dark Knight",
                             TotalReviews = 0,
                             TrailerUrl = "https://www.youtube.com/embed/EXeTwQWrcwY",
-                            ViewsCount = 0,
                             Year = 2008
                         });
                 });

@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Button, Card, Container, Badge, Alert } from 'react-bootstrap';
+import { Button, Card, Container, Badge, Alert, Nav } from 'react-bootstrap'; 
 import { useNavigate } from 'react-router-dom';
-import { reportsAPI, usersAPI } from '../services/api'; 
+import { reportsAPI } from '../services/api'; 
 
 function AdminReportsPage() {
-  const [reports, setReports] = useState([]);
+  const [allReports, setAllReports] = useState([]); 
+  const [activeTab, setActiveTab] = useState('pending');
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
@@ -14,106 +15,110 @@ function AdminReportsPage() {
 
   const loadReports = () => {
     reportsAPI.getAll()
-      .then(res => setReports(res.data.filter(r => !r.isResolved)))
+      .then(res => setAllReports(res.data))
       .catch(err => {
-        console.error(err);
-        setError('Не вдалося завантажити скарги. Можливо, у вас немає прав адміністратора.');
+        setError('Не вдалося завантажити скарги.');
       });
   };
 
-  const handleBlockUser = async (reportedUserId, reportId) => {
-    if (!window.confirm("Ви впевнені, що хочете заблокувати цього користувача? Він більше не зможе писати повідомлення.")) return;
-    
-    try {
-      await usersAPI.block(reportedUserId);
-      await reportsAPI.resolve(reportId);
-      setReports(prev => prev.filter(r => r.id !== reportId));
-      alert("Користувача заблоковано!");
-    } catch (err) {
-      console.error(err);
-      alert("Помилка при блокуванні користувача.");
-    }
-  };
+  const displayedReports = allReports.filter(r => 
+    activeTab === 'pending' ? !r.isResolved : r.isResolved
+  );
 
-  const handleRejectReport = async (reportId) => {
-    if (!window.confirm("Відхилити цю скаргу?")) return;
+  const handleProcessReport = async (reportId, status, comment) => {
+    const actionName = status === 3 ? "заблокувати" : "відхилити";
+    if (!window.confirm(`Ви впевнені, що хочете ${actionName} цю скаргу?`)) return;
 
     try {
-      await reportsAPI.resolve(reportId);
-      setReports(prev => prev.filter(r => r.id !== reportId));
+      await reportsAPI.resolve(reportId, { 
+        status: status, 
+        adminComment: comment 
+      });
+      
+      alert("Опрацьовано!");
+      loadReports(); 
     } catch (err) {
-      console.error(err);
-      alert("Помилка при відхиленні скарги.");
+      alert("Помилка при опрацюванні.");
     }
   };
 
   return (
     <Container className="mt-4" style={{ color: 'var(--text-main)' }}>
-      <h3 className="mb-4">🛑 Скарги користувачів</h3>
+      <h3 className="mb-4">🛑 Управління скаргами</h3>
+
+      <Nav variant="tabs" activeKey={activeTab} onSelect={(k) => setActiveTab(k)} className="mb-4">
+        <Nav.Item>
+          <Nav.Link eventKey="pending" className="text-warning">Нові скарги</Nav.Link>
+        </Nav.Item>
+        <Nav.Item>
+          <Nav.Link eventKey="history" className="text-info">Історія опрацьованих</Nav.Link>
+        </Nav.Item>
+      </Nav>
 
       {error && <Alert variant="danger">{error}</Alert>}
 
-      {reports.length === 0 && !error && <p style={{ color: 'var(--text-secondary)' }}>Скарг немає 🎉</p>}
+      {displayedReports.length === 0 && <p className="text-center mt-5">Тут поки порожньо ☕</p>}
 
-      {reports.map(report => (
-        <Card key={report.id} className="mb-3 shadow-sm" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-color)', color: 'var(--text-main)' }}>
-          <Card.Header className="d-flex justify-content-between align-items-center" style={{ backgroundColor: 'var(--bg-panel)', borderBottom: '1px solid var(--border-color)' }}>
+      {displayedReports.map(report => (
+        <Card key={`report-${report.id}`} className="mb-3 shadow-sm bg-card text-main border-color">
+          <Card.Header className="d-flex justify-content-between align-items-center bg-panel border-color">
             <span>
-              <strong style={{ color: 'var(--primary-color)' }}>{report.senderName}</strong> поскаржився на <strong style={{ color: 'var(--primary-color)' }}>{report.reportedUserName}</strong>
+              <strong>{report.senderName}</strong> ➡️ <strong>{report.reportedUserName}</strong>
             </span>
-            <small style={{ color: 'var(--text-secondary)' }}>
-              {new Date(report.createdAt).toLocaleString()}
-            </small>
+            <div className="text-end">
+              {report.isResolved && (
+                <Badge bg={report.status === 3 ? "danger" : "secondary"} className="me-2">
+                  {report.status === 3 ? "Блокування" : "Відхилено"}
+                </Badge>
+              )}
+              <small className="text-secondary">{new Date(report.createdAt).toLocaleString()}</small>
+            </div>
           </Card.Header>
 
           <Card.Body>
-            <div className="mb-3">
-              <Badge bg="danger" className="me-2">Причина:</Badge>
-              {report.reason}
-            </div>
-
+            <p><strong>Причина:</strong> {report.reason}</p>
+            
             {report.messageSnapshot && (
-              <div className="p-3 rounded mb-3 fst-italic border-start border-4 border-danger" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }}>
-                <small className="d-block mb-1" style={{ color: 'var(--text-secondary)' }}>Зміст повідомлення (Зліпок):</small>
+              <div className="p-3 rounded mb-3 fst-italic border-start border-4 border-danger bg-opacity-10 bg-white">
                 "{report.messageSnapshot}"
               </div>
             )}
 
-            <hr style={{ borderColor: 'var(--border-color)' }} />
+            {report.isResolved && report.adminComment && (
+              <Alert variant="dark" className="small py-2 mt-2">
+                <strong>Вердикт:</strong> {report.adminComment}
+              </Alert>
+            )}
 
-            <div className="d-flex justify-content-between align-items-center">
-              <div>
-                <Button
-                  variant="outline-warning"
-                  size="sm"
-                  className="me-2"
-                  onClick={() => handleBlockUser(report.reportedUserId, report.id)}
-                >
-                  🚫 Заблокувати порушника
-                </Button>
+            <hr className="border-color" />
 
-                <Button
-                  variant="outline-success"
-                  size="sm"
-                  onClick={() => handleRejectReport(report.id)}
-                >
-                  ✅ Відхилити скаргу (Немає порушень)
-                </Button>
-              </div>
-
-              {report.isGeneralChat ? (
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={() => navigate(`/chat?messageId=${report.messageId}`)}
-                  disabled={!report.messageId}
-                >
-                  🔗 Перейти в Загальний чат
-                </Button>
+            <div className="d-flex justify-content-between">
+              {!report.isResolved ? (
+                <div>
+                  <Button 
+                    variant="outline-danger" 
+                    size="sm" 
+                    className="me-2"
+                    onClick={() => handleProcessReport(report.id, 3, "Порушення правил спільноти")}
+                  >
+                    🚫 Блокувати
+                  </Button>
+                  <Button 
+                    variant="outline-secondary" 
+                    size="sm"
+                    onClick={() => handleProcessReport(report.id, 2, "Недостатньо доказів порушення")}
+                  >
+                    ✅ Відхилити
+                  </Button>
+                </div>
               ) : (
-                <Badge bg="secondary" className="p-2 fw-normal" style={{ fontSize: '0.85rem' }}>
-                  🔒 Приватна переписка
-                </Badge>
+                <span className="text-muted small italic">Скарга вже розглянута</span>
+              )}
+
+              {report.isGeneralChat && (
+                <Button variant="link" size="sm" onClick={() => navigate(`/chat?messageId=${report.messageId}`)}>
+                  🔗 Перейти до чату
+                </Button>
               )}
             </div>
           </Card.Body>

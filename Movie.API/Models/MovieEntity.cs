@@ -13,6 +13,7 @@ namespace Movie.API.Models
         public bool IsSeries { get; set; }
         public double AverageRating { get; set; }
         public int TotalReviews { get; set; }
+        public int ViewsCount { get; set; } = 0;
         public DateTime CreatedAt { get; set; }
         public ICollection<Review>? Reviews { get; set; }
         public ICollection<Watchlist>? Watchlists { get; set; }

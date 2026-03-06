@@ -94,6 +94,9 @@ namespace Movie.API.Controllers
                 case "ratingDesc":
                     query = query.OrderByDescending(m => m.AverageRating);
                     break;
+                case "viewsDesc":
+                    query = query.OrderByDescending(m => m.ViewsCount);
+                    break;
                 case "yearDesc":
                     query = query.OrderByDescending(m => m.Year);
                     break;
@@ -182,6 +185,7 @@ namespace Movie.API.Controllers
                 TrailerUrl = movie.TrailerUrl,
                 AverageRating = movie.AverageRating,
                 TotalReviews = movie.Reviews?.Count ?? 0,
+                ViewsCount = movie.ViewsCount,
 
                 ReactionCounts = reactions
                     .GroupBy(r => r.Type)
@@ -864,6 +868,19 @@ namespace Movie.API.Controllers
             }
 
             return Ok(latestMovie);
+        }
+
+        [HttpPost("{id}/increment-view")]
+        public async Task<IActionResult> IncrementViewCount(int id)
+        {
+            var movie = await _context.Movies.FindAsync(id);
+            if (movie == null) return NotFound("Фільм не знайдено.");
+
+            movie.ViewsCount += 1;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { viewsCount = movie.ViewsCount });
         }
     }
 }

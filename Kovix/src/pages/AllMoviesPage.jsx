@@ -13,6 +13,7 @@ const SORT_OPTIONS = [
   { value: 'dateDesc', label: 'Даті додавання (нові)' },
   { value: 'dateAsc', label: 'Даті додавання (старі)' },
   { value: 'ratingDesc', label: 'Рейтингу' },
+  { value: 'viewsDesc', label: 'Популярності (Перегляди)' },
   { value: 'yearDesc', label: 'Року випуску' },
   { value: 'titleAsc', label: 'Назві (А-Я)' },
 ];

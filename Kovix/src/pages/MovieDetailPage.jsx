@@ -8,11 +8,9 @@ import ReviewList from '../components/ReviewList';
 import AdminMovieModal from '../components/AdminMovieModal';
 import AdminEpisodeModal from '../components/AdminEpisodeModal';
 import defaultPosterImg from '../assets/NotFoundPoster.webp';
-import defaultAvatarImg from '../assets/NotFoundAvatar.png';
 import '../style/App.css';
 
 const API_BASE_URL = 'http://localhost:5096';
-const DEFAULT_AVATAR = defaultAvatarImg
 const LIKE_ID = 6;
 const DISLIKE_ID = 7;
 
@@ -57,6 +55,33 @@ function MovieDetailPage() {
 
   useEffect(() => {
     loadMovieData();
+  }, [id]);
+
+  useEffect(() => {
+    moviesAPI.getById(id)
+      .then(res => setMovie(res.data))
+      .catch(err => console.error(err));
+  }, [id]);
+
+  useEffect(() => {
+    const viewedMovies = JSON.parse(sessionStorage.getItem('viewedMovies') || '[]');
+
+    if (viewedMovies.includes(id)) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      moviesAPI.incrementView(id)
+        .then(res => {
+          setMovie(prev => prev ? { ...prev, viewsCount: res.data.viewsCount } : prev);
+
+          viewedMovies.push(id);
+          sessionStorage.setItem('viewedMovies', JSON.stringify(viewedMovies));
+        })
+        .catch(err => console.error("Не вдалося зарахувати перегляд", err));
+    }, 3000);
+
+    return () => clearTimeout(timer);
   }, [id]);
 
   useEffect(() => {
@@ -282,6 +307,10 @@ function MovieDetailPage() {
             <h1 className="mb-0">{movie.title}</h1>
             {movie.isSeries && <Badge bg="primary">TV Series</Badge>}
           </div>
+
+          <div className="text-muted mb-3">
+              <span>👁️ {movie.viewsCount || 0} переглядів сторінки</span>
+            </div>
 
           {movie.director && (
             <div className="text-secondary mb-3" style={{ fontSize: '1.1rem' }}>

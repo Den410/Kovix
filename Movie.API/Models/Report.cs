@@ -1,5 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using Movie.API.Models;
+﻿using Movie.API.Models.Enums;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Movie.API.Models
 {
@@ -23,6 +23,15 @@ namespace Movie.API.Models
         public string? MessageSnapshot { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        public bool IsResolved { get; set; } = false;
+
+        public AppealStatus Resolution { get; set; } = AppealStatus.Pending;
+
+        public int? ResolvedByAdminId { get; set; }
+        [ForeignKey("ResolvedByAdminId")]
+        public User? ResolvedByAdmin { get; set; }
+
+        public string? AdminComment { get; set; }
+
+        public DateTime? ResolvedAt { get; set; }
     }
 }

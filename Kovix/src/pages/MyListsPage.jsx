@@ -3,6 +3,10 @@ import { Container, Row, Col, Card, Spinner, Nav, Badge, Button } from 'react-bo
 import { Link } from 'react-router-dom';
 import { watchlistAPI } from '../services/api';
 import '../style/MyListsPage.css';
+import defaultPosterImg from '../assets/NotFoundPoster.webp';
+
+const API_BASE_URL = 'http://localhost:5096'; 
+const PLACEHOLDER_IMG = defaultPosterImg;
 
 const TABS = [
   { eventKey: 'favorite', label: '❤️ Улюблені' },
@@ -106,39 +110,57 @@ function MyListsPage() {
         </div>
       ) : (
         <Row>
-          {filteredItems.map(item => (
-            <Col key={item.movieId} xs={6} sm={4} md={3} lg={2} className="mb-4">
-            <Card 
-                className="h-100 shadow-sm border-0 position-relative movie-card-hover"
-                style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)' }}
-            >
-               <Link to={`/movie/${item.movieId}`} className="text-decoration-none h-100 d-flex flex-column" style={{ color: 'var(--text-main)' }}>
-                  <div
-                    className="overflow-hidden rounded-top"
-                    style={{ aspectRatio: '2 / 3' }}
-                  >
-                    <Card.Img
-                      src={item.posterUrl || 'https://tse1.mm.bing.net/th/id/OIP.Lr_j_PgqTGzKxJTeIwajVwHaLH'}
-                      alt={item.title}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
-                  </div>
+          {filteredItems.map(item => {
+            let imageUrl = PLACEHOLDER_IMG;
+            let rawPoster = item.posterUrl;
 
-                  <Card.Body className="p-2">
-                    <h6 className="text-truncate mb-1" title={item.title} style={{fontSize: '0.9rem', fontWeight: 'bold', color: 'var(--text-main)'}}>
-                      {item.title}
-                    </h6>
-                    
-                    {activeTab === 'favorite' && item.status > 0 && STATUS_MAP[item.status] && (
-                      <span className={`status-badge ${STATUS_MAP[item.status].className}`}>
-                        {STATUS_MAP[item.status].label}
-                      </span>
-                    )}
-                  </Card.Body>
-               </Link>
-             </Card>
-            </Col>
-          ))}
+            if (rawPoster) {
+                if (rawPoster.startsWith('http')) {
+                    imageUrl = rawPoster;
+                } else {
+                    const cleanPath = rawPoster.startsWith('/') ? rawPoster : `/${rawPoster}`;
+                    imageUrl = `${API_BASE_URL}${cleanPath}`;
+                }
+            }
+
+            return (
+              <Col key={item.movieId} xs={6} sm={4} md={3} lg={2} className="mb-4">
+              <Card 
+                  className="h-100 shadow-sm border-0 position-relative movie-card-hover"
+                  style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)' }}
+              >
+                 <Link to={`/movie/${item.movieId}`} className="text-decoration-none h-100 d-flex flex-column" style={{ color: 'var(--text-main)' }}>
+                    <div
+                      className="overflow-hidden rounded-top"
+                      style={{ aspectRatio: '2 / 3' }}
+                    >
+                      <Card.Img
+                        src={imageUrl}
+                        alt={item.title}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        onError={(e) => { 
+                          e.target.onerror = null; 
+                          e.target.src = PLACEHOLDER_IMG; 
+                        }}
+                      />
+                    </div>
+
+                    <Card.Body className="p-2">
+                      <h6 className="text-truncate mb-1" title={item.title} style={{fontSize: '0.9rem', fontWeight: 'bold', color: 'var(--text-main)'}}>
+                        {item.title}
+                      </h6>
+                      
+                      {activeTab === 'favorite' && item.status > 0 && STATUS_MAP[item.status] && (
+                        <span className={`status-badge ${STATUS_MAP[item.status].className}`}>
+                          {STATUS_MAP[item.status].label}
+                        </span>
+                      )}
+                    </Card.Body>
+                 </Link>
+               </Card>
+              </Col>
+            );
+          })}
         </Row>
       )}
     </Container>

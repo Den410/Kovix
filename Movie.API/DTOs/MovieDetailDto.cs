@@ -19,5 +19,6 @@
         public string? Type { get; set; } 
         public List<EpisodeDto> Episodes { get; set; } = new List<EpisodeDto>();
         public List<CastDto>? Cast { get; set; }
+        public int ViewsCount { get; set; }
     }
 }

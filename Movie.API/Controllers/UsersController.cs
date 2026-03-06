@@ -6,6 +6,7 @@ using Movie.API.Data;
 using Movie.API.DTOs;
 using Movie.API.Hubs;
 using Movie.API.Models;
+using Movie.API.Models.Enums;
 using System.Security.Claims;
 
 namespace Movie.API.Controllers
@@ -248,25 +249,31 @@ namespace Movie.API.Controllers
             var userToBlock = await _context.Users.FindAsync(id);
             if (userToBlock == null) return NotFound("Користувача не знайдено.");
 
+            var adminId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
             userToBlock.IsBlocked = true;
 
             var notification = new Notification
             {
                 UserId = id,
-                SenderId = 0, 
+                SenderId = 0,
                 Message = "Ваш акаунт було заблоковано адміністратором за порушення правил.",
-                Url = "/appeal", 
+                Url = "/appeal",
                 CreatedAt = DateTime.UtcNow,
                 IsRead = false
             };
             _context.Notifications.Add(notification);
 
             var activeReports = await _context.Reports
-                                              .Where(r => r.ReportedUserId == id && !r.IsResolved)
-                                              .ToListAsync();
+                                             .Where(r => r.ReportedUserId == id && r.Resolution == AppealStatus.Pending)
+                                             .ToListAsync();
+
             foreach (var r in activeReports)
             {
-                r.IsResolved = true;
+                r.Resolution = AppealStatus.Blocked;
+                r.AdminComment = "Закрито автоматично при блокуванні користувача.";
+                r.ResolvedByAdminId = adminId;
+                r.ResolvedAt = DateTime.UtcNow;
             }
 
             await _context.SaveChangesAsync();
@@ -283,7 +290,7 @@ namespace Movie.API.Controllers
                 });
             }
 
-            return Ok(new { message = "Користувача заблоковано, сповіщення надіслано." });
+            return Ok(new { message = "Користувача заблоковано, скарги перенесено в історію." });
         }
 
         [HttpGet("blocked-actors")]
@@ -294,11 +301,11 @@ namespace Movie.API.Controllers
 
             var blockedActors = await _context.UserBlockedActors
                 .Where(uba => uba.UserId == userId)
-                .Include(uba => uba.Actor) 
+                .Include(uba => uba.Actor)
                 .Select(uba => new
                 {
                     uba.ActorId,
-                    uba.Actor.Name, 
+                    uba.Actor.Name,
                     uba.BlockedAt
                 })
                 .ToListAsync();
@@ -308,7 +315,7 @@ namespace Movie.API.Controllers
 
         [HttpPost("block-actor/{actorId}")]
         [Authorize]
-        public async Task<IActionResult> BlockActorContent(int actorId) 
+        public async Task<IActionResult> BlockActorContent(int actorId)
         {
             var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
@@ -348,6 +355,67 @@ namespace Movie.API.Controllers
             await _context.SaveChangesAsync();
 
             return Ok(new { message = "Актора розблоковано." });
+        }
+
+        [HttpGet("stats")]
+        [Authorize]
+        public async Task<IActionResult> GetMyStats()
+        {
+            try
+            {
+                var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
+                var userId = int.Parse(userIdStr);
+
+                var myWatchlists = await _context.Watchlists
+                    .Where(w => w.UserId == userId)
+                    .Select(w => new { w.MovieId, w.Status })
+                    .ToListAsync();
+
+                var myReviews = await _context.Reviews
+                    .Where(r => r.UserId == userId)
+                    .Select(r => new { r.MovieId, r.Rating })
+                    .ToListAsync();
+
+                var statsData = myWatchlists
+                    .GroupJoin(myReviews,
+                        w => w.MovieId,
+                        r => r.MovieId,
+                        (w, revs) => new { w.Status, Rating = revs.Select(r => (double?)r.Rating).FirstOrDefault() })
+                    .GroupBy(x => x.Status)
+                    .Select(g => new
+                    {
+                        Status = g.Key,
+                        Count = g.Count(),
+                        AverageRating = g.Where(x => x.Rating.HasValue).Select(x => x.Rating.Value).DefaultIfEmpty(0).Average()
+                    })
+                    .ToList();
+
+                var result = new UserMovieStatsDto
+                {
+                    PlanToWatchCount = statsData.FirstOrDefault(s => s.Status == WatchStatus.PlanToWatch)?.Count ?? 0,
+                    PlanToWatchAvg = Math.Round(statsData.FirstOrDefault(s => s.Status == WatchStatus.PlanToWatch)?.AverageRating ?? 0, 1),
+
+                    WatchingCount = statsData.FirstOrDefault(s => s.Status == WatchStatus.Watching)?.Count ?? 0,
+                    WatchingAvg = Math.Round(statsData.FirstOrDefault(s => s.Status == WatchStatus.Watching)?.AverageRating ?? 0, 1),
+
+                    CompletedCount = statsData.FirstOrDefault(s => s.Status == WatchStatus.Completed)?.Count ?? 0,
+                    CompletedAvg = Math.Round(statsData.FirstOrDefault(s => s.Status == WatchStatus.Completed)?.AverageRating ?? 0, 1),
+
+                    DroppedCount = statsData.FirstOrDefault(s => s.Status == WatchStatus.Dropped)?.Count ?? 0,
+                    DroppedAvg = Math.Round(statsData.FirstOrDefault(s => s.Status == WatchStatus.Dropped)?.AverageRating ?? 0, 1)
+                };
+
+                result.TotalCount = result.PlanToWatchCount + result.WatchingCount + result.CompletedCount + result.DroppedCount;
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"\n❌ ПОМИЛКА СТАТИСТИКИ: {ex.Message}");
+                if (ex.InnerException != null) Console.WriteLine($"🔍 ДЕТАЛІ: {ex.InnerException.Message}");
+                return StatusCode(500, new { message = "Помилка при розрахунку статистики", details = ex.Message });
+            }
         }
     }
 }
