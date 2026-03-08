@@ -14,6 +14,10 @@ namespace Movie.API.Models
         public double AverageRating { get; set; }
         public int TotalReviews { get; set; }
         public int ViewsCount { get; set; } = 0;
+        public int? FranchiseId { get; set; } 
+        public Franchise? Franchise { get; set; }
+
+        public int? OrderInFranchise { get; set; }
         public DateTime CreatedAt { get; set; }
         public ICollection<Review>? Reviews { get; set; }
         public ICollection<Watchlist>? Watchlists { get; set; }

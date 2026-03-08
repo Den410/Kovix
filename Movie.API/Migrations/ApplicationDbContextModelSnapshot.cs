@@ -142,6 +142,26 @@ namespace Movie.API.Migrations
                     b.ToTable("Episodes");
                 });
 
+            modelBuilder.Entity("Movie.API.Models.Franchise", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Franchises");
+                });
+
             modelBuilder.Entity("Movie.API.Models.Friendship", b =>
                 {
                     b.Property<int>("Id")
@@ -298,12 +318,18 @@ namespace Movie.API.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<int?>("FranchiseId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Genre")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
                     b.Property<bool>("IsSeries")
                         .HasColumnType("bit");
+
+                    b.Property<int?>("OrderInFranchise")
+                        .HasColumnType("int");
 
                     b.Property<string>("PosterUrl")
                         .HasColumnType("nvarchar(max)");
@@ -326,6 +352,8 @@ namespace Movie.API.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("FranchiseId");
 
                     b.ToTable("Movies");
 
@@ -916,6 +944,16 @@ namespace Movie.API.Migrations
                     b.Navigation("Movie");
                 });
 
+            modelBuilder.Entity("Movie.API.Models.MovieEntity", b =>
+                {
+                    b.HasOne("Movie.API.Models.Franchise", "Franchise")
+                        .WithMany("Movies")
+                        .HasForeignKey("FranchiseId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Franchise");
+                });
+
             modelBuilder.Entity("Movie.API.Models.MovieReaction", b =>
                 {
                     b.HasOne("Movie.API.Models.User", "User")
@@ -1110,6 +1148,11 @@ namespace Movie.API.Migrations
             modelBuilder.Entity("Movie.API.Models.Episode", b =>
                 {
                     b.Navigation("Ratings");
+                });
+
+            modelBuilder.Entity("Movie.API.Models.Franchise", b =>
+                {
+                    b.Navigation("Movies");
                 });
 
             modelBuilder.Entity("Movie.API.Models.Message", b =>

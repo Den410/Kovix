@@ -464,6 +464,52 @@ function MovieDetailPage() {
             </div>
           </div>
 
+          {movie.franchiseName && movie.franchiseMovies && movie.franchiseMovies.length > 0 && (
+            <div className="mb-5">
+              <h3 className="mb-3 border-start border-4 border-info ps-2">
+                Порядок перегляду: {movie.franchiseName}
+              </h3>
+              
+              <div className="d-flex flex-column gap-2">
+                {movie.franchiseMovies.map((fm) => (
+                  <Link 
+                    key={fm.id} 
+                    to={`/movie/${fm.id}`} 
+                    className="text-decoration-none"
+                  >
+                    <div 
+                      className={`p-3 rounded d-flex align-items-center ${fm.isCurrent ? 'border-primary border' : 'border'}`}
+                      style={{ 
+                        backgroundColor: fm.isCurrent ? 'rgba(13, 110, 253, 0.1)' : 'var(--bg-card)',
+                        borderColor: fm.isCurrent ? 'var(--primary-color)' : 'var(--border-color)',
+                        color: 'var(--text-main)',
+                        transition: 'background-color 0.2s'
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!fm.isCurrent) e.currentTarget.style.backgroundColor = 'var(--bg-main)';
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!fm.isCurrent) e.currentTarget.style.backgroundColor = 'var(--bg-card)';
+                      }}
+                    >
+                      <Badge bg={fm.isCurrent ? "primary" : "secondary"} className="me-3 fs-6">
+                        Частина {fm.order}
+                      </Badge>
+                      <span className={fm.isCurrent ? "fw-bold text-primary" : "fw-semibold"}>
+                        {fm.title}
+                      </span>
+                      {fm.isCurrent && (
+                        <span className="ms-auto fw-bold text-primary" style={{ fontSize: '0.9rem' }}>
+                          👈 Ви зараз тут
+                        </span>
+                      )}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
           {movie.isSeries && movie.episodes && movie.episodes.length > 0 && (
             <div className="mb-5">
               <h3 className="mb-3 border-start border-4 border-primary ps-2">Список епізодів</h3>

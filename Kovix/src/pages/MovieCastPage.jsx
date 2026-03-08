@@ -1,19 +1,30 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Container, Row, Col, Card, Button, Spinner } from 'react-bootstrap';
-import { moviesAPI } from '../services/api';
-import { FaArrowLeft } from 'react-icons/fa'; 
+import { moviesAPI, actorsAPI } from '../services/api';
+import { FaArrowLeft, FaEdit, FaTrash } from 'react-icons/fa'; 
 import defaultAvatarImg from '../assets/NotFoundAvatar.png';
+import { useAuth } from '../contexts/AuthContext';
+import AdminActorModal from '../components/AdminActorModal';
 
 const API_BASE_URL = 'http://localhost:5096';
 
 function MovieCastPage() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { isAdmin } = useAuth(); 
+
     const [movie, setMovie] = useState(null);
     const [loading, setLoading] = useState(true);
 
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [selectedActor, setSelectedActor] = useState(null);
+
     useEffect(() => {
+        loadMovieData();
+    }, [id]);
+
+    const loadMovieData = () => {
         moviesAPI.getById(id)
             .then(res => {
                 setMovie(res.data);
@@ -23,7 +34,30 @@ function MovieCastPage() {
                 console.error("Error loading cast:", err);
                 setLoading(false);
             });
-    }, [id]);
+    };
+
+    const handleEditClick = (e, actor) => {
+        e.preventDefault();
+        setSelectedActor({
+            id: actor.actorId,
+            name: actor.name,
+            photoUrl: actor.photoUrl,
+            bio: actor.biography || '' 
+        });
+        setShowEditModal(true);
+    };
+
+    const handleDelete = async (e, actorId, name) => {
+        e.preventDefault();
+        if (window.confirm(`Видалити актора ${name} з бази даних?`)) {
+            try {
+                await actorsAPI.delete(actorId);
+                loadMovieData(); 
+            } catch (err) {
+                alert("Помилка видалення");
+            }
+        }
+    };
 
     if (loading) return (
         <Container className="text-center mt-5">
@@ -70,38 +104,67 @@ function MovieCastPage() {
             <Row className="g-4">
                 {movie.cast && movie.cast.map((actor, index) => (
                     <Col key={actor.actorId || index} xs={6} sm={4} md={3} lg={2}>
-                        <Card className="h-100 border-0 shadow-sm bg-card movie-card-hover rounded-4 overflow-hidden">
-                            <Link 
-                                to={actor.actorId > 0 ? `/actors/${actor.actorId}` : '#'} 
-                                className={`text-decoration-none ${actor.actorId === 0 ? 'pe-none' : ''}`}
-                            >
-                                <div style={{ aspectRatio: '2/3', overflow: 'hidden' }}>
-                                    <Card.Img
-                                        variant="top"
-                                        src={
-                                            actor?.photoUrl
-                                                ? (actor.photoUrl.startsWith('http')
-                                                    ? actor.photoUrl
-                                                    : `${API_BASE_URL}${actor.photoUrl}`)
-                                                : defaultAvatarImg
-                                        }
-                                        className="w-100 h-100 object-fit-cover transition-transform"
-                                        onError={(e) => (e.target.src = defaultAvatarImg)}
-                                    />
+                        <div className="position-relative">
+                            {isAdmin && isAdmin() && actor.actorId > 0 && (
+                                <div className="position-absolute top-0 end-0 p-2 d-flex gap-2" style={{ zIndex: 10 }}>
+                                    <Button variant="success" size="sm" className="rounded-circle p-1 admin-btn" onClick={(e) => handleEditClick(e, actor)} style={{ width: '32px', height: '32px' }}>
+                                        <FaEdit size={14} />
+                                    </Button>
+                                    <Button variant="danger" size="sm" className="rounded-circle p-1 admin-btn" onClick={(e) => handleDelete(e, actor.actorId, actor.name)} style={{ width: '32px', height: '32px' }}>
+                                        <FaTrash size={12} />
+                                    </Button>
                                 </div>
-                                <Card.Body className="p-3 text-center">
-                                    <div className="fw-bold text-main text-truncate mb-1" title={actor.name}>
-                                        {actor.name}
+                            )}
+                            
+                            <Card className="h-100 border-0 shadow-sm bg-card movie-card-hover rounded-4 overflow-hidden">
+                                <Link 
+                                    to={actor.actorId > 0 ? `/actors/${actor.actorId}` : '#'} 
+                                    className={`text-decoration-none ${actor.actorId === 0 ? 'pe-none' : ''}`}
+                                >
+                                    <div style={{ aspectRatio: '2/3', overflow: 'hidden' }}>
+                                        <Card.Img
+                                            variant="top"
+                                            src={
+                                                actor?.photoUrl
+                                                    ? (actor.photoUrl.startsWith('http')
+                                                        ? actor.photoUrl
+                                                        : `${API_BASE_URL}${actor.photoUrl}`)
+                                                    : defaultAvatarImg
+                                            }
+                                            className="w-100 h-100 object-fit-cover transition-transform"
+                                            onError={(e) => (e.target.src = defaultAvatarImg)}
+                                        />
                                     </div>
-                                    <div className="text-muted small lh-sm text-truncate" title={actor.role}>
-                                        {actor.role}
-                                    </div>
-                                </Card.Body>
-                            </Link>
-                        </Card>
+                                    <Card.Body className="p-3 text-center">
+                                        <div className="fw-bold text-main text-truncate mb-1" title={actor.name}>
+                                            {actor.name}
+                                        </div>
+                                        <div className="text-muted small lh-sm text-truncate" title={actor.role}>
+                                            {actor.role}
+                                        </div>
+                                    </Card.Body>
+                                </Link>
+                            </Card>
+                        </div>
                     </Col>
                 ))}
             </Row>
+
+            <style>{`
+                .admin-btn { opacity: 0.8; transition: 0.2s; }
+                .admin-btn:hover { opacity: 1; transform: scale(1.1); }
+                .movie-card-hover { transition: 0.3s; }
+                .movie-card-hover:hover { transform: translateY(-5px); }
+                .transition-transform { transition: transform 0.3s ease; }
+                .movie-card-hover:hover .transition-transform { transform: scale(1.05); }
+            `}</style>
+
+            <AdminActorModal
+                show={showEditModal}
+                onHide={() => setShowEditModal(false)}
+                actorToEdit={selectedActor}
+                onSuccess={loadMovieData}
+            />
         </Container>
     );
 }

@@ -32,6 +32,7 @@ namespace Movie.API.Data
         public DbSet<MovieActor> MovieActors { get; set; }
         public DbSet<UserBlockedActor> UserBlockedActors { get; set; }
         public DbSet<Appeal> Appeals { get; set; }
+        public DbSet<Franchise> Franchises { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -231,6 +232,12 @@ namespace Movie.API.Data
                 .WithMany()                  
                 .HasForeignKey(a => a.UserId)  
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<MovieEntity>()
+                .HasOne(m => m.Franchise)    
+                .WithMany(f => f.Movies)  
+                .HasForeignKey(m => m.FranchiseId) 
+                .OnDelete(DeleteBehavior.SetNull);
 
 
             modelBuilder.Entity<MovieEntity>().HasData(

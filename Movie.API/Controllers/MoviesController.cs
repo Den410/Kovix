@@ -139,6 +139,8 @@ namespace Movie.API.Controllers
                 .Include(m => m.Episodes)
                 .Include(m => m.MovieActors)
                     .ThenInclude(ma => ma.Actor)
+                .Include(m => m.Franchise)
+                    .ThenInclude(f => f.Movies)
                 .FirstOrDefaultAsync(m => m.Id == id);
 
             if (movie == null) return NotFound();
@@ -172,6 +174,7 @@ namespace Movie.API.Controllers
                 .OrderBy(e => e.SeasonNumber).ThenBy(e => e.EpisodeNumber)
                 .ToList();
             }
+
 
             var dto = new MovieDetailDto
             {
@@ -208,6 +211,20 @@ namespace Movie.API.Controllers
                     PhotoUrl = ma.Actor.PhotoUrl
                 }).ToList()
             };
+
+            dto.FranchiseName = movie.Franchise?.Name;
+            if (movie.Franchise != null)
+            {
+                dto.FranchiseMovies = movie.Franchise.Movies
+                    .OrderBy(fm => fm.OrderInFranchise)
+                    .Select(fm => new FranchiseMovieDto
+                    {
+                        Id = fm.Id,
+                        Title = fm.Title,
+                        Order = fm.OrderInFranchise ?? 0,
+                        IsCurrent = fm.Id == movie.Id 
+                    }).ToList();
+            }
 
             return Ok(dto);
         }
@@ -368,90 +385,161 @@ namespace Movie.API.Controllers
 
         [HttpPost]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<MovieEntity>> Create(MovieDetailDto dto)
+        public async Task<IActionResult> Create(MovieDetailDto dto)
         {
-            var exists = await _context.Movies.AnyAsync(m =>
-             m.Title.ToLower() == dto.Title.ToLower() &&
-             m.Year == dto.Year);
+            try
+            {
+                var exists = await _context.Movies.AnyAsync(m =>
+                    m.Title.ToLower() == dto.Title.ToLower() &&
+                    m.Year == dto.Year);
 
-            if (exists)
-            {
-                return BadRequest($"Фільм '{dto.Title}' ({dto.Year}) вже існує в базі даних!");
-            }
-            var movie = new MovieEntity
-            {
-                Title = dto.Title,
-                Description = dto.Description,
-                Year = dto.Year,
-                Genre = dto.Genre,
-                Director = dto.Director,
-                TrailerUrl = dto.TrailerUrl,
-                IsSeries = dto.IsSeries,
-                CreatedAt = DateTime.UtcNow,
-                PosterUrl = await DownloadAndSaveImage(dto.PosterUrl) ?? dto.PosterUrl,
-                AverageRating = 0,
-                TotalReviews = 0,
-                MovieActors = dto.Cast?.Select(c => new MovieActor
+                if (exists)
+                    return BadRequest($"Фільм '{dto.Title}' ({dto.Year}) вже існує в базі даних!");
+
+                var movie = new MovieEntity
                 {
-                    ActorId = c.ActorId,
-                    Role = c.Role
-                }).ToList()
-            };
+                    Title = dto.Title,
+                    Description = dto.Description,
+                    Year = dto.Year,
+                    Genre = dto.Genre,
+                    Director = dto.Director,
+                    TrailerUrl = dto.TrailerUrl,
+                    IsSeries = dto.IsSeries,
+                    CreatedAt = DateTime.UtcNow,
+                    PosterUrl = (!string.IsNullOrEmpty(dto.PosterUrl) && dto.PosterUrl.StartsWith("http"))
+                                ? await DownloadAndSaveImage(dto.PosterUrl)
+                                : dto.PosterUrl,
+                    AverageRating = 0,
+                    TotalReviews = 0,
+                    MovieActors = new List<MovieActor>() 
+                };
 
-            _context.Movies.Add(movie);
-            await _context.SaveChangesAsync();
+                if (dto.Cast != null)
+                {
+                    var distinctCast = dto.Cast.GroupBy(c => c.ActorId).Select(g => g.First());
+                    foreach (var castMember in distinctCast)
+                    {
+                        if (castMember.ActorId > 0) 
+                        {
+                            movie.MovieActors.Add(new MovieActor
+                            {
+                                ActorId = castMember.ActorId,
+                                Role = castMember.Role
+                            });
+                        }
+                    }
+                }
 
-            return CreatedAtAction(nameof(GetById), new { id = movie.Id }, movie);
+                if (!string.IsNullOrWhiteSpace(dto.NewFranchiseName))
+                {
+                    var newFranchise = new Franchise { Name = dto.NewFranchiseName };
+                    _context.Franchises.Add(newFranchise);
+                    await _context.SaveChangesAsync();
+                    movie.FranchiseId = newFranchise.Id;
+                }
+                else
+                {
+                    movie.FranchiseId = dto.FranchiseId > 0 ? dto.FranchiseId : null;
+                }
+
+                movie.OrderInFranchise = dto.OrderInFranchise > 0 ? dto.OrderInFranchise : null;
+
+                _context.Movies.Add(movie);
+                await _context.SaveChangesAsync();
+
+                return Ok(new { id = movie.Id });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"\n❌ ПОМИЛКА ЗБЕРЕЖЕННЯ: {ex.Message}");
+                if (ex.InnerException != null)
+                    Console.WriteLine($"🔍 ДЕТАЛІ SQL: {ex.InnerException.Message}");
+
+                return StatusCode(500, new
+                {
+                    message = "Помилка сервера",
+                    details = ex.InnerException?.Message ?? ex.Message
+                });
+            }
         }
 
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Update(int id, MovieDetailDto dto)
         {
-            var movie = await _context.Movies
-                .Include(m => m.MovieActors)
-                .FirstOrDefaultAsync(m => m.Id == id);
-
-            if (movie == null) return NotFound();
-
-            movie.Title = dto.Title;
-            movie.Description = dto.Description;
-            movie.Year = dto.Year;
-            movie.Genre = dto.Genre;
-            movie.Director = dto.Director;
-            movie.TrailerUrl = dto.TrailerUrl;
-            movie.IsSeries = dto.IsSeries;
-
-            if (movie.PosterUrl != dto.PosterUrl)
+            try
             {
-                if (!string.IsNullOrEmpty(dto.PosterUrl) && dto.PosterUrl.StartsWith("http"))
+                var movie = await _context.Movies
+                    .Include(m => m.MovieActors)
+                    .FirstOrDefaultAsync(m => m.Id == id);
+
+                if (movie == null) return NotFound();
+
+                movie.Title = dto.Title;
+                movie.Description = dto.Description;
+                movie.Year = dto.Year;
+                movie.Genre = dto.Genre;
+                movie.Director = dto.Director;
+                movie.TrailerUrl = dto.TrailerUrl;
+                movie.IsSeries = dto.IsSeries;
+
+                if (movie.PosterUrl != dto.PosterUrl)
                 {
-                    movie.PosterUrl = await DownloadAndSaveImage(dto.PosterUrl);
+                    movie.PosterUrl = (!string.IsNullOrEmpty(dto.PosterUrl) && dto.PosterUrl.StartsWith("http"))
+                        ? await DownloadAndSaveImage(dto.PosterUrl)
+                        : dto.PosterUrl;
+                }
+
+                if (!string.IsNullOrWhiteSpace(dto.NewFranchiseName))
+                {
+                    var newFranchise = new Franchise { Name = dto.NewFranchiseName };
+                    _context.Franchises.Add(newFranchise);
+                    await _context.SaveChangesAsync();
+                    movie.FranchiseId = newFranchise.Id;
                 }
                 else
                 {
-                    movie.PosterUrl = dto.PosterUrl;
+                    movie.FranchiseId = dto.FranchiseId > 0 ? dto.FranchiseId : null;
                 }
-            }
 
-            if (dto.Cast != null)
-            {
-                _context.MovieActors.RemoveRange(movie.MovieActors);
+                movie.OrderInFranchise = dto.OrderInFranchise > 0 ? dto.OrderInFranchise : null;
 
-                foreach (var castMember in dto.Cast)
+                if (dto.Cast != null)
                 {
-                    _context.MovieActors.Add(new MovieActor
+                    var distinctCast = dto.Cast.GroupBy(c => c.ActorId).Select(g => g.First()).ToList();
+                    var existingActorIds = movie.MovieActors.Select(ma => ma.ActorId).ToList();
+
+                    var actorsToRemove = movie.MovieActors.Where(ma => !distinctCast.Any(dc => dc.ActorId == ma.ActorId)).ToList();
+                    foreach (var remove in actorsToRemove)
+                        movie.MovieActors.Remove(remove);
+
+                    foreach (var castMember in distinctCast)
                     {
-                        MovieId = movie.Id,
-                        ActorId = castMember.ActorId,
-                        Role = castMember.Role
-                    });
+                        var existing = movie.MovieActors.FirstOrDefault(ma => ma.ActorId == castMember.ActorId);
+                        if (existing != null)
+                        {
+                            existing.Role = castMember.Role;
+                        }
+                        else if (castMember.ActorId > 0)
+                        {
+                            movie.MovieActors.Add(new MovieActor
+                            {
+                                ActorId = castMember.ActorId,
+                                Role = castMember.Role
+                            });
+                        }
+                    }
                 }
+
+                await _context.SaveChangesAsync();
+                return NoContent();
             }
-
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            catch (Exception ex)
+            {
+                Console.WriteLine($"\n❌ ПОМИЛКА ОНОВЛЕННЯ ФІЛЬМУ: {ex.Message}");
+                if (ex.InnerException != null) Console.WriteLine($"🔍 ДЕТАЛІ: {ex.InnerException.Message}");
+                return StatusCode(500, new { message = "Помилка при оновленні", details = ex.Message });
+            }
         }
 
         [HttpDelete("{id}")]
@@ -881,6 +969,17 @@ namespace Movie.API.Controllers
             await _context.SaveChangesAsync();
 
             return Ok(new { viewsCount = movie.ViewsCount });
+        }
+
+        [HttpGet("franchises")]
+        public async Task<IActionResult> GetFranchises()
+        {
+            var franchises = await _context.Franchises
+                .Select(f => new { f.Id, f.Name })
+                .OrderBy(f => f.Name)
+                .ToListAsync();
+
+            return Ok(franchises);
         }
     }
 }

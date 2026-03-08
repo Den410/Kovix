@@ -52,6 +52,7 @@ export const moviesAPI = {
   getTmdbDetails: (tmdbId) => api.get(`/movies/tmdb/details/${tmdbId}`),
   getLatest: () => api.get('/movies/latest'),
   incrementView: (id) => api.post(`/movies/${id}/increment-view`),
+  getFranchises: () => api.get('/movies/franchises'),
 };
 
 export const reviewsAPI = {

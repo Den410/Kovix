@@ -20,11 +20,31 @@ function AdminMovieModal({ show, onHide, movieToEdit, onSuccess }) {
   const [showQuickAddActor, setShowQuickAddActor] = useState(false);
   const [newActorData, setNewActorData] = useState({ name: '', bio: '', photoUrl: '' });
 
+  const [franchises, setFranchises] = useState([]);
+  const [franchiseId, setFranchiseId] = useState('');
+  const [orderInFranchise, setOrderInFranchise] = useState('');
+  const [newFranchiseName, setNewFranchiseName] = useState('');
+  const [isCreatingNewFranchise, setIsCreatingNewFranchise] = useState(false);
+
   useEffect(() => {
     if (show) {
       setActiveTab('info');
       setSearchResults([]);
       loadActors();
+
+      moviesAPI.getFranchises()
+        .then(res => {
+          setFranchises(res.data);
+          
+          if (movieToEdit) {
+            const foundFranchise = res.data.find(f => f.name === movieToEdit.franchiseName);
+            setFranchiseId(foundFranchise ? foundFranchise.id : '');
+            
+            const currentFm = movieToEdit.franchiseMovies?.find(fm => fm.isCurrent);
+            setOrderInFranchise(currentFm ? currentFm.order : '');
+          }
+        })
+        .catch(err => console.error("Error loading franchises:", err));
 
       if (movieToEdit) {
         setFormData({
@@ -38,12 +58,19 @@ function AdminMovieModal({ show, onHide, movieToEdit, onSuccess }) {
           isSeries: movieToEdit.isSeries || false,
         });
         setMovieCast(movieToEdit.cast || []);
+        setIsCreatingNewFranchise(false);
+        setNewFranchiseName('');
       } else {
         setFormData({
           title: '', description: '', year: new Date().getFullYear(), genre: '', director: '',
           posterUrl: '', trailerUrl: '', isSeries: false
         });
         setMovieCast([]);
+        
+        setFranchiseId('');
+        setOrderInFranchise('');
+        setIsCreatingNewFranchise(false);
+        setNewFranchiseName('');
       }
     }
   }, [show, movieToEdit]);
@@ -184,13 +211,28 @@ function AdminMovieModal({ show, onHide, movieToEdit, onSuccess }) {
     }));
   };
 
+  const handleFranchiseChange = (e) => {
+    const val = e.target.value;
+    if (val === 'new') {
+        setIsCreatingNewFranchise(true);
+        setFranchiseId('');
+    } else {
+        setIsCreatingNewFranchise(false);
+        setFranchiseId(val);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       const dataToSend = {
         ...formData,
         year: parseInt(formData.year),
-        cast: movieCast.map(c => ({ actorId: c.actorId, role: c.role }))
+        cast: movieCast.map(c => ({ actorId: c.actorId, role: c.role })),
+        
+        franchiseId: franchiseId && !isCreatingNewFranchise ? parseInt(franchiseId) : null,
+        orderInFranchise: orderInFranchise ? parseInt(orderInFranchise) : null,
+        newFranchiseName: isCreatingNewFranchise ? newFranchiseName : null
       };
 
       if (movieToEdit) {
@@ -304,6 +346,59 @@ function AdminMovieModal({ show, onHide, movieToEdit, onSuccess }) {
                   <Form.Control name="trailerUrl" value={formData.trailerUrl} onChange={handleChange} className="bg-input text-main border-secondary" />
                 </Form.Group>
 
+                <div className="p-3 mb-3 border rounded shadow-sm" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-color)' }}>
+                  <h6 className="mb-3 text-info">🔗 Прив'язка до франшизи (серії фільмів)</h6>
+                  <Row>
+                    <Col md={isCreatingNewFranchise ? 12 : 8} className="mb-2">
+                      <Form.Group>
+                        <Form.Label>Франшиза</Form.Label>
+                        <Form.Select 
+                          value={isCreatingNewFranchise ? 'new' : franchiseId} 
+                          onChange={handleFranchiseChange}
+                          className="bg-input text-main border-secondary"
+                        >
+                          <option value="">-- Без франшизи --</option>
+                          <option value="new" className="fw-bold text-success">+ Створити нову франшизу</option>
+                          {franchises.map(f => (
+                            <option key={f.id} value={f.id}>{f.name}</option>
+                          ))}
+                        </Form.Select>
+                      </Form.Group>
+                    </Col>
+
+                    {isCreatingNewFranchise && (
+                      <Col md={12} className="mb-2">
+                        <Form.Group>
+                          <Form.Label className="text-success">Назва нової франшизи</Form.Label>
+                          <Form.Control 
+                            type="text" 
+                            placeholder="Наприклад: Зоряні війни"
+                            value={newFranchiseName}
+                            onChange={(e) => setNewFranchiseName(e.target.value)}
+                            className="bg-input text-main border-secondary"
+                          />
+                        </Form.Group>
+                      </Col>
+                    )}
+
+                    {(franchiseId || isCreatingNewFranchise) && (
+                      <Col md={4} className={isCreatingNewFranchise ? "mt-2" : "mb-2"}>
+                        <Form.Group>
+                          <Form.Label>Частина №</Form.Label>
+                          <Form.Control 
+                            type="number" 
+                            min="1"
+                            placeholder="Напр: 1"
+                            value={orderInFranchise}
+                            onChange={(e) => setOrderInFranchise(e.target.value)}
+                            className="bg-input text-main border-secondary"
+                          />
+                        </Form.Group>
+                      </Col>
+                    )}
+                  </Row>
+                </div>
+
                 <Form.Check type="checkbox" label="Це серіал?" name="isSeries" checked={formData.isSeries} onChange={handleChange} className="mb-3" />
               </Tab>
 
@@ -334,7 +429,7 @@ function AdminMovieModal({ show, onHide, movieToEdit, onSuccess }) {
                 <ListGroup style={{ maxHeight: '300px', overflowY: 'auto' }}>
                   {movieCast.length > 0 ? movieCast.map((item, index) => (
                     <ListGroup.Item key={`${item.actorId}-${index}`} className="d-flex justify-content-between align-items-center bg-card text-main border-secondary">
-                      <div><strong className="text-white">{item.name}</strong> <span className="text-muted ms-2 small">як {item.role}</span></div>
+                      <div><strong className="text-info">{item.name}</strong> <span className="text-muted ms-2 small">як {item.role}</span></div>
                       <Button variant="outline-danger" size="sm" onClick={() => handleRemoveActor(item.actorId)}>✖</Button>
                     </ListGroup.Item>
                   )) : <p className="text-center text-muted mt-2">Список акторів порожній</p>}

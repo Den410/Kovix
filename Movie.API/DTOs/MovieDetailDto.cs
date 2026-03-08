@@ -1,4 +1,6 @@
-﻿namespace Movie.API.DTOs
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace Movie.API.DTOs
 {
     public class MovieDetailDto
     {
@@ -20,5 +22,13 @@
         public List<EpisodeDto> Episodes { get; set; } = new List<EpisodeDto>();
         public List<CastDto>? Cast { get; set; }
         public int ViewsCount { get; set; }
+        public string? FranchiseName { get; set; }
+        public List<FranchiseMovieDto> FranchiseMovies { get; set; } = new();
+        public int? FranchiseId { get; set; } 
+
+        public int? OrderInFranchise { get; set; } 
+
+        [MaxLength(200)]
+        public string? NewFranchiseName { get; set; }
     }
 }
