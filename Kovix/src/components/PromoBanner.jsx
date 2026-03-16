@@ -21,19 +21,19 @@ function PromoBanner() {
 
   return (
     <div style={{
-      backgroundColor: '#000000',
-      borderBottom: '1px solid #333333', 
-      color: '#ffffff',
+      backgroundColor: 'var(--bg-card)',
+      borderBottom: '1px solid var(--border-color)',
+      color: 'var(--text-main)',
       position: 'relative',
-      zIndex: 1050, 
+      zIndex: 1050,
       padding: '10px 0'
     }}>
       <Container className="d-flex justify-content-center align-items-center position-relative">
         
         <div className="d-flex align-items-center gap-3 flex-wrap justify-content-center text-center pe-4">
           <span style={{ 
-            backgroundColor: '#f5c518',
-            color: '#000000', 
+            backgroundColor: 'var(--primary-color)',
+            color: 'var(--btn-text)', 
             padding: '2px 8px', 
             fontWeight: '900', 
             borderRadius: '4px', 
@@ -45,13 +45,13 @@ function PromoBanner() {
           </span>
           
           <span style={{ fontSize: '0.95rem', fontWeight: '500' }}>
-            Не пропустіть! На сайт щойно додано: <strong style={{ color: '#f5c518' }}>{latestMovie.title}</strong>
+            Не пропустіть! На сайт щойно додано: <strong style={{ color: 'var(--primary-color)' }}>{latestMovie.title}</strong>
           </span>
           
           <Link 
             to={`/movie/${latestMovie.id}`} 
             style={{ 
-              color: '#5799ef', 
+              color: 'var(--primary-color)', 
               textDecoration: 'none', 
               fontWeight: '600', 
               fontSize: '0.95rem' 

@@ -8,7 +8,10 @@
   --text-secondary: #65676b;
   
   --primary-color: #3498db; 
+  --primary-color-rgb: 52, 152, 219;
   --primary-hover: #2980b9; 
+  
+  --spinner-color: var(--primary-color);
   
   --border-color: #ddd;     
   --shadow-color: rgba(0, 0, 0, 0.05); 
@@ -30,7 +33,10 @@
   --text-secondary: #a0a0a0;
   
   --primary-color: #90caf9; 
+  --primary-color-rgb: 144, 202, 249;
   --primary-hover: #64b5f6;
+  
+  --spinner-color: rgba(255, 255, 255, 0.85);
   
   --border-color: #444444;
   --shadow-color: rgba(0, 0, 0, 0.5);
@@ -556,6 +562,87 @@ h1, h2, h3, h4, h5 {
 .navbar .nav-link {
   display: flex;
   align-items: center;
+}
+
+.site-loader {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-main);
+  color: var(--text-main);
+  z-index: 9999;
+  gap: 12px;
+}
+
+.site-loader__text {
+  margin-top: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.custom-spinner {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--spinner-color);
+  font-weight: 600;
+  user-select: none;
+}
+
+.custom-spinner__svg {
+  width: 48px;
+  height: 48px;
+  transform-origin: center;
+  animation: custom-spinner-rotate 1.2s linear infinite;
+}
+
+.custom-spinner__ring {
+  stroke-dasharray: 150;
+  stroke-dashoffset: 95;
+  stroke-linecap: round;
+  opacity: 0.9;
+}
+
+.custom-spinner--small .custom-spinner__svg {
+  width: 32px;
+  height: 32px;
+}
+
+.custom-spinner--large .custom-spinner__svg {
+  width: 60px;
+  height: 60px;
+}
+
+.custom-spinner__label {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+}
+
+@keyframes custom-spinner-rotate {
+  0% { transform: rotate(0deg); }
+  50% { transform: rotate(180deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.lazy-image-wrapper {
+  position: relative;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.lazy-image-loader {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.6);
+  z-index: 2;
 }
 
 .dropdown-toggle::after {

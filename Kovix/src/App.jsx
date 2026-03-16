@@ -37,7 +37,14 @@ import BlacklistPage from './pages/BlacklistPage';
 import AppealPage from './pages/AppealPage';
 import AdminAppealsPage from './pages/AdminAppealsPage';
 
+import { useEffect } from 'react';
+
 function App() {
+  useEffect(() => {
+    const preloader = document.getElementById('preloader');
+    if (preloader) preloader.remove();
+  }, []);
+
   return (
     <SignalRProvider>
       <AuthProvider>

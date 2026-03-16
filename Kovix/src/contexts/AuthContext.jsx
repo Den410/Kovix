@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { jwtDecode } from 'jwt-decode';
 import { authAPI } from '../services/api';
+import CustomSpinner from '../components/CustomSpinner';
 
 const AuthContext = createContext();
 
@@ -68,7 +69,13 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider value={{ user, setUser, login, logout, isAdmin, loading, refreshUser }}>
-      {!loading && children}
+      {loading ? (
+        <div className="site-loader">
+          <CustomSpinner label="Завантаження сайту..." size="large" />
+        </div>
+      ) : (
+        children
+      )}
     </AuthContext.Provider>
   );
 }

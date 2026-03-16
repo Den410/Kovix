@@ -3,6 +3,7 @@ import { Container, Row, Col, Pagination, Spinner, Form, InputGroup, Button, Ale
 import { moviesAPI } from '../services/api';
 import { useSearchParams, Link } from 'react-router-dom';
 import MovieCard from '../components/MovieCard';
+import LazyImage from '../components/LazyImage';
 import defaultPosterImg from '../assets/NotFoundPoster.webp';
 import { useTheme } from '../contexts/ThemeContext';
 
@@ -173,16 +174,11 @@ function AllMoviesPage() {
           <Card className="flex-row shadow-sm h-100 overflow-hidden" style={{ minHeight: '180px', backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-color)' }}>
             <div style={{ width: '150px', minWidth: '150px', position: 'relative', backgroundColor: '#e9ecef' }}>
               <Link to={`/movie/${movie.id}`}>
-                  <img 
-                    src={imageUrl} 
+                  <LazyImage
+                    src={imageUrl}
                     alt={movie.title}
-                    style={{ 
-                        width: '100%', 
-                        height: '100%', 
-                        objectFit: 'cover',
-                        display: 'block' 
-                    }}
-                    onError={(e) => { e.target.src = PLACEHOLDER_IMG; }} 
+                    placeholder={PLACEHOLDER_IMG}
+                    style={{ width: '100%', height: '100%' }}
                   />
               </Link>
             </div>

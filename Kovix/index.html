@@ -9,9 +9,136 @@
       content="MovieReview - Пошук та рецензування фільмів"
     />
     <title>MovieReview App</title>
+  <script>
+    (function() {
+      const themeKey = localStorage.getItem('appTheme');
+      if (!themeKey) return;
+
+      const customThemes = localStorage.getItem('userCustomThemes');
+      let themes = {};
+
+      if (customThemes) {
+        try {
+          themes = JSON.parse(customThemes);
+        } catch (e) {
+          console.warn('Failed to parse custom themes:', e);
+        }
+      }
+
+      const defaultThemes = {
+        light: {
+          '--bg-main': '#f8f9fa',
+          '--bg-secondary': '#f0f2f5',
+          '--bg-card': '#ffffff',
+          '--text-main': '#212529',
+          '--text-secondary': '#6c757d',
+          '--border-color': '#dee2e6',
+          '--primary-color': '#0d6efd',
+          '--btn-text': '#ffffff',
+          '--preloader-border-color': 'rgba(255, 255, 255, 0.25)'
+        },
+        dark: {
+          '--bg-main': '#212529',
+          '--bg-secondary': '#1f2429',
+          '--bg-card': '#2b3035',
+          '--text-main': '#f8f9fa',
+          '--text-secondary': '#adb5bd',
+          '--border-color': '#495057',
+          '--primary-color': '#0d6efd',
+          '--btn-text': '#ffffff',
+          '--preloader-border-color': 'rgba(0, 0, 0, 0.25)'
+        },
+        ocean: {
+          '--bg-main': '#0f172a',
+          '--bg-secondary': '#1e293b',
+          '--bg-card': '#1e293b',
+          '--text-main': '#e2e8f0',
+          '--text-secondary': '#94a3b8',
+          '--border-color': '#334155',
+          '--primary-color': '#38bdf8',
+          '--btn-text': '#0f172a',
+          '--preloader-border-color': 'rgba(0, 0, 0, 0.25)'
+        },
+        dracula: {
+          '--bg-main': '#282a36',
+          '--bg-secondary': '#44475a',
+          '--bg-card': '#44475a',
+          '--text-main': '#f8f8f2',
+          '--text-secondary': '#6272a4',
+          '--border-color': '#6272a4',
+          '--primary-color': '#ff79c6',
+          '--btn-text': '#282a36',
+          '--preloader-border-color': 'rgba(0, 0, 0, 0.25)'
+        },
+        forest: {
+          '--bg-main': '#1a2f1c',
+          '--bg-secondary': '#2f4b32',
+          '--bg-card': '#2f4b32',
+          '--text-main': '#e8f5e9',
+          '--text-secondary': '#a5d6a7',
+          '--border-color': '#43a047',
+          '--primary-color': '#66bb6a',
+          '--btn-text': '#1a2f1c',
+          '--preloader-border-color': 'rgba(0, 0, 0, 0.25)'
+        }
+      };
+
+      const allThemes = { ...defaultThemes, ...themes };
+
+      const selected = allThemes[themeKey];
+      if (!selected) return;
+
+      const root = document.documentElement;
+      Object.entries(selected).forEach(([k, v]) => root.style.setProperty(k, v));
+    })();
+  </script>
+
+  <style>
+    :root {
+      --preloader-bg: var(--bg-main, #ffffff);
+      --preloader-text: var(--text-main, #111);
+      --preloader-spinner: var(--spinner-color, var(--primary-color, #3498db));
+    }
+
+    #preloader {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: var(--preloader-bg);
+      color: var(--preloader-text);
+      z-index: 99999;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    #preloader .spinner {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: 5px solid var(--preloader-border-color);
+      border-top-color: var(--preloader-spinner);
+      animation: preloader-spin 1s linear infinite;
+    }
+
+    #preloader .label {
+      margin-top: 12px;
+      font-size: 1rem;
+      letter-spacing: 0.02em;
+      opacity: 0.85;
+    }
+
+    @keyframes preloader-spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
   </head>
   <body>
-    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="preloader">
+      <div class="spinner"></div>
+      <div class="label">Завантаження...</div>
+    </div>
     <div id="root"></div>
     
     <script type="module" src="/src/main.jsx"></script>

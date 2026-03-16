@@ -1,6 +1,7 @@
 import { Card, Badge } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import defaultPosterImg from '../assets/NotFoundPoster.webp'; 
+import LazyImage from './LazyImage';
 import '../style/MovieCard.css';
 
 const API_BASE_URL = 'http://localhost:5096';
@@ -45,12 +46,11 @@ function MovieCard({ movie, disableLink = false, hideMeta = false, isNew = false
             </Badge>
         )}
 
-        <Card.Img
-          variant="top"
-          src={imageUrl} 
-          className="movie-card-img"
+        <LazyImage
+          src={imageUrl}
           alt={movie.title}
-          onError={(e) => { e.target.src = defaultPosterImg; }}
+          placeholder={defaultPosterImg}
+          className="movie-card-img"
         />
 
         {!hideMeta && (
