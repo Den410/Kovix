@@ -52,3 +52,34 @@
 .slider-section .rating {
   display: none;
 }
+
+.trailer-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.trailer-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4) !important;
+}
+
+.trailer-image {
+  transition: transform 0.5s ease;
+}
+
+
+.play-btn {
+  width: 60px;
+  height: 60px;
+  background-color: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  transition: all 0.3s ease;
+}
+
+.trailer-card:hover .play-btn {
+  background-color: #e50914;
+  border-color: #e50914;
+  transform: scale(1.15);
+}

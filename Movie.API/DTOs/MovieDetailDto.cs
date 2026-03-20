@@ -28,6 +28,8 @@ namespace Movie.API.DTOs
 
         public int? OrderInFranchise { get; set; } 
 
+        public DateTime CreatedAt { get; set; }
+
         [MaxLength(200)]
         public string? NewFranchiseName { get; set; }
     }

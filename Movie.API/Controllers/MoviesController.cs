@@ -127,7 +127,7 @@ namespace Movie.API.Controllers
             return Ok(result);
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("{id:int}")]
         public async Task<ActionResult<MovieDetailDto>> GetById(int id)
         {
             int? currentUserId = null;
@@ -329,7 +329,8 @@ namespace Movie.API.Controllers
                     PosterUrl = m.PosterUrl,
                     Year = m.Year,
                     AverageRating = m.AverageRating,
-                    Genre = m.Genre
+                    Genre = m.Genre,
+                    CreatedAt = m.CreatedAt
                 })
                 .ToListAsync();
 
@@ -582,7 +583,8 @@ namespace Movie.API.Controllers
                     PosterUrl = m.PosterUrl,
                     Year = m.Year,
                     AverageRating = m.AverageRating,
-                    Genre = m.Genre
+                    Genre = m.Genre,
+                    CreatedAt = m.CreatedAt
                 })
                 .ToListAsync();
 
@@ -722,7 +724,8 @@ namespace Movie.API.Controllers
                     Year = h.Movie.Year,
                     Description = h.Movie.Description,
                     AverageRating = h.Movie.AverageRating,
-                    Genre = h.Movie.Genre
+                    Genre = h.Movie.Genre,
+                    CreatedAt = h.Movie.CreatedAt
                 })
                 .ToListAsync();
 

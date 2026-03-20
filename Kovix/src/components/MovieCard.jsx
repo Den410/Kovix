@@ -6,12 +6,30 @@ import '../style/MovieCard.css';
 
 const API_BASE_URL = 'http://localhost:5096';
 
+const NEW_MOVIE_DAYS = 45;
+
 function MovieCard({ movie, disableLink = false, hideMeta = false, isNew = false }) {
   const getRatingColor = (rating) => {
     if (rating >= 8) return "success";
     if (rating >= 5) return "warning";
     return "danger";
   };
+
+  const parseCreatedAt = () => {
+    if (!movie) return null;
+    if (movie.createdAt) return new Date(movie.createdAt);
+    if (movie.CreatedAt) return new Date(movie.CreatedAt);
+    return null;
+  };
+
+  const isNewByDate = () => {
+    const createdAt = parseCreatedAt();
+    if (!createdAt) return false;
+    const diffDays = (new Date() - createdAt) / (1000 * 60 * 60 * 24);
+    return diffDays <= NEW_MOVIE_DAYS;
+  };
+
+  const showNewBadge = isNew || isNewByDate();
 
   const ratingValue = movie.averageRating || movie.rating || 0;
   const genresValue = movie.genre || movie.genres || '';
@@ -29,7 +47,7 @@ function MovieCard({ movie, disableLink = false, hideMeta = false, isNew = false
     <Card className="h-100 shadow-sm movie-card">
       <div className="movie-card-img-wrapper position-relative"> 
         
-        {isNew && (
+        {showNewBadge && (
           <div className="new-badge">
             <span className="new-badge-dot" />
             Новинка

@@ -32,9 +32,9 @@ function HomePage() {
       const [newRes, topRes, trendingRes] = await Promise.all([
         moviesAPI.getNew(45, 12),
         moviesAPI.getTopRated(),
-        moviesAPI.getTrending() 
+        moviesAPI.getTrending()
       ]);
-      
+
       setNewMovies(newRes.data);
       setTopRatedMovies(topRes.data);
       setTrendingMovies(trendingRes.data);
@@ -47,14 +47,14 @@ function HomePage() {
   };
 
   const sliderSettings = {
-    dots: false,       
-    infinite: true, 
-    speed: 500,          
-    slidesToShow: 4, 
-    slidesToScroll: 1,  
-    autoplay: true,    
+    dots: false,
+    infinite: true,
+    speed: 500,
+    slidesToShow: 4,
+    slidesToScroll: 1,
+    autoplay: true,
     autoplaySpeed: 3000,
-    responsive: [      
+    responsive: [
       { breakpoint: 1024, settings: { slidesToShow: 3 } },
       { breakpoint: 768, settings: { slidesToShow: 2 } },
       { breakpoint: 480, settings: { slidesToShow: 1 } }
@@ -92,15 +92,28 @@ function HomePage() {
         return parts[embedIndex + 1];
       }
 
-        return null;
-      } catch {
-        return null;
-      }
+      return null;
+    } catch {
+      return null;
+    }
   };
 
   const getYouTubeEmbedUrl = (trailerUrl) => {
     const id = getYouTubeId(trailerUrl);
-    return id ? `https://www.youtube.com/embed/${id}?rel=0&modestbranding=1` : null;
+    return id ? `https://www.youtube-nocookie.com/embed/${id}?rel=0&modestbranding=1` : null;
+  };
+
+  const getYouTubeThumbnail = (trailerUrl) => {
+    const id = getYouTubeId(trailerUrl);
+    return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : null;
+  };
+
+  const isMovieNew = (movie) => {
+    if (!movie) return false;
+    const createdAt = movie.createdAt ? new Date(movie.createdAt) : movie.CreatedAt ? new Date(movie.CreatedAt) : null;
+    if (!createdAt) return false;
+    const diffDays = (new Date() - createdAt) / (1000 * 60 * 60 * 24);
+    return diffDays <= 45;
   };
 
   const openTrailer = (movie) => {
@@ -119,11 +132,11 @@ function HomePage() {
 
   return (
     <Container className="mt-4 pb-5">
-      
+
       {user && user.isBlocked && (
         <Alert variant="danger" className="text-center shadow mb-4">
-            <h4 className="alert-heading">⛔ Увага! Ваш акаунт заблоковано адміністратором.</h4>
-            <p className="mb-0">Вам обмежено доступ до соціальних функцій (чат, коментарі, друзі).</p>
+          <h4 className="alert-heading">⛔ Увага! Ваш акаунт заблоковано адміністратором.</h4>
+          <p className="mb-0">Вам обмежено доступ до соціальних функцій (чат, коментарі, друзі).</p>
         </Alert>
       )}
 
@@ -131,13 +144,13 @@ function HomePage() {
 
       <section className="mb-5 slider-section">
         <div className="d-flex justify-content-between align-items-center mb-3">
-            <h3 className="mb-3 border-start border-4 border-warning ps-2">🔥 Новинки</h3>
-            <Link to="/movies" className="text-decoration-none small">Дивитися всі &rarr;</Link>
+          <h3 className="mb-3 border-start border-4 border-warning ps-2">🔥 Новинки</h3>
+          <Link to="/movies" className="text-decoration-none small">Дивитися всі &rarr;</Link>
         </div>
         {newMovies.length > 0 ? (
           <Slider {...sliderSettings}>
             {newMovies.map((movie) => (
-              <div key={movie.id} className="p-2"> 
+              <div key={movie.id} className="p-2">
                 <MovieCard movie={movie} isNew={true} />
               </div>
             ))}
@@ -149,15 +162,15 @@ function HomePage() {
 
       <section className="mb-5 slider-section">
         <div className="d-flex justify-content-between align-items-center mb-3">
-            <h3 className="mb-3 border-start border-4 border-success ps-2">⭐ Найкращі за рейтингом</h3>
-            <Link to="/movies" className="text-decoration-none small">Дивитися всі &rarr;</Link>
+          <h3 className="mb-3 border-start border-4 border-success ps-2">⭐ Найкращі за рейтингом</h3>
+          <Link to="/movies" className="text-decoration-none small">Дивитися всі &rarr;</Link>
         </div>
-        
+
         {topRatedMovies.length > 0 ? (
           <Slider {...sliderSettings}>
             {topRatedMovies.map((movie) => (
               <div key={movie.id} className="p-2">
-                <MovieCard movie={movie} />
+                <MovieCard movie={movie} isNew={isMovieNew(movie)} />
               </div>
             ))}
           </Slider>
@@ -168,45 +181,66 @@ function HomePage() {
 
       <section className="mb-5 slider-section">
         <div className="d-flex justify-content-between align-items-center mb-3 border-start border-4 border-danger ps-2">
-            <h3 className="mb-0">🎬 Найкращі трейлери</h3>
-            <Link to="/movies" className="text-decoration-none small">Дивитися всі &rarr;</Link>
+          <h3 className="mb-0">🎬 Найкращі трейлери</h3>
+          <Link to="/movies" className="text-decoration-none small">Дивитися всі &rarr;</Link>
         </div>
-        
+
         {trendingMovies.length > 0 ? (
           <Slider {...trailerSliderSettings}>
             {trendingMovies.map((movie) => {
               const embedUrl = getYouTubeEmbedUrl(movie.trailerUrl);
+              const thumbnailUrl = getYouTubeThumbnail(movie.trailerUrl) || (
+                movie.posterUrl?.startsWith('http') ? movie.posterUrl : `${API_BASE_URL}${movie.posterUrl}`
+              );
 
               return (
                 <div key={movie.id} className="p-2">
                   <div
-                    className="trailer-slide-card"
+                    className="trailer-card position-relative overflow-hidden rounded-4 shadow"
                     onClick={() => openTrailer(movie)}
-                    style={{ cursor: movie.trailerUrl ? 'pointer' : 'default' }}
+                    style={{ cursor: 'pointer', aspectRatio: '16/9', backgroundColor: '#000' }}
                   >
-                   {embedUrl ? (
-                      <div className="position-relative">
-                        <div className="ratio ratio-16x9 rounded overflow-hidden shadow-sm">
-                          <iframe
-                            src={embedUrl}
-                            title={`Trailer ${movie.title}`}
-                            allow="autoplay; encrypted-media"
-                            allowFullScreen
-                          />
-                        </div>
+                    {embedUrl ? (
+                      <>
+                        <img
+                          src={thumbnailUrl}
+                          alt={`Trailer ${movie.title}`}
+                          className="w-100 h-100 object-fit-cover trailer-image"
+                          onError={(e) => { e.target.src = defaultPosterImg; }}
+                        />
 
                         <div
-                          className="position-absolute top-0 start-0 w-100 h-100"
-                          style={{ background: 'transparent' }}
-                        />
-                      </div>
+                          className="position-absolute bottom-0 start-0 w-100"
+                          style={{
+                            height: '60%',
+                            background: 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%)'
+                          }}
+                        ></div>
+
+                        <div className="position-absolute top-50 start-50 translate-middle">
+                          <div className="play-btn d-flex align-items-center justify-content-center rounded-circle">
+                            <svg
+                              width="36"
+                              height="36"
+                              viewBox="0 0 24 24"
+                              fill="white"
+                              xmlns="http://www.w3.org/2000/svg"
+                              style={{ marginLeft: '2px' }}
+                            >
+                              <path d="M8 5V19L19 12L8 5Z" />
+                            </svg>
+                          </div>
+                        </div>
+
+                        <div className="position-absolute bottom-0 w-100 p-3 text-center">
+                          <h6 className="mb-0 fw-bold text-white text-truncate" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.8)', letterSpacing: '0.5px' }}>
+                            {movie.title}
+                          </h6>
+                        </div>
+                      </>
                     ) : (
                       <MovieCard movie={movie} disableLink={true} hideMeta={true} />
                     )}
-
-                    <div className="mt-2 small text-truncate trailer-title">
-                      {movie.title}
-                    </div>
                   </div>
                 </div>
               );
@@ -217,12 +251,12 @@ function HomePage() {
         )}
       </section>
 
-      <div 
+      <div
         className="text-center mt-5 p-5 rounded shadow-sm"
         style={{
-            backgroundColor: 'var(--bg-card)', 
-            color: 'var(--text-main)',         
-            border: '1px solid var(--border-color)'
+          backgroundColor: 'var(--bg-card)',
+          color: 'var(--text-main)',
+          border: '1px solid var(--border-color)'
         }}
       >
         <h2>🎥 Шукаєте щось конкретне?</h2>
@@ -231,7 +265,7 @@ function HomePage() {
           <Button variant="primary" size="lg">Відкрити каталог фільмів</Button>
         </Link>
       </div>
-      
+
       <Modal
         show={showTrailer}
         onHide={closeTrailer}
@@ -250,7 +284,7 @@ function HomePage() {
           {activeTrailer && (
             <div className="ratio ratio-16x9">
               <iframe
-                src={activeTrailer}
+                src={getYouTubeEmbedUrl(activeTrailer) || activeTrailer}
                 title="Movie Trailer"
                 allow="autoplay; encrypted-media"
                 allowFullScreen

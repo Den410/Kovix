@@ -158,6 +158,20 @@ function AllMoviesPage() {
     let imageUrl = PLACEHOLDER_IMG;
     let rawPoster = movie.posterUrl || movie.PosterUrl;
 
+    const getCreatedAt = () => {
+      if (!movie) return null;
+      if (movie.createdAt) return new Date(movie.createdAt);
+      if (movie.CreatedAt) return new Date(movie.CreatedAt);
+      return null;
+    };
+
+    const isNewMovie = (() => {
+      const createdAt = getCreatedAt();
+      if (!createdAt) return false;
+      const diffDays = (new Date() - createdAt) / (1000 * 60 * 60 * 24);
+      return diffDays <= 45;
+    })();
+
     if (rawPoster) {
        if (rawPoster.startsWith('http')) {
            imageUrl = rawPoster;
@@ -190,6 +204,7 @@ function AllMoviesPage() {
                         <Link to={`/movie/${movie.id}`} className="text-decoration-none fw-bold" style={{ color: 'var(--text-main)' }}>
                             {movie.title}
                         </Link>
+                        {isNewMovie && <Badge bg="success" className="ms-2">Новинка</Badge>}
                     </h5>
                     {movie.director && <small className="text-muted d-block">Режисер: {movie.director}</small>}
                  </div>

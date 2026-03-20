@@ -308,9 +308,10 @@ function MovieDetailPage() {
             {movie.isSeries && <Badge bg="primary">TV Series</Badge>}
           </div>
 
-          <div className="text-muted mb-3">
-              <span>👁️ {movie.viewsCount || 0} переглядів сторінки</span>
-            </div>
+          <div className="text-muted mb-3 d-flex align-items-center gap-2">
+            <span style={{ fontSize: '1.2rem' }}>👁️</span>
+            <span className="mt-1">{movie.viewsCount || 0} переглядів сторінки</span>
+          </div>
 
           {movie.director && (
             <div className="text-secondary mb-3" style={{ fontSize: '1.1rem' }}>
@@ -469,17 +470,17 @@ function MovieDetailPage() {
               <h3 className="mb-3 border-start border-4 border-info ps-2">
                 Порядок перегляду: {movie.franchiseName}
               </h3>
-              
+
               <div className="d-flex flex-column gap-2">
                 {movie.franchiseMovies.map((fm) => (
-                  <Link 
-                    key={fm.id} 
-                    to={`/movie/${fm.id}`} 
+                  <Link
+                    key={fm.id}
+                    to={`/movie/${fm.id}`}
                     className="text-decoration-none"
                   >
-                    <div 
+                    <div
                       className={`p-3 rounded d-flex align-items-center ${fm.isCurrent ? 'border-primary border' : 'border'}`}
-                      style={{ 
+                      style={{
                         backgroundColor: fm.isCurrent ? 'rgba(13, 110, 253, 0.1)' : 'var(--bg-card)',
                         borderColor: fm.isCurrent ? 'var(--primary-color)' : 'var(--border-color)',
                         color: 'var(--text-main)',
