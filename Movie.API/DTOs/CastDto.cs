@@ -7,5 +7,7 @@
         public string? Role { get; set; }
         public string? Biography { get; set; }
         public string? PhotoUrl { get; set; }
+        public bool IsMainRole { get; set; }
+        public DateTime? BirthDate { get; set; }
     }
 }

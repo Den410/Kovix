@@ -35,11 +35,11 @@ function AdminMovieModal({ show, onHide, movieToEdit, onSuccess }) {
       moviesAPI.getFranchises()
         .then(res => {
           setFranchises(res.data);
-          
+
           if (movieToEdit) {
             const foundFranchise = res.data.find(f => f.name === movieToEdit.franchiseName);
             setFranchiseId(foundFranchise ? foundFranchise.id : '');
-            
+
             const currentFm = movieToEdit.franchiseMovies?.find(fm => fm.isCurrent);
             setOrderInFranchise(currentFm ? currentFm.order : '');
           }
@@ -66,7 +66,7 @@ function AdminMovieModal({ show, onHide, movieToEdit, onSuccess }) {
           posterUrl: '', trailerUrl: '', isSeries: false
         });
         setMovieCast([]);
-        
+
         setFranchiseId('');
         setOrderInFranchise('');
         setIsCreatingNewFranchise(false);
@@ -105,8 +105,8 @@ function AdminMovieModal({ show, onHide, movieToEdit, onSuccess }) {
 
   const handleSelectTmdbMovie = async (movieFromSearch) => {
     setIsSearching(true);
-    setMovieCast([]); 
-    
+    setMovieCast([]);
+
     try {
       const res = await moviesAPI.getTmdbDetails(movieFromSearch.tmdbId);
       const data = res.data;
@@ -135,7 +135,8 @@ function AdminMovieModal({ show, onHide, movieToEdit, onSuccess }) {
             const createRes = await actorsAPI.create({
               name: aName,
               bio: aBio,
-              photoUrl: aPhoto
+              photoUrl: aPhoto,
+              birthDate: actorDto.birthDate || actorDto.BirthDate || null 
             });
             aId = createRes.data.id;
             createdActors.push(createRes.data);
@@ -144,7 +145,13 @@ function AdminMovieModal({ show, onHide, movieToEdit, onSuccess }) {
             continue;
           }
         }
-        finalizedCast.push({ actorId: aId, name: aName, role: aRole });
+        
+        finalizedCast.push({
+          actorId: aId,
+          name: aName,
+          role: aRole,
+          isMainRole: actorDto.isMainRole !== undefined ? actorDto.isMainRole : (actorDto.IsMainRole || false) 
+        });
       }
 
       if (createdActors.length > 0) {
@@ -172,7 +179,7 @@ function AdminMovieModal({ show, onHide, movieToEdit, onSuccess }) {
       const res = await actorsAPI.create(newActorData);
       const createdActor = res.data;
       setAllActors(prev => [...prev, createdActor]);
-      setSelectedActorId(createdActor.id); 
+      setSelectedActorId(createdActor.id);
       setShowQuickAddActor(false);
       setNewActorData({ name: '', bio: '', photoUrl: '' });
     } catch (err) {
@@ -194,7 +201,7 @@ function AdminMovieModal({ show, onHide, movieToEdit, onSuccess }) {
       name: actorInfo.name,
       role: roleName
     }]);
-    
+
     setSelectedActorId('');
     setRoleName('');
   };
@@ -214,11 +221,11 @@ function AdminMovieModal({ show, onHide, movieToEdit, onSuccess }) {
   const handleFranchiseChange = (e) => {
     const val = e.target.value;
     if (val === 'new') {
-        setIsCreatingNewFranchise(true);
-        setFranchiseId('');
+      setIsCreatingNewFranchise(true);
+      setFranchiseId('');
     } else {
-        setIsCreatingNewFranchise(false);
-        setFranchiseId(val);
+      setIsCreatingNewFranchise(false);
+      setFranchiseId(val);
     }
   };
 
@@ -228,8 +235,12 @@ function AdminMovieModal({ show, onHide, movieToEdit, onSuccess }) {
       const dataToSend = {
         ...formData,
         year: parseInt(formData.year),
-        cast: movieCast.map(c => ({ actorId: c.actorId, role: c.role })),
-        
+        cast: movieCast.map(c => ({
+          actorId: c.actorId,
+          role: c.role,
+          isMainRole: c.isMainRole || c.IsMainRole || false
+        })),
+
         franchiseId: franchiseId && !isCreatingNewFranchise ? parseInt(franchiseId) : null,
         orderInFranchise: orderInFranchise ? parseInt(orderInFranchise) : null,
         newFranchiseName: isCreatingNewFranchise ? newFranchiseName : null
@@ -257,7 +268,7 @@ function AdminMovieModal({ show, onHide, movieToEdit, onSuccess }) {
         <Modal.Body style={{ backgroundColor: 'var(--bg-main)' }}>
           <Form onSubmit={handleSubmit}>
             <Tabs activeKey={activeTab} onSelect={(k) => setActiveTab(k)} className="mb-3">
-              
+
               <Tab eventKey="info" title="Інформація">
                 <Row>
                   <Col md={8}>
@@ -352,8 +363,8 @@ function AdminMovieModal({ show, onHide, movieToEdit, onSuccess }) {
                     <Col md={isCreatingNewFranchise ? 12 : 8} className="mb-2">
                       <Form.Group>
                         <Form.Label>Франшиза</Form.Label>
-                        <Form.Select 
-                          value={isCreatingNewFranchise ? 'new' : franchiseId} 
+                        <Form.Select
+                          value={isCreatingNewFranchise ? 'new' : franchiseId}
                           onChange={handleFranchiseChange}
                           className="bg-input text-main border-secondary"
                         >
@@ -370,8 +381,8 @@ function AdminMovieModal({ show, onHide, movieToEdit, onSuccess }) {
                       <Col md={12} className="mb-2">
                         <Form.Group>
                           <Form.Label className="text-success">Назва нової франшизи</Form.Label>
-                          <Form.Control 
-                            type="text" 
+                          <Form.Control
+                            type="text"
                             placeholder="Наприклад: Зоряні війни"
                             value={newFranchiseName}
                             onChange={(e) => setNewFranchiseName(e.target.value)}
@@ -385,8 +396,8 @@ function AdminMovieModal({ show, onHide, movieToEdit, onSuccess }) {
                       <Col md={4} className={isCreatingNewFranchise ? "mt-2" : "mb-2"}>
                         <Form.Group>
                           <Form.Label>Частина №</Form.Label>
-                          <Form.Control 
-                            type="number" 
+                          <Form.Control
+                            type="number"
                             min="1"
                             placeholder="Напр: 1"
                             value={orderInFranchise}
@@ -452,15 +463,15 @@ function AdminMovieModal({ show, onHide, movieToEdit, onSuccess }) {
         <Modal.Body style={{ backgroundColor: 'var(--bg-main)' }}>
           <Form.Group className="mb-3">
             <Form.Label>Ім'я</Form.Label>
-            <Form.Control value={newActorData.name} onChange={(e) => setNewActorData({...newActorData, name: e.target.value})} className="bg-input text-main border-secondary" />
+            <Form.Control value={newActorData.name} onChange={(e) => setNewActorData({ ...newActorData, name: e.target.value })} className="bg-input text-main border-secondary" />
           </Form.Group>
           <Form.Group className="mb-3">
             <Form.Label>URL Фото</Form.Label>
-            <Form.Control value={newActorData.photoUrl} onChange={(e) => setNewActorData({...newActorData, photoUrl: e.target.value})} className="bg-input text-main border-secondary" />
+            <Form.Control value={newActorData.photoUrl} onChange={(e) => setNewActorData({ ...newActorData, photoUrl: e.target.value })} className="bg-input text-main border-secondary" />
           </Form.Group>
           <Form.Group className="mb-3">
             <Form.Label>Біографія</Form.Label>
-            <Form.Control as="textarea" rows={3} value={newActorData.bio} onChange={(e) => setNewActorData({...newActorData, bio: e.target.value})} className="bg-input text-main border-secondary" />
+            <Form.Control as="textarea" rows={3} value={newActorData.bio} onChange={(e) => setNewActorData({ ...newActorData, bio: e.target.value })} className="bg-input text-main border-secondary" />
           </Form.Group>
         </Modal.Body>
         <Modal.Footer style={{ borderColor: 'var(--border-color)' }}>

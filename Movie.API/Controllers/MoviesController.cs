@@ -7,6 +7,7 @@ using Movie.API.Models;
 using Movie.API.Models.Enums;
 using Movie.API.Models.TMdb;
 using System.Security.Claims;
+using GTranslate.Translators;
 
 namespace Movie.API.Controllers
 {
@@ -208,6 +209,7 @@ namespace Movie.API.Controllers
                     ActorId = ma.ActorId,
                     Name = ma.Actor.Name,
                     Role = ma.Role,
+                    IsMainRole = ma.IsMainRole,
                     PhotoUrl = ma.Actor.PhotoUrl
                 }).ToList()
             };
@@ -425,6 +427,7 @@ namespace Movie.API.Controllers
                             movie.MovieActors.Add(new MovieActor
                             {
                                 ActorId = castMember.ActorId,
+                                IsMainRole = castMember.IsMainRole,
                                 Role = castMember.Role
                             });
                         }
@@ -520,12 +523,14 @@ namespace Movie.API.Controllers
                         if (existing != null)
                         {
                             existing.Role = castMember.Role;
+                            existing.IsMainRole = castMember.IsMainRole;
                         }
                         else if (castMember.ActorId > 0)
                         {
                             movie.MovieActors.Add(new MovieActor
                             {
                                 ActorId = castMember.ActorId,
+                                IsMainRole = castMember.IsMainRole,
                                 Role = castMember.Role
                             });
                         }
@@ -900,7 +905,9 @@ namespace Movie.API.Controllers
 
             if (data.credits != null && data.credits.cast != null)
             {
-                var castMembers = ((IEnumerable<dynamic>)data.credits.cast).Take(100);
+                var castMembers = ((IEnumerable<dynamic>)data.credits.cast).Take(50);
+
+                var translator = new GoogleTranslator();
 
                 foreach (var person in castMembers)
                 {
@@ -909,18 +916,68 @@ namespace Movie.API.Controllers
                     string profilePath = person.profile_path;
                     int personId = person.id;
 
+                    if (System.Text.RegularExpressions.Regex.IsMatch(name, @"[a-zA-Z]"))
+                    {
+                        try
+                        {
+                            var nameResult = await translator.TranslateAsync(name, "uk");
+                            name = nameResult.Translation;
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.ForegroundColor = ConsoleColor.Yellow;
+                            Console.WriteLine($"⚠️ Не вдалося перекласти біографію для '{name}': {ex.Message}");
+                            Console.ResetColor();
+                        }
+                    }
+
+                    int order = person.order != null ? (int)person.order : 999;
+                    bool isMainRole = order < 6;
+
                     var existingActor = await _context.Actors.FirstOrDefaultAsync(a => a.Name == name);
 
                     string biography = "";
+                    DateTime? birthDate = null;
+
                     if (existingActor == null)
                     {
-                        var personUrl = $"https://api.themoviedb.org/3/person/{personId}?api_key={TMDB_API_KEY}&language=uk-UA";
-                        var personResponse = await client.GetAsync(personUrl);
+                        var personUrlUk = $"https://api.themoviedb.org/3/person/{personId}?api_key={TMDB_API_KEY}&language=uk-UA";
+                        var personResponse = await client.GetAsync(personUrlUk);
+
                         if (personResponse.IsSuccessStatusCode)
                         {
                             var personJson = await personResponse.Content.ReadAsStringAsync();
                             dynamic personData = Newtonsoft.Json.JsonConvert.DeserializeObject(personJson);
+
                             biography = personData.biography ?? "";
+
+                            string bdayStr = personData.birthday;
+                            if (DateTime.TryParse(bdayStr, out DateTime parsedDate))
+                            {
+                                birthDate = parsedDate;
+                            }
+
+                            if (string.IsNullOrWhiteSpace(biography))
+                            {
+                                var personUrlEn = $"https://api.themoviedb.org/3/person/{personId}?api_key={TMDB_API_KEY}&language=en-US";
+                                var enResponse = await client.GetAsync(personUrlEn);
+                                if (enResponse.IsSuccessStatusCode)
+                                {
+                                    var enJson = await enResponse.Content.ReadAsStringAsync();
+                                    dynamic enData = Newtonsoft.Json.JsonConvert.DeserializeObject(enJson);
+                                    string enBio = enData.biography ?? "";
+
+                                    if (!string.IsNullOrWhiteSpace(enBio))
+                                    {
+                                        try
+                                        {
+                                            var bioResult = await translator.TranslateAsync(enBio, "uk");
+                                            biography = bioResult.Translation;
+                                        }
+                                        catch { biography = enBio; }
+                                    }
+                                }
+                            }
                         }
                     }
 
@@ -930,15 +987,16 @@ namespace Movie.API.Controllers
                         Name = name,
                         Role = role,
                         Biography = existingActor?.Bio ?? biography,
-                        PhotoUrl = !string.IsNullOrEmpty(profilePath)
-                            ? $"https://image.tmdb.org/t/p/w500{profilePath}"
-                            : null
+                        PhotoUrl = !string.IsNullOrEmpty(profilePath) ? $"https://image.tmdb.org/t/p/w500{profilePath}" : null,
+                        IsMainRole = isMainRole,
+                        BirthDate = existingActor?.BirthDate ?? birthDate
                     });
                 }
             }
 
             return Ok(movieDto);
         }
+
 
         [HttpGet("latest")]
         [AllowAnonymous] 

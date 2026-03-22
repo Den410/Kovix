@@ -72,6 +72,60 @@ function MovieCastPage() {
         </Container>
     );
 
+    const mainCast = movie?.cast?.filter(actor => actor.isMainRole) || [];
+    const supportingCast = movie?.cast?.filter(actor => !actor.isMainRole) || [];
+
+    const renderActorGrid = (castArray) => (
+        <Row className="g-4">
+            {castArray.map((actor, index) => (
+                <Col key={actor.actorId || index} xs={6} sm={4} md={3} lg={2}>
+                    <div className="position-relative">
+                        {isAdmin && isAdmin() && actor.actorId > 0 && (
+                            <div className="position-absolute top-0 end-0 p-2 d-flex gap-2" style={{ zIndex: 10 }}>
+                                <Button variant="success" size="sm" className="rounded-circle p-1 admin-btn" onClick={(e) => handleEditClick(e, actor)} style={{ width: '32px', height: '32px' }}>
+                                    <FaEdit size={14} />
+                                </Button>
+                                <Button variant="danger" size="sm" className="rounded-circle p-1 admin-btn" onClick={(e) => handleDelete(e, actor.actorId, actor.name)} style={{ width: '32px', height: '32px' }}>
+                                    <FaTrash size={12} />
+                                </Button>
+                            </div>
+                        )}
+                        
+                        <Card className="h-100 border-0 shadow-sm bg-card movie-card-hover rounded-4 overflow-hidden">
+                            <Link 
+                                to={actor.actorId > 0 ? `/actors/${actor.actorId}` : '#'} 
+                                className={`text-decoration-none ${actor.actorId === 0 ? 'pe-none' : ''}`}
+                            >
+                                <div style={{ aspectRatio: '2/3', overflow: 'hidden' }}>
+                                    <Card.Img
+                                        variant="top"
+                                        src={
+                                            actor?.photoUrl
+                                                ? (actor.photoUrl.startsWith('http')
+                                                    ? actor.photoUrl
+                                                    : `${API_BASE_URL}${actor.photoUrl}`)
+                                                : defaultAvatarImg
+                                        }
+                                        className="w-100 h-100 object-fit-cover transition-transform"
+                                        onError={(e) => (e.target.src = defaultAvatarImg)}
+                                    />
+                                </div>
+                                <Card.Body className="p-3 text-center">
+                                    <div className="fw-bold text-main text-truncate mb-1" title={actor.name}>
+                                        {actor.name}
+                                    </div>
+                                    <div className="text-muted small lh-sm text-truncate" title={actor.role}>
+                                        {actor.role}
+                                    </div>
+                                </Card.Body>
+                            </Link>
+                        </Card>
+                    </div>
+                </Col>
+            ))}
+        </Row>
+    );
+
     return (
         <Container className="mt-4 mb-5">
             <div className="mb-4 d-flex align-items-center gap-3">
@@ -101,54 +155,19 @@ function MovieCastPage() {
                 </div>
             </div>
 
-            <Row className="g-4">
-                {movie.cast && movie.cast.map((actor, index) => (
-                    <Col key={actor.actorId || index} xs={6} sm={4} md={3} lg={2}>
-                        <div className="position-relative">
-                            {isAdmin && isAdmin() && actor.actorId > 0 && (
-                                <div className="position-absolute top-0 end-0 p-2 d-flex gap-2" style={{ zIndex: 10 }}>
-                                    <Button variant="success" size="sm" className="rounded-circle p-1 admin-btn" onClick={(e) => handleEditClick(e, actor)} style={{ width: '32px', height: '32px' }}>
-                                        <FaEdit size={14} />
-                                    </Button>
-                                    <Button variant="danger" size="sm" className="rounded-circle p-1 admin-btn" onClick={(e) => handleDelete(e, actor.actorId, actor.name)} style={{ width: '32px', height: '32px' }}>
-                                        <FaTrash size={12} />
-                                    </Button>
-                                </div>
-                            )}
-                            
-                            <Card className="h-100 border-0 shadow-sm bg-card movie-card-hover rounded-4 overflow-hidden">
-                                <Link 
-                                    to={actor.actorId > 0 ? `/actors/${actor.actorId}` : '#'} 
-                                    className={`text-decoration-none ${actor.actorId === 0 ? 'pe-none' : ''}`}
-                                >
-                                    <div style={{ aspectRatio: '2/3', overflow: 'hidden' }}>
-                                        <Card.Img
-                                            variant="top"
-                                            src={
-                                                actor?.photoUrl
-                                                    ? (actor.photoUrl.startsWith('http')
-                                                        ? actor.photoUrl
-                                                        : `${API_BASE_URL}${actor.photoUrl}`)
-                                                    : defaultAvatarImg
-                                            }
-                                            className="w-100 h-100 object-fit-cover transition-transform"
-                                            onError={(e) => (e.target.src = defaultAvatarImg)}
-                                        />
-                                    </div>
-                                    <Card.Body className="p-3 text-center">
-                                        <div className="fw-bold text-main text-truncate mb-1" title={actor.name}>
-                                            {actor.name}
-                                        </div>
-                                        <div className="text-muted small lh-sm text-truncate" title={actor.role}>
-                                            {actor.role}
-                                        </div>
-                                    </Card.Body>
-                                </Link>
-                            </Card>
-                        </div>
-                    </Col>
-                ))}
-            </Row>
+            {mainCast.length > 0 && (
+                <div className="mb-5">
+                    <h4 className="mb-3 border-start border-4 border-warning ps-2 text-main">Головні ролі</h4>
+                    {renderActorGrid(mainCast)}
+                </div>
+            )}
+
+            {supportingCast.length > 0 && (
+                <div className="mb-5">
+                    <h4 className="mb-3 border-start border-4 border-secondary ps-2 text-main">Другорядні ролі</h4>
+                    {renderActorGrid(supportingCast)}
+                </div>
+            )}
 
             <style>{`
                 .admin-btn { opacity: 0.8; transition: 0.2s; }

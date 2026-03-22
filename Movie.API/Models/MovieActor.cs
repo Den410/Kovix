@@ -9,5 +9,6 @@
 
         public string? Role { get; set; } 
         public int Order { get; set; }
+        public bool IsMainRole { get; set; }
     }
 }

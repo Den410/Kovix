@@ -283,6 +283,9 @@ namespace Movie.API.Migrations
                     b.Property<int>("ActorId")
                         .HasColumnType("int");
 
+                    b.Property<bool>("IsMainRole")
+                        .HasColumnType("bit");
+
                     b.Property<int>("Order")
                         .HasColumnType("int");
 

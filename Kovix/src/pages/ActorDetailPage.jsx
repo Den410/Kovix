@@ -5,6 +5,8 @@ import { actorsAPI, contentFilterAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import defaultPosterImg from '../assets/NotFoundPoster.webp';
 import { Link } from 'react-router-dom';
+import { FaEdit, FaTrash } from 'react-icons/fa'; 
+import AdminActorModal from '../components/AdminActorModal'; 
 
 const API_BASE_URL = 'http://localhost:5096';
 
@@ -12,28 +14,32 @@ function ActorDetailPage() {
     const { id } = useParams();
     const navigate = useNavigate();
     const { user, isAdmin } = useAuth();
+    
     const [actor, setActor] = useState(null);
     const [loading, setLoading] = useState(true);
     const [isBlocked, setIsBlocked] = useState(false);
+    
+    const [showEditModal, setShowEditModal] = useState(false);
 
     useEffect(() => {
-        const fetchActor = async () => {
-            try {
-                const res = await actorsAPI.getById(id);
-                setActor(res.data);
-                if (user) {
-                    const blockedRes = await contentFilterAPI.getBlockedActors();
-                    const blockedIds = blockedRes.data.map(a => a.actorId);
-                    setIsBlocked(blockedIds.includes(parseInt(id)));
-                }
-            } catch (error) {
-                console.error(error);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchActor();
+        loadActorData();
     }, [id]);
+
+    const loadActorData = async () => {
+        try {
+            const res = await actorsAPI.getById(id);
+            setActor(res.data);
+            if (user) {
+                const blockedRes = await contentFilterAPI.getBlockedActors();
+                const blockedIds = blockedRes.data.map(a => a.actorId);
+                setIsBlocked(blockedIds.includes(parseInt(id)));
+            }
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleToggleBlock = async () => {
         try {
@@ -91,7 +97,12 @@ function ActorDetailPage() {
 
                     {isAdmin() && (
                         <div className="d-grid gap-2 mt-3">
-                            <Button variant="danger" onClick={handleDelete}>Видалити актора</Button>
+                            <Button variant="success" onClick={() => setShowEditModal(true)}>
+                                <FaEdit className="me-2" /> Редагувати актора
+                            </Button>
+                            <Button variant="danger" onClick={handleDelete}>
+                                <FaTrash className="me-2" /> Видалити актора
+                            </Button>
                         </div>
                     )}
                 </Col>
@@ -137,9 +148,22 @@ function ActorDetailPage() {
                             </Row>
                         </div>
                     )}
-
                 </Col>
             </Row>
+
+            <style>{`
+                .movie-card-hover { transition: transform 0.3s ease; }
+                .movie-card-hover:hover { transform: translateY(-5px); }
+            `}</style>
+
+            {isAdmin() && (
+                <AdminActorModal
+                    show={showEditModal}
+                    onHide={() => setShowEditModal(false)}
+                    actorToEdit={actor}
+                    onSuccess={loadActorData}
+                />
+            )}
         </Container>
     );
 }
