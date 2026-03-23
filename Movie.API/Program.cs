@@ -93,6 +93,10 @@ builder.Services.AddSignalR();
 
 builder.Services.AddSingleton<IUserIdProvider, NameIdentifierUserIdProvider>();
 
+builder.Services.AddHttpClient<MalIntegrationService>();
+
+builder.Services.AddScoped<MalIntegrationService>();
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())

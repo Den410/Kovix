@@ -36,6 +36,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import BlacklistPage from './pages/BlacklistPage';
 import AppealPage from './pages/AppealPage';
 import AdminAppealsPage from './pages/AdminAppealsPage';
+import MoviePage from './pages/MoviePage';
 
 import { useEffect } from 'react';
 
@@ -73,6 +74,14 @@ function App() {
                   <Route path="/movie/:id/cast" element={<MovieCastPage />} />
                   <Route path="/privacy" element={<PrivacyPage />} />
                   <Route path="/terms" element={<TermsPage />} />
+                  <Route
+                    path="/movies/:movieId"
+                    element={
+                      <BlockedRoute>
+                        <MoviePage />
+                      </BlockedRoute>
+                    }
+                  />
                   <Route path="/blacklist" element={
                     <ProtectedRoute>
                       <BlacklistPage />

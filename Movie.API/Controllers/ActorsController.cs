@@ -186,5 +186,20 @@ namespace Movie.API.Controllers
                 return null;
             }
         }
+
+        [HttpGet("lookup")]
+        public async Task<ActionResult<IEnumerable<ActorLookupDto>>> GetActorsForDropdown()
+        {
+            var actors = await _context.Actors 
+                .OrderBy(a => a.Name) 
+                .Select(a => new ActorLookupDto
+                {
+                    Id = a.Id,
+                    Name = a.Name
+                })
+                .ToListAsync();
+
+            return Ok(actors);
+        }
     }
 }

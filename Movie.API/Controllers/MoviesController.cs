@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using GTranslate.Translators;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Movie.API.Data;
@@ -6,8 +7,8 @@ using Movie.API.DTOs;
 using Movie.API.Models;
 using Movie.API.Models.Enums;
 using Movie.API.Models.TMdb;
+using Movie.API.Services;
 using System.Security.Claims;
-using GTranslate.Translators;
 
 namespace Movie.API.Controllers
 {
@@ -907,10 +908,11 @@ namespace Movie.API.Controllers
             {
                 var castMembers = ((IEnumerable<dynamic>)data.credits.cast).Take(50);
 
-                var translator = new GoogleTranslator();
+                var translator = new AggregateTranslator();
 
                 foreach (var person in castMembers)
                 {
+                    await Task.Delay(30);
                     string name = person.name;
                     string role = person.character;
                     string profilePath = person.profile_path;
@@ -1041,6 +1043,95 @@ namespace Movie.API.Controllers
                 .ToListAsync();
 
             return Ok(franchises);
+        }
+
+        [HttpGet("{movieId}/characters")]
+        public async Task<ActionResult<IEnumerable<CharacterResponseDto>>> GetMovieCharacters(int movieId)
+        {
+            var movieExists = await _context.Movies.AnyAsync(m => m.Id == movieId);
+            if (!movieExists) return NotFound("Фільм не знайдено");
+
+            var characters = await _context.VoiceActingRoles
+                .Include(v => v.Character)
+                .Include(v => v.Actor)
+                .Where(v => v.MovieId == movieId)
+                .GroupBy(v => new { v.Character.Id, v.Character.Name, v.Character.ImageUrl })
+                .Select(g => new CharacterResponseDto
+                {
+                    CharacterId = g.Key.Id,
+                    CharacterName = g.Key.Name,
+                    ImageUrl = g.Key.ImageUrl,
+                    VoiceActors = g.Select(v => new VoiceActorDto
+                    {
+                        ActorId = v.Actor.Id,
+                        ActorName = v.Actor.Name,
+                        Language = v.Language,
+                        IsOriginal = v.IsOriginal,
+                        PhotoUrl = v.Actor.PhotoUrl
+                    }).ToList()
+                })
+                .ToListAsync();
+
+            return Ok(characters);
+        }
+
+        [HttpPost("{movieId}/characters")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> AddCharacterToMovie(int movieId, [FromBody] CreateCharacterWithRolesDto dto)
+        {
+            var movieExists = await _context.Movies.AnyAsync(m => m.Id == movieId);
+            if (!movieExists) return NotFound("Фільм не знайдено");
+
+            var newCharacter = new Character
+            {
+                Name = dto.CharacterName,
+                ImageUrl = dto.ImageUrl
+            };
+
+            _context.Characters.Add(newCharacter);
+
+            await _context.SaveChangesAsync();
+
+            var rolesToAdd = new List<VoiceActingRole>();
+
+            foreach (var actorRole in dto.VoiceActors)
+            {
+                var personExists = await _context.Actors.AnyAsync(p => p.Id == actorRole.PersonId); 
+
+                if (personExists)
+                {
+                    rolesToAdd.Add(new VoiceActingRole
+                    {
+                        MovieId = movieId,
+                        CharacterId = newCharacter.Id,
+                        ActorId = actorRole.PersonId, 
+                        Language = actorRole.Language,
+                        IsOriginal = actorRole.IsOriginal
+                    });
+                }
+            }
+
+            if (rolesToAdd.Any())
+            {
+                _context.VoiceActingRoles.AddRange(rolesToAdd);
+                await _context.SaveChangesAsync();
+            }
+
+            return Ok(new { Message = "Персонажа та акторів успішно додано!", CharacterId = newCharacter.Id });
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpPost("{movieId}/import-mal/{malAnimeId}")]
+        public async Task<IActionResult> ImportFromMal(int movieId, int malAnimeId, [FromServices] MalIntegrationService malService)
+        {
+            var movieExists = await _context.Movies.AnyAsync(m => m.Id == movieId);
+            if (!movieExists) return NotFound("Фільм/Аніме не знайдено в локальній базі");
+
+            var success = await malService.ImportCharactersAsync(movieId, malAnimeId);
+
+            if (success) return Ok(new { Message = "Персонажів успішно імпортовано з MyAnimeList!" });
+
+            return BadRequest("Не вдалося завантажити дані з MAL.");
         }
     }
 }

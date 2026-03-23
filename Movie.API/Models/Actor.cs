@@ -8,5 +8,6 @@
         public DateTime? BirthDate { get; set; }
         public string? PhotoUrl { get; set; } 
         public List<MovieActor> MovieActors { get; set; } = new List<MovieActor>();
+        public List<VoiceActingRole> VoiceActingRoles { get; set; } = new List<VoiceActingRole>();
     }
 }

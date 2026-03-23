@@ -201,6 +201,10 @@ function Navigation() {
                         <NavDropdown.Item as={Link} to="/admin/appeals" className="text-info">
                           ⚖️ Апеляції
                         </NavDropdown.Item>
+
+                        <NavDropdown.Item as={Link} to="/movies/1">
+                          ⚙️ Керування (Фільм ID: 1)
+                        </NavDropdown.Item>
                       </>
                     )}
 
