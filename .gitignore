@@ -1,6 +1,6 @@
 # Node.js dependencies
 node_modules/
-wwwroot/uploads/
+**/wwwroot/uploads/
 
 # Logs
 logs/
