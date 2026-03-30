@@ -272,9 +272,15 @@ function ProfilePage() {
           <Alert.Heading className="d-flex align-items-center gap-2">
             🚫 <strong>ВАШ АКАУНТ ЗАБЛОКОВАНО</strong>
           </Alert.Heading>
-          <p className="mb-0">
+          <p>
             Ви обмежені у діях. Ви не можете користуватися чатом, додавати друзів та переглядати профілі інших користувачів.
           </p>
+          <hr />
+          <div className="d-flex justify-content-end">
+            <Button as={Link} to="/appeal" variant="outline-danger" className="fw-bold">
+              ⚖️ Оскаржити блокування
+            </Button>
+          </div>
         </Alert>
       )}
 
