@@ -7,5 +7,6 @@
         public string? PhotoUrl { get; set; }
         public string Language { get; set; } = string.Empty;
         public bool IsOriginal { get; set; }
+        public bool IsMainRole { get; set; }
     }
 }

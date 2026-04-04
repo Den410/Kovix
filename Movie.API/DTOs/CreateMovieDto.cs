@@ -23,5 +23,7 @@ namespace Movie.API.DTOs
         public string? PosterUrl { get; set; }
         public string? TrailerUrl { get; set; }
         public bool IsSeries { get; set; }
+        public int? MalId { get; set; }
+        public int? TmdbId { get; set; }
     }
 }

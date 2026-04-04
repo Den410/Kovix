@@ -7,6 +7,7 @@ import ReviewForm from '../components/ReviewForm';
 import ReviewList from '../components/ReviewList';
 import AdminMovieModal from '../components/AdminMovieModal';
 import AdminEpisodeModal from '../components/AdminEpisodeModal';
+import CharactersList from '../components/CharactersList';
 import defaultPosterImg from '../assets/NotFoundPoster.webp';
 import '../style/App.css';
 
@@ -50,6 +51,7 @@ function MovieDetailPage() {
 
   const [showEditModal, setShowEditModal] = useState(false);
   const [showReactionPopup, setShowReactionPopup] = useState(false);
+  const [charactersRefreshKey, setCharactersRefreshKey] = useState(0);
   const popupRef = useRef(null);
   const userReview = user ? reviews.find(r => r.userId === user.id) : null;
 
@@ -103,6 +105,29 @@ function MovieDetailPage() {
       return () => clearTimeout(timer);
     }
   }, [id, user]);
+
+  useEffect(() => {
+    if (movie && !movie.castImported && (movie.tmdbId || movie.malId)) {
+      const autoImportCast = async () => {
+        try {
+          const response = await fetch(`http://localhost:5096/api/movies/${movie.id}/auto-import-cast`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+          });
+
+          if (response.ok) {
+            const updatedMovie = await moviesAPI.getById(id);
+            setMovie(updatedMovie.data);
+            setCharactersRefreshKey(prev => prev + 1);
+          }
+        } catch (error) {
+          console.error('⚠️ Помилка при автоімпорті касту:', error);
+        }
+      };
+
+      autoImportCast();
+    }
+  }, [id, movie?.castImported]);
 
   const loadMovieData = async () => {
     try {
@@ -695,6 +720,9 @@ function MovieDetailPage() {
         </Col>
       </Row>
 
+      {/* MAL Characters Section */}
+      {movie?.id && <CharactersList movieId={movie.id} refreshKey={charactersRefreshKey} />}
+
       <Row>
         <Col>
           <h3 className="mb-4 border-bottom pb-2" style={{ borderColor: 'var(--border-color)' }}>Відгуки глядачів</h3>
@@ -717,7 +745,15 @@ function MovieDetailPage() {
         onSuccess={loadMovieData}
       />
 
-      <AdminMovieModal show={showEditModal} onHide={() => setShowEditModal(false)} movieToEdit={movie} onSuccess={loadMovieData} />
+      <AdminMovieModal 
+        show={showEditModal} 
+        onHide={() => setShowEditModal(false)} 
+        movieToEdit={movie} 
+        onSuccess={() => {
+          loadMovieData();
+          setCharactersRefreshKey(prev => prev + 1);
+        }} 
+      />
     </Container>
   );
 }

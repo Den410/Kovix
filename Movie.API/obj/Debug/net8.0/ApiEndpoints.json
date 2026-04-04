@@ -868,6 +868,22 @@
   },
   {
     "ContainingType": "Movie.API.Controllers.MoviesController",
+    "Method": "AutoImportCast",
+    "RelativePath": "api/Movies/{movieId}/auto-import-cast",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "movieId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Movie.API.Controllers.MoviesController",
     "Method": "GetMovieCharacters",
     "RelativePath": "api/Movies/{movieId}/characters",
     "HttpMethod": "GET",

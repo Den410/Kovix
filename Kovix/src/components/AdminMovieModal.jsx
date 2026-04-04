@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Modal, Button, Form, Tabs, Tab, Row, Col, ListGroup, Image, InputGroup } from 'react-bootstrap';
+import { Modal, Button, Form, Tabs, Tab, Row, Col, ListGroup, Image, InputGroup, Alert } from 'react-bootstrap';
 import { moviesAPI, actorsAPI } from '../services/api';
 
 function AdminMovieModal({ show, onHide, movieToEdit, onSuccess }) {
@@ -25,6 +25,10 @@ function AdminMovieModal({ show, onHide, movieToEdit, onSuccess }) {
   const [orderInFranchise, setOrderInFranchise] = useState('');
   const [newFranchiseName, setNewFranchiseName] = useState('');
   const [isCreatingNewFranchise, setIsCreatingNewFranchise] = useState(false);
+  const [selectedTmdbId, setSelectedTmdbId] = useState(null);
+  const [selectedMalId, setSelectedMalId] = useState(null);
+  const [malSearchResults, setMalSearchResults] = useState([]);
+  const [isMalSearching, setIsMalSearching] = useState(false);
 
   useEffect(() => {
     if (show) {
@@ -60,6 +64,8 @@ function AdminMovieModal({ show, onHide, movieToEdit, onSuccess }) {
         setMovieCast(movieToEdit.cast || []);
         setIsCreatingNewFranchise(false);
         setNewFranchiseName('');
+        setSelectedMalId(movieToEdit.malId || null);
+        setSelectedTmdbId(movieToEdit.tmdbId || null);
       } else {
         setFormData({
           title: '', description: '', year: new Date().getFullYear(), genre: '', director: '',
@@ -71,6 +77,9 @@ function AdminMovieModal({ show, onHide, movieToEdit, onSuccess }) {
         setOrderInFranchise('');
         setIsCreatingNewFranchise(false);
         setNewFranchiseName('');
+        setSelectedMalId(null);
+        setSelectedTmdbId(null);
+        setSelectedTmdbId(null);
       }
     }
   }, [show, movieToEdit]);
@@ -103,9 +112,77 @@ function AdminMovieModal({ show, onHide, movieToEdit, onSuccess }) {
     }
   };
 
+  const handleSearchMal = async () => {
+    if (!formData.title) return alert("Введіть назву для пошуку!");
+
+    const query = formData.title.trim();
+    const isNumeric = /^\d+$/.test(query);
+
+    const hasCyrillic = /[а-яА-ЯІіЇїЄєҐґ]/.test(query);
+
+    if (hasCyrillic && !isNumeric) {
+      alert("⚠️ MyAnimeList не розуміє українські назви.\n\nБаза MAL використовує лише Romaji або англійську.\nБудь ласка, введіть оригінальну назву (наприклад, 'Jujutsu Kaisen' замість 'Магічна битва') або використовуйте цифровий MAL ID.");
+      return; 
+    }
+
+    setSearchResults([]);
+    setMalSearchResults([]);
+    setIsMalSearching(true);
+
+    try {
+      const url = isNumeric
+        ? `https://api.jikan.moe/v4/anime/${query}`
+        : `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(query)}&limit=10`;
+
+      const response = await fetch(url);
+
+      if (!response.ok) throw new Error(`MAL search failed: ${response.status}`);
+
+      const data = await response.json();
+
+      if (isNumeric && data.data && !Array.isArray(data.data)) {
+        setMalSearchResults([data.data]);
+        return;
+      }
+
+      if (data.data && Array.isArray(data.data)) {
+        const filtered = data.data.filter(item =>
+          item.type === 'TV' || item.type === 'Movie' || item.type === 'OVA' || item.type === 'Special'
+        );
+
+        if (filtered.length === 0) {
+          alert("За цією назвою на MyAnimeList нічого не знайдено. Спробуйте інший варіант або MAL ID.");
+        } else {
+          setMalSearchResults(filtered);
+        }
+      }
+    } catch (error) {
+      console.error("❌ ПОМИЛКА MAL пошуку:", error);
+      alert("Помилка при з'єднанні з MAL: " + error.message);
+    } finally {
+      setIsMalSearching(false);
+    }
+  };
+
+  const handleSelectMalAnime = (anime) => {
+    setFormData(prev => ({
+      ...prev,
+      title: anime.title || anime.title_english || prev.title,
+      description: anime.synopsis || prev.description,
+      year: anime.aired?.from ? new Date(anime.aired.from).getFullYear() : prev.year,
+      posterUrl: anime.images?.jpg?.large_image_url || prev.posterUrl,
+      isSeries: true 
+    }));
+
+    setSelectedMalId(anime.mal_id);
+    setSelectedTmdbId(null); 
+    setMalSearchResults([]);
+  };
+
   const handleSelectTmdbMovie = async (movieFromSearch) => {
     setIsSearching(true);
     setMovieCast([]);
+    setSelectedTmdbId(movieFromSearch.tmdbId);
 
     try {
       const res = await moviesAPI.getTmdbDetails(movieFromSearch.tmdbId);
@@ -136,7 +213,7 @@ function AdminMovieModal({ show, onHide, movieToEdit, onSuccess }) {
               name: aName,
               bio: aBio,
               photoUrl: aPhoto,
-              birthDate: actorDto.birthDate || actorDto.BirthDate || null 
+              birthDate: actorDto.birthDate || actorDto.BirthDate || null
             });
             aId = createRes.data.id;
             createdActors.push(createRes.data);
@@ -145,12 +222,12 @@ function AdminMovieModal({ show, onHide, movieToEdit, onSuccess }) {
             continue;
           }
         }
-        
+
         finalizedCast.push({
           actorId: aId,
           name: aName,
           role: aRole,
-          isMainRole: actorDto.isMainRole !== undefined ? actorDto.isMainRole : (actorDto.IsMainRole || false) 
+          isMainRole: actorDto.isMainRole !== undefined ? actorDto.isMainRole : (actorDto.IsMainRole || false)
         });
       }
 
@@ -235,6 +312,8 @@ function AdminMovieModal({ show, onHide, movieToEdit, onSuccess }) {
       const dataToSend = {
         ...formData,
         year: parseInt(formData.year),
+        tmdbId: selectedTmdbId,
+        malId: selectedMalId,
         cast: movieCast.map(c => ({
           actorId: c.actorId,
           role: c.role,
@@ -273,50 +352,104 @@ function AdminMovieModal({ show, onHide, movieToEdit, onSuccess }) {
                 <Row>
                   <Col md={8}>
                     <Form.Group className="mb-3 position-relative">
-                      <Form.Label>Назва</Form.Label>
+                      <Form.Label>🎬 Пошук Назви</Form.Label>
                       <InputGroup>
                         <Form.Control
                           name="title"
                           value={formData.title}
                           onChange={handleChange}
                           required
-                          placeholder="Назва (напр. Хмарочос)"
+                          placeholder="Введіть назву фільму/аніме..."
                           className="bg-input text-main border-secondary"
                         />
                         <Button variant="info" onClick={handleSearchTmdb} disabled={isSearching}>
-                          {isSearching ? '⏳' : '🔍 Знайти'}
+                          {isSearching ? '⏳ TMDB' : '🎬 TMDB'}
+                        </Button>
+                        <Button variant="warning" onClick={handleSearchMal} disabled={isMalSearching}>
+                          {isMalSearching ? '⏳ MAL' : '📚 MAL'}
                         </Button>
                       </InputGroup>
 
                       {Array.isArray(searchResults) && searchResults.length > 0 && (
-                        <ListGroup
-                          className="mt-1 shadow position-absolute w-100"
-                          style={{ zIndex: 1050, maxHeight: '350px', overflowY: 'auto', border: '1px solid var(--border-color)' }}
-                        >
-                          {searchResults.map(m => (
-                            <ListGroup.Item
-                              key={m.tmdbId}
-                              action
-                              onClick={(e) => { e.preventDefault(); handleSelectTmdbMovie(m); }}
-                              className="d-flex align-items-center gap-3 bg-card text-main border-secondary"
-                              style={{ cursor: 'pointer' }}
-                            >
-                              <Image
-                                src={m.posterUrl || 'https://via.placeholder.com/45x68?text=No+Img'}
-                                rounded
-                                style={{ width: 45, height: 68, objectFit: 'cover' }}
-                              />
-                              <div>
-                                <div className="fw-bold">{m.title}</div>
-                                <div className="small text-muted">{m.releaseDate ? m.releaseDate.split('-')[0] : 'Рік невідомий'}</div>
-                              </div>
+                        <div>
+                          <div className="small text-muted mt-2 mb-1">📊 TMDB Результати:</div>
+                          <ListGroup
+                            className="mt-1 shadow position-relative w-100"
+                            style={{ zIndex: 1050, maxHeight: '250px', overflowY: 'auto', border: '1px solid var(--border-color)' }}
+                          >
+                            {searchResults.map(m => (
+                              <ListGroup.Item
+                                key={m.tmdbId}
+                                action
+                                onClick={(e) => { e.preventDefault(); handleSelectTmdbMovie(m); }}
+                                className="d-flex align-items-center gap-3 bg-card text-main border-secondary"
+                                style={{ cursor: 'pointer' }}
+                              >
+                                <Image
+                                  src={m.posterUrl || 'https://via.placeholder.com/45x68?text=No+Img'}
+                                  rounded
+                                  style={{ width: 45, height: 68, objectFit: 'cover' }}
+                                />
+                                <div>
+                                  <div className="fw-bold">{m.title}</div>
+                                  <div className="small text-muted">{m.releaseDate ? m.releaseDate.split('-')[0] : 'Рік невідомий'}</div>
+                                </div>
+                              </ListGroup.Item>
+                            ))}
+                            <ListGroup.Item action onClick={() => setSearchResults([])} className="text-center text-danger bg-card border-secondary small">
+                              ✕ Закрити TMDB
                             </ListGroup.Item>
-                          ))}
-                          <ListGroup.Item action onClick={() => setSearchResults([])} className="text-center text-danger bg-card border-secondary small">
-                            Закрити список
-                          </ListGroup.Item>
-                        </ListGroup>
+                          </ListGroup>
+                        </div>
                       )}
+
+                      {/* MAL RESULTS DEBUG */}
+                      {(() => {
+                        return malSearchResults.length > 0 && (
+                          <div style={{ position: 'relative', zIndex: 2000 }}>
+                            <div className="small text-muted mt-2 mb-1">📊 MAL Результати:</div>
+                            <ListGroup
+                              style={{
+                                position: 'absolute',
+                                top: '100%',
+                                left: 0,
+                                right: 0,
+                                zIndex: 2000,
+                                maxHeight: '300px',
+                                overflowY: 'auto',
+                                border: '2px solid var(--border-color)',
+                                marginTop: '4px',
+                                boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
+                              }}
+                            >
+                              {malSearchResults.map(anime => (
+                                <ListGroup.Item
+                                  key={anime.mal_id}
+                                  action
+                                  onClick={(e) => { e.preventDefault(); handleSelectMalAnime(anime); }}
+                                  className="d-flex align-items-center gap-3 bg-card text-main border-secondary"
+                                  style={{ cursor: 'pointer' }}
+                                >
+                                  <Image
+                                    src={anime.images?.jpg?.image_url || 'https://via.placeholder.com/45x68?text=No+Img'}
+                                    rounded
+                                    style={{ width: 45, height: 68, objectFit: 'cover' }}
+                                  />
+                                  <div>
+                                    <div className="fw-bold">{anime.title}</div>
+                                    <div className="small text-muted">
+                                      {anime.type} • {anime.aired?.from ? new Date(anime.aired.from).getFullYear() : 'N/A'} • ID: {anime.mal_id}
+                                    </div>
+                                  </div>
+                                </ListGroup.Item>
+                              ))}
+                              <ListGroup.Item action onClick={() => setMalSearchResults([])} className="text-center text-danger bg-card border-secondary small">
+                                ✕ Закрити MAL
+                              </ListGroup.Item>
+                            </ListGroup>
+                          </div>
+                        );
+                      })()}
                     </Form.Group>
                   </Col>
                   <Col md={4}>
@@ -324,6 +457,27 @@ function AdminMovieModal({ show, onHide, movieToEdit, onSuccess }) {
                       <Form.Label>Рік</Form.Label>
                       <Form.Control type="number" name="year" value={formData.year} onChange={handleChange} required className="bg-input text-main border-secondary" />
                     </Form.Group>
+                  </Col>
+                </Row>
+
+                <Row className="mb-3">
+                  <Col xs={12}>
+                    {(selectedTmdbId || selectedMalId) && (
+                      <Alert variant="info" className="mb-0">
+                        {selectedTmdbId && (
+                          <div className="d-flex justify-content-between align-items-center mb-2">
+                            <span>🎬 TMDB ID: <strong>{selectedTmdbId}</strong></span>
+                            <Button variant="sm" size="sm" onClick={() => setSelectedTmdbId(null)}>✕</Button>
+                          </div>
+                        )}
+                        {selectedMalId && (
+                          <div className="d-flex justify-content-between align-items-center">
+                            <span>📚 MAL ID: <strong>{selectedMalId}</strong></span>
+                            <Button variant="sm" size="sm" onClick={() => setSelectedMalId(null)}>✕</Button>
+                          </div>
+                        )}
+                      </Alert>
+                    )}
                   </Col>
                 </Row>
 

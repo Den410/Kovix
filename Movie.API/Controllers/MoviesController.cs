@@ -212,7 +212,10 @@ namespace Movie.API.Controllers
                     Role = ma.Role,
                     IsMainRole = ma.IsMainRole,
                     PhotoUrl = ma.Actor.PhotoUrl
-                }).ToList()
+                }).ToList(),
+                MalId = movie.MalId,
+                TmdbId = movie.TmdbId,
+                CastImported = movie.CastImported
             };
 
             dto.FranchiseName = movie.Franchise?.Name;
@@ -415,6 +418,9 @@ namespace Movie.API.Controllers
                                 : dto.PosterUrl,
                     AverageRating = 0,
                     TotalReviews = 0,
+                    MalId = dto.MalId,
+                    TmdbId = dto.TmdbId,
+                    CastImported = false,
                     MovieActors = new List<MovieActor>() 
                 };
 
@@ -487,6 +493,8 @@ namespace Movie.API.Controllers
                 movie.Director = dto.Director;
                 movie.TrailerUrl = dto.TrailerUrl;
                 movie.IsSeries = dto.IsSeries;
+                movie.MalId = dto.MalId;
+                movie.TmdbId = dto.TmdbId;
 
                 if (movie.PosterUrl != dto.PosterUrl)
                 {
@@ -895,6 +903,7 @@ namespace Movie.API.Controllers
                 Description = data.overview,
                 PosterUrl = data.poster_path != null ? $"https://image.tmdb.org/t/p/original{data.poster_path}" : null,
                 Year = 0,
+                TmdbId = tmdbId,
                 Cast = new List<CastDto>()
             };
 
@@ -1067,6 +1076,7 @@ namespace Movie.API.Controllers
                         ActorName = v.Actor.Name,
                         Language = v.Language,
                         IsOriginal = v.IsOriginal,
+                        IsMainRole = v.IsMainRole,
                         PhotoUrl = v.Actor.PhotoUrl
                     }).ToList()
                 })
@@ -1132,6 +1142,195 @@ namespace Movie.API.Controllers
             if (success) return Ok(new { Message = "Персонажів успішно імпортовано з MyAnimeList!" });
 
             return BadRequest("Не вдалося завантажити дані з MAL.");
+        }
+
+        [AllowAnonymous]
+        [HttpPost("{movieId}/auto-import-cast")]
+        public async Task<IActionResult> AutoImportCast(int movieId, [FromServices] MalIntegrationService malService)
+        {
+            var movie = await _context.Movies
+                .Include(m => m.MovieActors)
+                .Include(m => m.VoiceActingRoles)
+                    .ThenInclude(v => v.Character)
+                .FirstOrDefaultAsync(m => m.Id == movieId);
+
+            if (movie == null) return NotFound("Фільм не знайдено");
+
+            if (movie.CastImported)
+                return Ok(new { Message = "Касту вже імпортовано", AlreadyImported = true });
+
+            try
+            {
+                string importSource = "none";
+
+                if (movie.IsSeries && movie.MalId.HasValue && movie.MalId > 0)
+                {
+                    Console.WriteLine($"📚 Імпорт персонажів з MAL ({movie.MalId}) для аніме '{movie.Title}'");
+                    await malService.ImportCharactersAsync(movieId, movie.MalId.Value);
+                    importSource = "mal-characters";
+                }
+                else if (!movie.IsSeries && movie.TmdbId.HasValue && movie.TmdbId > 0)
+                {
+                    Console.WriteLine($"🎬 Імпорт акторів з TMDB ({movie.TmdbId}) для фільму '{movie.Title}'");
+                    await ImportActorsFromTmdb(movieId, movie.TmdbId.Value);
+                    importSource = "tmdb-actors";
+                }
+                else if (movie.MalId.HasValue && movie.MalId > 0)
+                {
+                    Console.WriteLine($"📚 Резервний імпорт персонажів з MAL ({movie.MalId}) для '{movie.Title}'");
+                    await malService.ImportCharactersAsync(movieId, movie.MalId.Value);
+                    importSource = "mal-fallback";
+                }
+
+                movie.CastImported = true;
+                await _context.SaveChangesAsync();
+
+                return Ok(new { 
+                    Message = "Касту успішно автоімпортовано", 
+                    ImportSource = importSource,
+                    IsAnime = movie.IsSeries,
+                    movie.MalId,
+                    movie.TmdbId
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Помилка при автоімпорті касту: {ex.Message}");
+                return StatusCode(500, new { Message = "Помилка при імпорті касту", Details = ex.Message });
+            }
+        }
+
+        private async Task ImportActorsFromTmdb(int movieId, int tmdbId)
+        {
+            using var client = new HttpClient();
+
+            var url = $"https://api.themoviedb.org/3/movie/{tmdbId}?api_key={TMDB_API_KEY}&append_to_response=credits&language=uk-UA";
+            var response = await client.GetAsync(url);
+
+            if (!response.IsSuccessStatusCode) return;
+
+            var json = await response.Content.ReadAsStringAsync();
+            dynamic data = Newtonsoft.Json.JsonConvert.DeserializeObject(json);
+
+            var movie = await _context.Movies
+                .Include(m => m.MovieActors)
+                .Include(m => m.VoiceActingRoles)
+                .FirstOrDefaultAsync(m => m.Id == movieId);
+
+            if (movie == null) return;
+
+            if (data.credits == null || data.credits.cast == null) return;
+
+            var castMembers = ((IEnumerable<dynamic>)data.credits.cast).Take(30);
+            var translator = new AggregateTranslator();
+
+            foreach (var person in castMembers)
+            {
+                try
+                {
+                    await Task.Delay(20);
+                    string actorName = person.name;
+                    string characterName = person.character;
+                    string profilePath = person.profile_path;
+                    int personId = person.id;
+
+                    if (string.IsNullOrEmpty(actorName) || string.IsNullOrEmpty(characterName)) continue;
+
+                    if (System.Text.RegularExpressions.Regex.IsMatch(actorName, @"[a-zA-Z]"))
+                    {
+                        try
+                        {
+                            var nameResult = await translator.TranslateAsync(actorName, "uk");
+                            actorName = nameResult.Translation;
+                        }
+                        catch { }
+                    }
+
+                    if (System.Text.RegularExpressions.Regex.IsMatch(characterName, @"[a-zA-Z]"))
+                    {
+                        try
+                        {
+                            var charResult = await translator.TranslateAsync(characterName, "uk");
+                            characterName = charResult.Translation;
+                        }
+                        catch { }
+                    }
+
+                    int order = person.order != null ? (int)person.order : 999;
+                    bool isMainRole = order < 6;
+
+                    var character = await _context.Characters.FirstOrDefaultAsync(c => c.Name == characterName);
+                    
+                    if (character == null)
+                    {
+                        character = new Character
+                        {
+                            Name = characterName,
+                            ImageUrl = null
+                        };
+                        _context.Characters.Add(character);
+                        await _context.SaveChangesAsync();
+                    }
+
+                    var actor = await _context.Actors.FirstOrDefaultAsync(a => a.Name == actorName);
+
+                    if (actor == null)
+                    {
+                        string biography = "";
+                        DateTime? birthDate = null;
+
+                        var personUrl = $"https://api.themoviedb.org/3/person/{personId}?api_key={TMDB_API_KEY}&language=uk-UA";
+                        try
+                        {
+                            var personResponse = await client.GetAsync(personUrl);
+                            if (personResponse.IsSuccessStatusCode)
+                            {
+                                var personJson = await personResponse.Content.ReadAsStringAsync();
+                                dynamic personData = Newtonsoft.Json.JsonConvert.DeserializeObject(personJson);
+                                biography = personData.biography ?? "";
+                                
+                                if (personData.birthday != null && !string.IsNullOrEmpty(personData.birthday.ToString()))
+                                {
+                                    if (DateTime.TryParse(personData.birthday.ToString(), out DateTime bd))
+                                        birthDate = bd;
+                                }
+                            }
+                        }
+                        catch { }
+
+                        actor = new Actor
+                        {
+                            Name = actorName,
+                            Bio = biography,
+                            PhotoUrl = !string.IsNullOrEmpty(profilePath) ? $"https://image.tmdb.org/t/p/w500{profilePath}" : null,
+                            BirthDate = birthDate
+                        };
+
+                        _context.Actors.Add(actor);
+                        await _context.SaveChangesAsync();
+                    }
+
+                    var voiceRoleExists = await _context.VoiceActingRoles
+                        .AnyAsync(v => v.CharacterId == character.Id && v.ActorId == actor.Id && v.MovieId == movieId);
+                    
+                    if (!voiceRoleExists)
+                    {
+                        _context.VoiceActingRoles.Add(new VoiceActingRole
+                        {
+                            CharacterId = character.Id,
+                            ActorId = actor.Id,
+                            MovieId = movieId,
+                            IsMainRole = isMainRole
+                        });
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"⚠️ Помилка при обробці персонажа: {ex.Message}");
+                }
+            }
+
+            await _context.SaveChangesAsync();
         }
     }
 }

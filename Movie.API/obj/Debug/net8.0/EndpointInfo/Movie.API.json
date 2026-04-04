@@ -1959,6 +1959,29 @@
         }
       }
     },
+    "/api/Movies/{movieId}/auto-import-cast": {
+      "post": {
+        "tags": [
+          "Movies"
+        ],
+        "parameters": [
+          {
+            "name": "movieId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/Notifications": {
       "get": {
         "tags": [
@@ -3696,6 +3719,19 @@
             "format": "int32",
             "nullable": true
           },
+          "malId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "tmdbId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "castImported": {
+            "type": "boolean"
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -3770,6 +3806,19 @@
             "type": "integer",
             "format": "int32",
             "nullable": true
+          },
+          "malId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "tmdbId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "castImported": {
+            "type": "boolean"
           },
           "createdAt": {
             "type": "string",
@@ -4509,6 +4558,9 @@
           },
           "isOriginal": {
             "type": "boolean"
+          },
+          "isMainRole": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false
@@ -4533,6 +4585,9 @@
             "nullable": true
           },
           "isOriginal": {
+            "type": "boolean"
+          },
+          "isMainRole": {
             "type": "boolean"
           }
         },

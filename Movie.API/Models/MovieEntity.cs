@@ -18,6 +18,9 @@ namespace Movie.API.Models
         public Franchise? Franchise { get; set; }
 
         public int? OrderInFranchise { get; set; }
+        public int? MalId { get; set; }
+        public int? TmdbId { get; set; }
+        public bool CastImported { get; set; } = false;
         public DateTime CreatedAt { get; set; }
         public ICollection<Review>? Reviews { get; set; }
         public ICollection<Watchlist>? Watchlists { get; set; }

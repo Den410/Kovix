@@ -1,111 +1,112 @@
 import { useState, useEffect } from 'react';
-import { Spinner, Card } from 'react-bootstrap';
-import { useTheme } from '../contexts/ThemeContext';
+import { Spinner, Alert } from 'react-bootstrap';
 
 const API_BASE_URL = 'http://localhost:5096';
 
-const CharactersList = ({ movieId }) => {
+const CharactersList = ({ movieId, refreshKey = 0 }) => {
     const [characters, setCharacters] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
-    
-    const { themeMode } = useTheme();
-    const isDark = themeMode === 'dark';
+    const [error, setError] = useState(null);
 
     useEffect(() => {
-        const token = localStorage.getItem('token'); 
+        const loadCharacters = async () => {
+            setIsLoading(true);
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/api/movies/${movieId}/characters`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
 
-        fetch(`${API_BASE_URL}/api/movies/${movieId}/characters`, {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
+                if (!response.ok) throw new Error(`Помилка сервера: ${response.status}`);
+
+                const data = await response.json();
+                console.log("📥 Отримані дані персонажів:", data); 
+                setCharacters(data);
+            } catch (err) {
+                console.error("❌ Помилка завантаження:", err);
+                setError(err.message);
+            } finally {
+                setIsLoading(false);
             }
-        })
-        .then(r => {
-            if (!r.ok) throw new Error('Помилка завантаження');
-            return r.json();
-        })
-        .then(setCharacters)
-        .catch(err => console.error("Помилка:", err))
-        .finally(() => setIsLoading(false));
-    }, [movieId]);
+        };
+
+        if (movieId) loadCharacters();
+    }, [movieId, refreshKey]);
 
     if (isLoading) return (
-        <div className="text-center p-4">
+        <div className="text-center p-5">
             <Spinner animation="border" variant="warning" />
+            <div className="mt-2 text-muted">Завантаження персонажів...</div>
         </div>
     );
 
-    if (characters.length === 0) return (
-        <div className="text-muted text-center p-3">Персонажів ще не додано.</div>
-    );
+    if (error) return <Alert variant="danger">Помилка: {error}</Alert>;
+
+    if (!characters || characters.length === 0) {
+        return (
+            <div className="text-center p-4 border rounded" style={{ borderStyle: 'dashed', borderColor: 'var(--border-color)' }}>
+                <p className="mb-0 text-muted">У базі поки немає персонажів для цього фільму.</p>
+                <small>Спробуйте натиснути "Імпортувати" вище.</small>
+            </div>
+        );
+    }
 
     return (
-        <div className="mt-4">
-            <h2 style={{ 
-                fontSize: 18, 
-                fontWeight: 600, 
-                borderBottom: `2px solid ${isDark ? '#444' : '#eee'}`, 
-                paddingBottom: 8, 
-                marginBottom: 16,
-                color: isDark ? '#ffc107' : '#333' 
-            }}>
+        <div className="mt-4 p-3 rounded shadow-sm" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-main)', border: '1px solid var(--border-color)' }}>
+            <h5 className="mb-4 pb-2" style={{ borderBottom: '1px solid var(--border-color)', fontWeight: 'bold' }}>
                 🎭 Characters & Voice Actors
-            </h2>
+            </h5>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {characters.map(char => (
-                    <div key={char.characterId} style={{
-                        display: 'flex', 
-                        justifyContent: 'space-between',
-                        border: `1px solid ${isDark ? '#444' : '#e0e0e0'}`, 
-                        borderRadius: 6,
-                        overflow: 'hidden', 
-                        backgroundColor: isDark ? '#1a1d20' : '#fff', 
-                        color: isDark ? '#eee' : '#333',
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                    }}>
-                        <div style={{ display: 'flex', alignItems: 'center' }}>
+            <div className="d-flex flex-column gap-3">
+                {characters.map((char, index) => (
+                    <div 
+                        key={char.characterId || index} 
+                        className="d-flex justify-content-between align-items-center py-2" 
+                        style={{ 
+                            borderBottom: index !== characters.length - 1 ? '1px solid var(--border-color)' : 'none' 
+                        }}
+                    >
+                        <div className="d-flex align-items-center">
                             <img
-                                src={char.imageUrl || '/placeholder-char.jpg'}
+                                src={char.imageUrl || 'https://via.placeholder.com/65x100?text=No+Img'}
                                 alt={char.characterName}
-                                style={{ width: 60, height: 85, objectFit: 'cover', flexShrink: 0 }}
-                                onError={(e) => { e.target.src = 'https://via.placeholder.com/60x85?text=No+Img'; }}
+                                style={{ width: '60px', height: '85px', objectFit: 'cover', borderRadius: '4px', border: '1px solid var(--border-color)' }}
+                                onError={(e) => { e.target.src = 'https://via.placeholder.com/65x100?text=No+Img'; }}
                             />
-                            <div style={{ padding: '8px 15px' }}>
-                                <div style={{ fontWeight: 600, fontSize: 14 }}>{char.characterName}</div>
-                                <div style={{ fontSize: 11, color: '#888' }}>Main Character</div>
+                            <div className="ms-3">
+                                <div className="fw-bold" style={{ color: 'var(--primary-color)', fontSize: '1rem' }}>
+                                    {char.characterName}
+                                </div>
+                                <div className="small text-muted">
+                                    {char.voiceActors?.[0]?.isMainRole ? '🌟 Головний персонаж' : '👤 Другорядний персонаж'}
+                                </div>
                             </div>
                         </div>
 
-                        <div style={{ display: 'flex', flexDirection: 'column', flexGrow: 1, maxWidth: '60%' }}>
-                            {char.voiceActors.map((actor, i) => (
-                                <div key={actor.actorId} style={{
-                                    display: 'flex',
-                                    justifyContent: 'flex-end',
-                                    borderTop: i > 0 ? `1px solid ${isDark ? '#333' : '#eee'}` : 'none',
-                                    borderLeft: `1px solid ${isDark ? '#333' : '#eee'}`,
-                                    height: '100%'
-                                }}>
-                                    <div style={{ padding: '8px 12px', textAlign: 'right', alignSelf: 'center' }}>
-                                        <div style={{ fontWeight: 500, fontSize: 13 }}>{actor.actorName}</div>
-                                        <div style={{ fontSize: 11, color: isDark ? '#aaa' : '#666', marginTop: 2 }}>
-                                            {actor.language} {actor.isOriginal ? ' • Original' : ''}
+                        {/* АКТОРИ ОЗВУЧКИ */}
+                        <div className="d-flex flex-column gap-2" style={{ minWidth: '200px' }}>
+                            {char.voiceActors && char.voiceActors.length > 0 ? (
+                                char.voiceActors.map((actor) => (
+                                    <div key={actor.actorId} className="d-flex justify-content-end align-items-center">
+                                        <div className="text-end me-3">
+                                            <div className="fw-bold" style={{ color: 'var(--primary-color)', fontSize: '0.9rem' }}>
+                                                {actor.actorName}
+                                            </div>
+                                            <div className="small text-muted" style={{ fontSize: '0.75rem' }}>
+                                                {actor.language} {actor.isOriginal ? '• Сейю' : ''}
+                                            </div>
                                         </div>
+                                        <img
+                                            src={actor.photoUrl || 'https://via.placeholder.com/45x70?text=No+Img'}
+                                            alt={actor.actorName}
+                                            style={{ width: '45px', height: '65px', objectFit: 'cover', borderRadius: '4px', border: '1px solid var(--border-color)' }}
+                                            onError={(e) => { e.target.src = 'https://via.placeholder.com/45x70?text=No+Img'; }}
+                                        />
                                     </div>
-                                    <img
-                                        src={actor.photoUrl || '/placeholder-actor.jpg'}
-                                        alt={actor.actorName}
-                                        style={{ 
-                                            width: 60, 
-                                            height: 85, 
-                                            objectFit: 'cover', 
-                                            flexShrink: 0, 
-                                            borderLeft: `1px solid ${isDark ? '#333' : '#eee'}` 
-                                        }}
-                                        onError={(e) => { e.target.src = 'https://via.placeholder.com/60x85?text=Actor'; }}
-                                    />
-                                </div>
-                            ))}
+                                ))
+                            ) : (
+                                <div className="text-end text-muted small italic">Актори не вказані</div>
+                            )}
                         </div>
                     </div>
                 ))}

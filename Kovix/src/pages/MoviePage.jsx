@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import ImportMalCharacters from "../components/ImportMalCharacters";
 import CharactersList from '../components/CharactersList';   
 
 const MoviePage = () => {
@@ -15,13 +14,6 @@ const MoviePage = () => {
     return (
         <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
             <h1>Керування фільмом / аніме (ID: {movieId})</h1>
-            
-            <div style={{ marginBottom: '40px' }}>
-                <ImportMalCharacters 
-                    movieId={movieId} 
-                    onImportSuccess={handleImportSuccess} 
-                />
-            </div>
 
             <hr style={{ margin: '30px 0' }} />
 

@@ -27,6 +27,9 @@ namespace Movie.API.DTOs
         public int? FranchiseId { get; set; } 
 
         public int? OrderInFranchise { get; set; } 
+        public int? MalId { get; set; }
+        public int? TmdbId { get; set; }
+        public bool CastImported { get; set; }
 
         public DateTime CreatedAt { get; set; }
 
