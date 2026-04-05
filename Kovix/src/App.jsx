@@ -37,6 +37,8 @@ import BlacklistPage from './pages/BlacklistPage';
 import AppealPage from './pages/AppealPage';
 import AdminAppealsPage from './pages/AdminAppealsPage';
 import MoviePage from './pages/MoviePage';
+import CharacterDetailPage from './pages/CharacterDetailPage';
+import VoiceActorDetailPage from './pages/VoiceActorDetailPage';
 
 import { useEffect } from 'react';
 
@@ -71,6 +73,8 @@ function App() {
                   <Route path="/my-reviews" element={<UserReviewsPage />} />
                   <Route path="/actors" element={<ActorsPage />} />
                   <Route path="/actors/:id" element={<ActorDetailPage />} />
+                  <Route path="/character/:id" element={<CharacterDetailPage />} />
+                  <Route path="/voice-actor/:id" element={<VoiceActorDetailPage />} />
                   <Route path="/movie/:id/cast" element={<MovieCastPage />} />
                   <Route path="/privacy" element={<PrivacyPage />} />
                   <Route path="/terms" element={<TermsPage />} />

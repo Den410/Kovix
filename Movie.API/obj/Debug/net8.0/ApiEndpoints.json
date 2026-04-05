@@ -412,6 +412,22 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "Movie.API.Controllers.CharactersController",
+    "Method": "GetById",
+    "RelativePath": "api/Characters/{id}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "Movie.API.Controllers.ChatController",
     "Method": "GetGeneralHistory",
     "RelativePath": "api/Chat/general",
@@ -883,9 +899,9 @@
     "ReturnTypes": []
   },
   {
-    "ContainingType": "Movie.API.Controllers.MoviesController",
+    "ContainingType": "Movie.API.Controllers.CharactersController",
     "Method": "GetMovieCharacters",
-    "RelativePath": "api/Movies/{movieId}/characters",
+    "RelativePath": "api/movies/{movieId}/characters",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
@@ -909,9 +925,9 @@
     ]
   },
   {
-    "ContainingType": "Movie.API.Controllers.MoviesController",
+    "ContainingType": "Movie.API.Controllers.CharactersController",
     "Method": "AddCharacterToMovie",
-    "RelativePath": "api/Movies/{movieId}/characters",
+    "RelativePath": "api/movies/{movieId}/characters",
     "HttpMethod": "POST",
     "IsController": true,
     "Order": 0,
@@ -924,6 +940,53 @@
       {
         "Name": "dto",
         "Type": "Movie.API.DTOs.CreateCharacterWithRolesDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Movie.API.Controllers.CharactersController",
+    "Method": "UpdateCharacter",
+    "RelativePath": "api/movies/{movieId}/characters/{characterId}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "movieId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "characterId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "dto",
+        "Type": "Movie.API.DTOs.CreateCharacterWithRolesDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Movie.API.Controllers.CharactersController",
+    "Method": "DeleteCharacter",
+    "RelativePath": "api/movies/{movieId}/characters/{characterId}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "movieId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "characterId",
+        "Type": "System.Int32",
         "IsRequired": true
       }
     ],

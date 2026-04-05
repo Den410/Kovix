@@ -159,6 +159,20 @@ export const appealsAPI = {
   process: (id, data) => api.put(`/appeals/${id}/process`, data),
 };
 
+export const charactersAPI = {
+  getByMovie: (movieId) => api.get(`/movies/${movieId}/characters`),
+  getById: (id) => api.get(`/characters/${id}`),
+  create: (movieId, data) => api.post(`/movies/${movieId}/characters`, data),
+  update: (movieId, characterId, data) => api.put(`/movies/${movieId}/characters/${characterId}`, data),
+  delete: (movieId, characterId) => api.delete(`/movies/${movieId}/characters/${characterId}`),
+};
+
+export const voiceActorsAPI = {
+  getByCharacter: (characterId) => api.get(`/characters/${characterId}/voice-actors`),
+  getByMovie: (movieId) => api.get(`/movies/${movieId}/voice-actors`),
+  getById: (actorId) => api.get(`/actors/${actorId}`),
+};
+
 export const statsAPI = {
   getStats: () => api.get('/users/stats'),
 };

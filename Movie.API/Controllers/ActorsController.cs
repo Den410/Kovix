@@ -144,15 +144,36 @@ namespace Movie.API.Controllers
         public async Task<IActionResult> DeleteActor(int id)
         {
             var actor = await _context.Actors.FindAsync(id);
-            if (actor == null)
-            {
-                return NotFound();
-            }
+            if (actor == null) return NotFound("Актора не знайдено");
+
+            var voiceRoles = await _context.VoiceActingRoles
+                .Where(v => v.ActorId == id)
+                .ToListAsync();
+            if (voiceRoles.Any()) _context.VoiceActingRoles.RemoveRange(voiceRoles);
+
+            var movieActors = await _context.MovieActors
+                .Where(m => m.ActorId == id)
+                .ToListAsync();
+            if (movieActors.Any()) _context.MovieActors.RemoveRange(movieActors);
+
+            var blockedRecords = await _context.UserBlockedActors
+                .Where(b => b.ActorId == id)
+                .ToListAsync();
+            if (blockedRecords.Any()) _context.UserBlockedActors.RemoveRange(blockedRecords);
 
             _context.Actors.Remove(actor);
-            await _context.SaveChangesAsync();
 
-            return NoContent();
+            try
+            {
+                await _context.SaveChangesAsync();
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"ПОМИЛКА ВИДАЛЕННЯ АКТОРА: {ex.Message}");
+                if (ex.InnerException != null) Console.WriteLine($"ДЕТАЛІ SQL: {ex.InnerException.Message}");
+                return StatusCode(500, "Помилка бази даних при видаленні актора.");
+            }
         }
 
         private bool ActorExists(int id)
