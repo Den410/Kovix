@@ -288,3 +288,4 @@ wwwroot\uploads\28a29cef-e2be-4c77-a937-6655a6232639.jpg
 wwwroot\uploads\f1765002-cafa-4726-883c-365aa16cce8a.jpg
 wwwroot\uploads\0d3283eb-025d-4fe9-93f3-75b895f67fb2.jpg
 wwwroot\uploads\34e8bab4-2bee-41bb-a1f2-83c840c03bc9.jpg
+wwwroot\uploads\8b0c57f6-c354-4d87-9e92-4177ab0158ac_3 side quest.png

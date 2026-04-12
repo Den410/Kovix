@@ -24,6 +24,7 @@ function ProfilePage() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [shouldDeleteAvatar, setShouldDeleteAvatar] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   const [showSettings, setShowSettings] = useState(false);
   const [blockedGenres, setBlockedGenres] = useState([]);
@@ -208,6 +209,34 @@ function ProfilePage() {
     setSelectedFile(null);
     setPreviewUrl(null);
     setShouldDeleteAvatar(true);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      const file = files[0];
+      if (file.type.startsWith('image/')) {
+        setSelectedFile(file);
+        setPreviewUrl(URL.createObjectURL(file));
+        setShouldDeleteAvatar(false);
+      } else {
+        alert('Будь ласка, завантажте файл зображення');
+      }
+    }
   };
 
   const handleSaveChanges = async () => {
@@ -448,15 +477,56 @@ function ProfilePage() {
             </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>Аватар</Form.Label>
-              <Form.Control
-                type="file"
-                onChange={handleFileChange}
-                style={{ backgroundColor: 'var(--bg-main)', color: 'var(--text-main)', borderColor: 'var(--border-color)' }}
-              />
+              
+              <div
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                style={{
+                  padding: '30px',
+                  border: `2px dashed ${isDragging ? '#0d6efd' : 'var(--border-color)'}`,
+                  borderRadius: '8px',
+                  backgroundColor: isDragging ? 'rgba(13, 110, 253, 0.1)' : 'var(--bg-main)',
+                  cursor: 'pointer',
+                  textAlign: 'center',
+                  transition: 'all 0.2s',
+                  marginBottom: '10px'
+                }}
+              >
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  style={{
+                    display: 'none'
+                  }}
+                  id="avatar-file-input"
+                />
+                <label
+                  htmlFor="avatar-file-input"
+                  style={{
+                    cursor: 'pointer',
+                    display: 'block',
+                    margin: 0
+                  }}
+                >
+                  <div style={{ fontSize: '2.5rem', marginBottom: '10px' }}>📁</div>
+                  <div style={{ color: 'var(--text-main)', marginBottom: '5px', fontWeight: '500' }}>
+                    {isDragging ? '⬇️ Перетягніть файл сюди' : '🖱️ Перетягніть аватар сюди або клікніть'}
+                  </div>
+                  <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                    Формати: JPG, PNG, GIF, WebP
+                  </div>
+                </label>
+              </div>
+
               {previewUrl && (
-                <div className="mt-2 d-flex align-items-center">
-                  <img src={previewUrl} alt="preview" className="rounded-circle" style={{ width: 60, height: 60, objectFit: 'cover', marginRight: '10px' }} />
-                  <Button variant="danger" size="sm" onClick={handleDeletePhoto}>Видалити фото</Button>
+                <div className="mt-3 d-flex align-items-center gap-3 p-3 rounded" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)' }}>
+                  <img src={previewUrl} alt="preview" className="rounded" style={{ width: 80, height: 80, objectFit: 'cover' }} />
+                  <div>
+                    <div style={{ color: 'var(--text-main)', fontWeight: '500', marginBottom: '8px' }}>✅ Новий аватар готовий</div>
+                    <Button variant="danger" size="sm" onClick={handleDeletePhoto}>🗑️ Видалити</Button>
+                  </div>
                 </div>
               )}
             </Form.Group>

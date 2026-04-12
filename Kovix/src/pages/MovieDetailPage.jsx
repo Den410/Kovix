@@ -8,6 +8,7 @@ import ReviewList from '../components/ReviewList';
 import AdminMovieModal from '../components/AdminMovieModal';
 import AdminEpisodeModal from '../components/AdminEpisodeModal';
 import CharactersList from '../components/CharactersList';
+import MoviePhotos from '../components/MoviePhotos';
 import defaultPosterImg from '../assets/NotFoundPoster.webp';
 import '../style/App.css';
 
@@ -720,8 +721,12 @@ function MovieDetailPage() {
         </Col>
       </Row>
 
-      {/* MAL Characters Section */}
-      {movie?.id && <CharactersList movieId={movie.id} refreshKey={charactersRefreshKey} />}
+      {movie?.id && (() => {
+        const isAnime = movie.malId !== null && movie.malId !== undefined;
+        return isAnime ? <CharactersList movieId={movie.id} refreshKey={charactersRefreshKey} /> : null;
+      })()}
+
+      {movie?.id && <MoviePhotos movieId={movie.id} movieTitle={movie.title} />}
 
       <Row>
         <Col>

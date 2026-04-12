@@ -177,4 +177,16 @@ export const statsAPI = {
   getStats: () => api.get('/users/stats'),
 };
 
+export const moviePhotosAPI = {
+  getByMovie: (movieId) => api.get(`/movies/${movieId}/photos`),
+  
+  addUrl: (movieId, imageUrl) => api.post(`/movies/${movieId}/photos/url`, `"${imageUrl}"`, {
+      headers: { 'Content-Type': 'application/json' }
+  }),
+  
+  uploadMultiple: (movieId, formData) => api.post(`/movies/${movieId}/photos/upload`, formData),
+  
+  delete: (movieId, photoId) => api.delete(`/movies/${movieId}/photos/${photoId}`)
+};
+
 export default api;

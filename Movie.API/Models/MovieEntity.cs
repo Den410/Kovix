@@ -27,5 +27,6 @@ namespace Movie.API.Models
         public ICollection<Episode> Episodes { get; set; } = new List<Episode>();
         public List<MovieActor> MovieActors { get; set; } = new List<MovieActor>();
         public List<VoiceActingRole> VoiceActingRoles { get; set; } = new List<VoiceActingRole>();
+        public ICollection<MoviePhoto> Photos { get; set; } = new List<MoviePhoto>();
     }
 }

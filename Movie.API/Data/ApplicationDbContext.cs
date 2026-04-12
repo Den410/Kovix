@@ -35,6 +35,7 @@ namespace Movie.API.Data
         public DbSet<Franchise> Franchises { get; set; }
         public DbSet<Character> Characters { get; set; }
         public DbSet<VoiceActingRole> VoiceActingRoles { get; set; }
+        public DbSet<MoviePhoto> MoviePhotos { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -258,6 +259,12 @@ namespace Movie.API.Data
                 .WithMany(c => c.VoiceActors)
                 .HasForeignKey(v => v.CharacterId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<MoviePhoto>()
+                .HasOne(mp => mp.Movie)
+                .WithMany(m => m.Photos)
+                .HasForeignKey(mp => mp.MovieId)
+                .OnDelete(DeleteBehavior.Cascade);
 
 
             modelBuilder.Entity<MovieEntity>().HasData(

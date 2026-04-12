@@ -1014,6 +1014,85 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "Movie.API.Controllers.MoviePhotosController",
+    "Method": "GetPhotos",
+    "RelativePath": "api/movies/{movieId}/photos",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "movieId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Movie.API.Controllers.MoviePhotosController",
+    "Method": "DeletePhoto",
+    "RelativePath": "api/movies/{movieId}/photos/{photoId}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "movieId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "photoId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Movie.API.Controllers.MoviePhotosController",
+    "Method": "UploadPhotos",
+    "RelativePath": "api/movies/{movieId}/photos/upload",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "movieId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "files",
+        "Type": "System.Collections.Generic.List\u00601[[Microsoft.AspNetCore.Http.IFormFile, Microsoft.AspNetCore.Http.Features, Version=8.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60]]",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Movie.API.Controllers.MoviePhotosController",
+    "Method": "AddPhotoUrl",
+    "RelativePath": "api/movies/{movieId}/photos/url",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "movieId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "imageUrl",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "Movie.API.Controllers.MoviesController",
     "Method": "UpdateEpisode",
     "RelativePath": "api/Movies/episodes/{id}",
