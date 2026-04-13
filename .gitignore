@@ -42,3 +42,9 @@ coverage/
 bin/
 obj/
 .env.*
+
+[Oo]bj/
+[Bb]in/
+
+Movie.API/obj/
+Movie.API/bin/
