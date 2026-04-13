@@ -7,6 +7,7 @@ import ThemeSettings from './ThemeSettings';
 import { authAPI, moviesAPI } from '../services/api';
 import NotificationBell from './NotificationBell';
 import { useTheme } from '../contexts/ThemeContext';
+import { FaNewspaper } from 'react-icons/fa';
 import '../style/App.css';
 import defaultAvatarImg from '../assets/NotFoundAvatar.png';
 
@@ -88,6 +89,10 @@ function Navigation() {
 
               <Nav.Link as={Link} to="/top" className="fw-bold text-warning">
                 🏆 Топ-100
+              </Nav.Link>
+              
+              <Nav.Link as={Link} to="/news" className="fw-semibold d-flex align-items-center gap-1">
+                <FaNewspaper /> Новини
               </Nav.Link>
             </Nav>
             <Nav className="align-items-center gap-2">

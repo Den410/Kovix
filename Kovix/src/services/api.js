@@ -189,4 +189,12 @@ export const moviePhotosAPI = {
   delete: (movieId, photoId) => api.delete(`/movies/${movieId}/photos/${photoId}`)
 };
 
+export const newsAPI = {
+  getAll: () => api.get('/news'),
+  getById: (id) => api.get(`/news/${id}`),
+  update: (id, data) => api.put(`/news/${id}`, data),
+  create: (data) => api.post('/news', data),
+  delete: (id) => api.delete(`/news/${id}`)
+};
+
 export default api;

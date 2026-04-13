@@ -36,6 +36,7 @@ namespace Movie.API.Data
         public DbSet<Character> Characters { get; set; }
         public DbSet<VoiceActingRole> VoiceActingRoles { get; set; }
         public DbSet<MoviePhoto> MoviePhotos { get; set; }
+        public DbSet<NewsItem> News { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

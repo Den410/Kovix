@@ -39,6 +39,9 @@ import AdminAppealsPage from './pages/AdminAppealsPage';
 import MoviePage from './pages/MoviePage';
 import CharacterDetailPage from './pages/CharacterDetailPage';
 import VoiceActorDetailPage from './pages/VoiceActorDetailPage';
+import NewsBanner from './components/NewsBanner';
+import NewsDetailsPage from './pages/NewsDetailsPage';
+import NewsPage from './pages/NewsPage';
 
 import { useEffect } from 'react';
 
@@ -56,6 +59,7 @@ function App() {
             <Router>
               <div className="App">
                 <PromoBanner />
+                <NewsBanner />
                 <Navigation />
                 <Routes>
                   <Route path="/" element={<HomePage />} />
@@ -78,6 +82,8 @@ function App() {
                   <Route path="/movie/:id/cast" element={<MovieCastPage />} />
                   <Route path="/privacy" element={<PrivacyPage />} />
                   <Route path="/terms" element={<TermsPage />} />
+                  <Route path="/news/:id" element={<NewsDetailsPage />} />
+                  <Route path="/news" element={<NewsPage />} />
                   <Route
                     path="/movies/:movieId"
                     element={
