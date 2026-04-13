@@ -6,8 +6,7 @@ import MovieCard from '../components/MovieCard';
 import LazyImage from '../components/LazyImage';
 import defaultPosterImg from '../assets/NotFoundPoster.webp';
 import { useTheme } from '../contexts/ThemeContext';
-
-const API_BASE_URL = 'http://localhost:5096'; 
+import { API_BASE_URL } from '../utils/apiConfig'; 
 const PLACEHOLDER_IMG = defaultPosterImg;
 
 const SORT_OPTIONS = [

@@ -4,8 +4,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { moviePhotosAPI } from '../services/api';
 import { FaPlus, FaTrash, FaCloudUploadAlt, FaTimes, FaShareAlt, FaChevronLeft, FaChevronRight, FaChevronDown } from 'react-icons/fa';
-
-const API_BASE_URL = 'http://localhost:5096';
+import { API_BASE_URL } from '../utils/apiConfig';
 
 const PhotoLightbox = ({ show, onHide, photos, initialIndex, movieTitle, movieId, isAdmin, onDeletePhoto }) => {
     const [currentIndex, setCurrentIndex] = useState(initialIndex || 0);

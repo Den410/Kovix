@@ -6,8 +6,7 @@ import { usersAPI, reviewsAPI, friendsAPI } from '../services/api';
 import { useFriends } from '../contexts/FriendsContext';
 import { formatLastSeen } from '../utils/dateUtils';
 import defaultPosterImg from '../assets/NotFoundPoster.webp';
-
-const API_BASE_URL = 'http://localhost:5096';
+import { API_BASE_URL } from '../utils/apiConfig';
 
 function UserPublicProfilePage() {
     const { id } = useParams();

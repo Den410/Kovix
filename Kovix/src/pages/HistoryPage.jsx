@@ -5,9 +5,8 @@ import { moviesAPI } from '../services/api';
 import MovieCard from '../components/MovieCard';
 import { FiGrid, FiList } from 'react-icons/fi';
 
-import defaultPosterImg from '../assets/NotFoundPoster.webp'; 
-
-const API_BASE_URL = 'http://localhost:5096';
+import defaultPosterImg from '../assets/NotFoundPoster.webp';
+import { API_BASE_URL } from '../utils/apiConfig';
 const PLACEHOLDER_IMG = defaultPosterImg;
 
 function getPoster(movie) {

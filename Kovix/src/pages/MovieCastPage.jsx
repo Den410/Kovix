@@ -6,8 +6,7 @@ import { FaArrowLeft, FaEdit, FaTrash } from 'react-icons/fa';
 import defaultAvatarImg from '../assets/NotFoundAvatar.png';
 import { useAuth } from '../contexts/AuthContext';
 import AdminActorModal from '../components/AdminActorModal';
-
-const API_BASE_URL = 'http://localhost:5096';
+import { API_BASE_URL } from '../utils/apiConfig';
 
 function MovieCastPage() {
     const { id } = useParams();

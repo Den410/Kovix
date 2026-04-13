@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { Form, Button, Card, Alert, Spinner } from 'react-bootstrap';
-import { useTheme } from '../contexts/ThemeContext'; 
-
-const API_BASE_URL = 'http://localhost:5096'; 
+import { useTheme } from '../contexts/ThemeContext';
+import { API_BASE_URL } from '../utils/apiConfig'; 
 
 const ImportMalCharacters = ({ movieId, onImportSuccess }) => {
     const { themeMode } = useTheme();

@@ -6,8 +6,7 @@ import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { HubConnectionState } from '@microsoft/signalr';
 import { useChatConnection } from '../hooks/useChatConnection';
 import '../style/App.css';
-
-const API_BASE_URL = 'http://localhost:5096';
+import { API_BASE_URL } from '../utils/apiConfig';
 
 const formatMessageDate = (dateString) => {
     if (!dateString) return '';

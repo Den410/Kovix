@@ -115,7 +115,12 @@ app.UseRouting();
 
 app.UseCors("AllowReactApp");
 
-app.UseStaticFiles();
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(
+        Path.Combine(builder.Environment.ContentRootPath, "wwwroot")),
+    RequestPath = ""
+});
 
 app.UseAuthentication();
 app.UseAuthorization();

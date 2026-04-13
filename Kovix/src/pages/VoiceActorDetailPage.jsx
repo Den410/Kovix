@@ -5,8 +5,7 @@ import { actorsAPI, moviesAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { FaEdit, FaTrash } from 'react-icons/fa';
 import defaultPosterImg from '../assets/NotFoundPoster.webp';
-
-const API_BASE_URL = 'http://localhost:5096';
+import { API_BASE_URL } from '../utils/apiConfig';
 
 function VoiceActorDetailPage() {
     const { id } = useParams();

@@ -3,8 +3,7 @@ import { Link } from 'react-router-dom';
 import defaultPosterImg from '../assets/NotFoundPoster.webp'; 
 import LazyImage from './LazyImage';
 import '../style/MovieCard.css';
-
-const API_BASE_URL = 'http://localhost:5096';
+import { API_BASE_URL } from '../utils/apiConfig';
 
 const NEW_MOVIE_DAYS = 45;
 

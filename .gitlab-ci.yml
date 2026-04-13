@@ -53,3 +53,43 @@ frontend_test:
   script:
     - cd frontend
     - npm test -- --watchAll=false
+
+# ── .NET: форматування коду ───────────────────────────────────────────────
+dotnet_format:
+  stage: test
+  image: mcr.microsoft.com/dotnet/sdk:8.0
+  script:
+    - cd Movie.API
+    - dotnet format --verify-no-changes
+  allow_failure: true # Не блокуємо CI через зайвий пробіл, поки просто дивимося звіти
+
+# ── React/Vite: ESLint ─────────────────────────────────────────
+js_lint:
+  stage: test
+  image: node:20-alpine
+  script:
+    - cd Kovix
+    - npm install
+    # Оскільки у вас проєкт на Vite, там зазвичай вже налаштований зручний скрипт lint
+    - npm run lint
+  allow_failure: true
+
+# ── Перевірка NuGet пакетів для .NET ──────────────────────────────────────────
+security_dotnet:
+  stage: test
+  image: mcr.microsoft.com/dotnet/sdk:8.0
+  script:
+    - cd Movie.API
+    - dotnet restore
+    - dotnet list package --vulnerable --include-transitive
+  allow_failure: true
+
+# ── Перевірка npm пакетів для React ───────────────────────────────────────────
+security_npm:
+  stage: test
+  image: node:20-alpine
+  script:
+    - cd Kovix
+    - npm install
+    - npm audit --audit-level=high
+  allow_failure: true

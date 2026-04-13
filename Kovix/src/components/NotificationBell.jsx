@@ -7,8 +7,7 @@ import { notificationsAPI, friendsAPI } from '../services/api';
 import { FiBell, FiTrash2, FiCheck, FiX } from 'react-icons/fi';
 import { Button } from 'react-bootstrap';
 import '../style/NotificationBell.css';
-
-const API_BASE_URL = 'http://localhost:5096';
+import { getWebSocketUrl } from '../utils/apiConfig';
 
 function NotificationBell() {
     const { user } = useAuth();
@@ -36,8 +35,9 @@ function NotificationBell() {
 
     useEffect(() => {
         if (!user) return;
+        const wsUrl = getWebSocketUrl();
         const newConnection = new HubConnectionBuilder()
-            .withUrl(`${API_BASE_URL}/notificationHub`, { accessTokenFactory: () => localStorage.getItem('token') })
+            .withUrl(`${wsUrl}/notificationHub`, { accessTokenFactory: () => localStorage.getItem('token') })
             .withAutomaticReconnect()
             .build();
         setConnection(newConnection);
@@ -45,9 +45,9 @@ function NotificationBell() {
 
     useEffect(() => {
         if (!user) return;
-
+        const wsUrl = getWebSocketUrl();
         const connection = new HubConnectionBuilder()
-            .withUrl(`${API_BASE_URL}/notificationHub`, {
+            .withUrl(`${wsUrl}/notificationHub`, {
                 accessTokenFactory: () => localStorage.getItem('token')
             })
             .withAutomaticReconnect()

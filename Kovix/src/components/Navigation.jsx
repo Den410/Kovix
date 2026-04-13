@@ -10,8 +10,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { FaNewspaper } from 'react-icons/fa';
 import '../style/App.css';
 import defaultAvatarImg from '../assets/NotFoundAvatar.png';
-
-const API_BASE_URL = 'http://localhost:5096';
+import { API_BASE_URL } from '../utils/apiConfig';
 const DEFAULT_AVATAR = defaultAvatarImg
 
 function Navigation() {

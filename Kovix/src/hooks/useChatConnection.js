@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { HubConnectionBuilder, HubConnectionState } from '@microsoft/signalr';
-
-const API_BASE_URL = 'http://localhost:5096';
+import { getWebSocketUrl } from '../utils/apiConfig';
 
 /**
  * useChatConnection - хук для підключення до SignalR хаба
@@ -16,8 +15,9 @@ export const useChatConnection = (onConnectedCallback) => {
     }, [onConnectedCallback]);
 
     useEffect(() => {
+        const wsUrl = getWebSocketUrl();
         const newConnection = new HubConnectionBuilder()
-            .withUrl(`${API_BASE_URL}/chatHub`, {
+            .withUrl(`${wsUrl}/chatHub`, {
                 accessTokenFactory: () => localStorage.getItem('token')
             })
             .withAutomaticReconnect()

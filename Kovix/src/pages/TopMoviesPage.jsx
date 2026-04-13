@@ -5,8 +5,7 @@ import MovieCard from '../components/MovieCard';
 import { useTheme } from '../contexts/ThemeContext';
 import { Link } from 'react-router-dom';
 import defaultPosterImg from '../assets/NotFoundPoster.webp';
-
-const API_BASE_URL = 'http://localhost:5096';
+import { API_BASE_URL } from '../utils/apiConfig';
 const PLACEHOLDER_IMG = defaultPosterImg;
 
 function TopMoviesPage() {

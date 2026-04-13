@@ -3,9 +3,8 @@ import { Container, Row, Col, Card, Badge, Spinner, Button, Form } from 'react-b
 import { Link } from 'react-router-dom';
 import { reviewsAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
-import defaultPosterImg from '../assets/NotFoundPoster.webp'; 
-
-const API_BASE_URL = 'http://localhost:5096';
+import defaultPosterImg from '../assets/NotFoundPoster.webp';
+import { API_BASE_URL } from '../utils/apiConfig';
 
 function UserReviewsPage() {
   const { user } = useAuth();

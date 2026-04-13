@@ -6,8 +6,7 @@ import { actorsAPI, contentFilterAPI } from '../services/api';
 import { FaSearch, FaUserFriends, FaEdit, FaTrash } from 'react-icons/fa';
 import defaultPosterImg from '../assets/NotFoundAvatar.png';
 import AdminActorModal from '../components/AdminActorModal';
-
-const API_BASE_URL = 'http://localhost:5096';
+import { API_BASE_URL } from '../utils/apiConfig';
 const ACTORS_PER_PAGE = 18;
 
 function ActorsPage() {

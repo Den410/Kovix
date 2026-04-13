@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { HubConnectionBuilder } from '@microsoft/signalr';
 import { useAuth } from './AuthContext';
+import { getWebSocketUrl } from '../utils/apiConfig';
 
 const PresenceContext = createContext(null);
 
@@ -12,8 +13,9 @@ export const PresenceProvider = ({ children }) => {
     useEffect(() => {
         if (!user || !token) return;
 
+        const wsUrl = getWebSocketUrl();
         const connection = new HubConnectionBuilder()
-            .withUrl("http://localhost:5096/chatHub", { 
+            .withUrl(`${wsUrl}/chatHub`, { 
                 accessTokenFactory: () => token
             })
             .withAutomaticReconnect()

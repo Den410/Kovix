@@ -26,5 +26,8 @@ EXPOSE 8080
 # Копіюємо готовий скомпільований результат з попереднього етапу
 COPY --from=publish /app/publish .
 
+# Копіюємо wwwroot папку з завантаженими файлами
+COPY wwwroot/ /app/wwwroot/
+
 # Вказуємо команду, яка запустить ваш API
 ENTRYPOINT ["dotnet", "Movie.API.dll"]

@@ -3,8 +3,7 @@ import { Container, Form, Button, Alert, Card, Spinner } from 'react-bootstrap';
 import { appealsAPI } from '../services/api';
 import { HubConnectionBuilder } from '@microsoft/signalr';
 import { useAuth } from '../contexts/AuthContext';
-
-const API_BASE_URL = 'http://localhost:5096';
+import { API_BASE_URL } from '../utils/apiConfig';
 
 function AppealPage() {
     const { refreshUser } = useAuth();
