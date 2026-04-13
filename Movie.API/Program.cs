@@ -94,7 +94,6 @@ builder.Services.AddTransient<IEmailService, EmailService>();
 builder.Services.AddControllers().AddJsonOptions(x =>
     x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
 
-builder.Services.AddSingleton<IUserIdProvider, CustomUserIdProvider>();
 
 builder.Services.AddSignalR();
 
@@ -131,7 +130,8 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var context = services.GetRequiredService<ApplicationDbContext>();
-
+        context.Database.Migrate();
+        DataSeeder.SeedAdmin(context);
         DataSeeder.SeedNews(context);
     }
     catch (Exception ex)

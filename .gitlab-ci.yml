@@ -1,0 +1,55 @@
+# Визначаємо етапи нашого конвеєра
+stages:
+  - build
+  - test
+
+# Налаштування кешу для пришвидшення роботи
+cache:
+  key: "$CI_COMMIT_REF_SLUG"
+  paths:
+    - .nuget/packages/
+    - frontend/node_modules/
+
+# --- БЕКЕНД (.NET) ---
+backend_build:
+  stage: build
+  image: mcr.microsoft.com/dotnet/sdk:8.0
+  tags: [student]
+  script:
+    - cd backend   # Переходимо в папку бекенду (переконайтеся, що вона називається саме 'backend')
+    - dotnet restore
+    - dotnet build --configuration Release --no-restore
+  artifacts:
+    paths: [backend/bin/, backend/obj/]
+    expire_in: 1 hour
+
+backend_test:
+  stage: test
+  image: mcr.microsoft.com/dotnet/sdk:8.0
+  tags: [student]
+  dependencies: [backend_build]
+  script:
+    - cd backend
+    - dotnet test --configuration Release --no-build
+
+# --- ФРОНТЕНД (React) ---
+frontend_build:
+  stage: build
+  image: node:20
+  tags: [student]
+  script:
+    - cd frontend   # Переходимо в папку React (переконайтеся, що вона називається 'frontend')
+    - npm install
+    - npm run build
+  artifacts:
+    paths: [frontend/dist/]  # Змініть 'dist' на 'build', якщо ви використовуєте Create React App замість Vite
+    expire_in: 1 hour
+
+frontend_test:
+  stage: test
+  image: node:20
+  tags: [student]
+  dependencies: [frontend_build]
+  script:
+    - cd frontend
+    - npm test -- --watchAll=false

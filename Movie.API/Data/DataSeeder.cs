@@ -28,5 +28,21 @@ namespace Movie.API.Data
             context.News.AddRange(fakeNews);
             context.SaveChanges();
         }
+
+        public static void SeedAdmin(ApplicationDbContext context)
+        {
+            if (!context.Users.Any(u => u.Email == "admin@gmail.com"))
+            {
+                context.Users.Add(new User
+                {
+                    Username = "admin",
+                    Email = "admin@gmail.com",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin"),
+                    Role = "Admin",
+                    CreatedAt = DateTime.UtcNow
+                });
+                context.SaveChanges();
+            }
+        }
     }
 }
