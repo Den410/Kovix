@@ -1,14 +1,12 @@
-# Визначаємо етапи нашого конвеєра
 stages:
   - build
   - test
 
-# Налаштування кешу для пришвидшення роботи
 cache:
   key: "$CI_COMMIT_REF_SLUG"
   paths:
     - .nuget/packages/
-    - frontend/node_modules/
+    - Kovix/node_modules/ # Виправлено шлях до node_modules
 
 # --- БЕКЕНД (.NET) ---
 backend_build:
@@ -16,11 +14,11 @@ backend_build:
   image: mcr.microsoft.com/dotnet/sdk:8.0
   tags: [student]
   script:
-    - cd backend   # Переходимо в папку бекенду (переконайтеся, що вона називається саме 'backend')
+    - cd Movie.API   # Виправлено на реальну папку
     - dotnet restore
     - dotnet build --configuration Release --no-restore
   artifacts:
-    paths: [backend/bin/, backend/obj/]
+    paths: [Movie.API/bin/, Movie.API/obj/]
     expire_in: 1 hour
 
 backend_test:
@@ -29,7 +27,7 @@ backend_test:
   tags: [student]
   dependencies: [backend_build]
   script:
-    - cd backend
+    - cd Movie.API   # Виправлено на реальну папку
     - dotnet test --configuration Release --no-build
 
 # --- ФРОНТЕНД (React) ---
@@ -38,11 +36,11 @@ frontend_build:
   image: node:20
   tags: [student]
   script:
-    - cd frontend   # Переходимо в папку React (переконайтеся, що вона називається 'frontend')
+    - cd Kovix   # Виправлено на реальну папку
     - npm install
     - npm run build
   artifacts:
-    paths: [frontend/dist/]  # Змініть 'dist' на 'build', якщо ви використовуєте Create React App замість Vite
+    paths: [Kovix/dist/]  
     expire_in: 1 hour
 
 frontend_test:
@@ -51,43 +49,46 @@ frontend_test:
   tags: [student]
   dependencies: [frontend_build]
   script:
-    - cd frontend
+    - cd Kovix   # Виправлено на реальну папку
     - npm test -- --watchAll=false
 
-# ── .NET: форматування коду ───────────────────────────────────────────────
+# ── .NET: форматування коду ──
 dotnet_format:
   stage: test
   image: mcr.microsoft.com/dotnet/sdk:8.0
+  tags: [student] # ДОДАНО ТЕГ
   script:
     - cd Movie.API
     - dotnet format --verify-no-changes
-  allow_failure: true # Не блокуємо CI через зайвий пробіл, поки просто дивимося звіти
+  allow_failure: true 
 
-# ── React/Vite: ESLint ─────────────────────────────────────────
+# ── React/Vite: ESLint ──
 js_lint:
   stage: test
   image: node:20-alpine
+  tags: [student] # ДОДАНО ТЕГ
   script:
     - cd Kovix
     - npm install
-    # Оскільки у вас проєкт на Vite, там зазвичай вже налаштований зручний скрипт lint
     - npm run lint
   allow_failure: true
 
-# ── Перевірка NuGet пакетів для .NET ──────────────────────────────────────────
+# ── Перевірка NuGet пакетів для .NET ──
 security_dotnet:
   stage: test
   image: mcr.microsoft.com/dotnet/sdk:8.0
+  tags: [student] # ДОДАНО ТЕГ
   script:
     - cd Movie.API
     - dotnet restore
     - dotnet list package --vulnerable --include-transitive
   allow_failure: true
 
-# ── Перевірка npm пакетів для React ───────────────────────────────────────────
+# ── Перевірка npm пакетів для React ──
 security_npm:
   stage: test
   image: node:20-alpine
+  tags: [student] # ДОДАНО ТЕГ
   script:
     - cd Kovix
     - npm install
