@@ -259,7 +259,7 @@ function AdminMovieModal({ show, onHide, movieToEdit, onSuccess }) {
       setSelectedActorId(createdActor.id);
       setShowQuickAddActor(false);
       setNewActorData({ name: '', bio: '', photoUrl: '' });
-    } catch (err) {
+    } catch {
       alert("Помилка при створенні актора в БД");
     }
   };

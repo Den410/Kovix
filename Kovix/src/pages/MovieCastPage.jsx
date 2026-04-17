@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Container, Row, Col, Card, Button, Spinner } from 'react-bootstrap';
 import { moviesAPI, actorsAPI } from '../services/api';
@@ -19,21 +19,21 @@ function MovieCastPage() {
     const [showEditModal, setShowEditModal] = useState(false);
     const [selectedActor, setSelectedActor] = useState(null);
 
-    useEffect(() => {
-        loadMovieData();
-    }, [id]);
-
-    const loadMovieData = () => {
+    const loadMovieData = useCallback(() => {
         moviesAPI.getById(id)
             .then(res => {
                 setMovie(res.data);
                 setLoading(false);
             })
-            .catch(err => {
-                console.error("Error loading cast:", err);
+            .catch(_err => {
+                console.error("Error loading cast:", _err);
                 setLoading(false);
             });
-    };
+    }, [id]);
+
+    useEffect(() => {
+        loadMovieData();
+    }, [loadMovieData]);
 
     const handleEditClick = (e, actor) => {
         e.preventDefault();
@@ -52,7 +52,7 @@ function MovieCastPage() {
             try {
                 await actorsAPI.delete(actorId);
                 loadMovieData(); 
-            } catch (err) {
+            } catch {
                 alert("Помилка видалення");
             }
         }

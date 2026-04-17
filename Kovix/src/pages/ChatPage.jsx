@@ -1,12 +1,12 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Container, Row, Col, Card, Form, Button, ListGroup, Modal, Badge } from 'react-bootstrap';
 import { useAuth } from '../contexts/AuthContext';
 import { chatAPI, friendsAPI, usersAPI } from '../services/api';
-import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { HubConnectionState } from '@microsoft/signalr';
 import { useChatConnection } from '../hooks/useChatConnection';
+import { getApiBaseUrl } from '../utils/apiConfig';
 import '../style/App.css';
-import { API_BASE_URL } from '../utils/apiConfig';
 
 const formatMessageDate = (dateString) => {
     if (!dateString) return '';
@@ -14,7 +14,7 @@ const formatMessageDate = (dateString) => {
     const now = new Date();
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const diffTime = now - date;
-    const oneWeek = 1000 * 60 * 60 * 24 * 7;
+    const oneWeek = 1000 * 60 * 60 * 60 * 24 * 7;
 
     if (date >= startOfToday) return date.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' });
     if (diffTime < oneWeek) return date.toLocaleDateString('uk-UA', { weekday: 'short' });
@@ -26,25 +26,26 @@ function ChatPage() {
     const [isBlocked, setIsBlocked] = useState(false);
     const chatContainerRef = useRef(null);
 
-    const checkIfAccountBlocked = async () => {
+    const checkIfAccountBlocked = useCallback(async () => {
+        if (!user) return;
         try {
             const res = await usersAPI.getPublicProfile(user.id);
             setIsBlocked(res.data.isBlocked);
         } catch (e) {
             console.error(e);
         }
-    };
+    }, [user]);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         checkIfAccountBlocked();
-    }, []);
+    }, [checkIfAccountBlocked]);
 
     const [messages, setMessages] = useState([]);
     const [messageInput, setMessageInput] = useState('');
     const [activeChat, setActiveChat] = useState(null);
     const [friends, setFriends] = useState([]);
     const navigate = useNavigate();
-    const location = useLocation();
 
     const [generalChat, setGeneralChat] = useState({
         lastMessage: '',
@@ -76,6 +77,7 @@ function ChatPage() {
         let currentActiveId = null;
         if (forcedChatId) {
             currentActiveId = parseInt(forcedChatId);
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setActiveChat(currentActiveId);
             chatAPI.markAsRead(currentActiveId).catch(console.error);
         } else {
@@ -106,7 +108,7 @@ function ChatPage() {
                 }
             })
             .catch(console.error);
-    }, []);
+    }, [forcedChatId]);
 
     useEffect(() => {
         if (targetMessageId && messages.length > 0) {
@@ -196,6 +198,7 @@ function ChatPage() {
     });
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setMessages([]);
         setEditingId(null);
         setMessageInput('');
@@ -292,7 +295,7 @@ function ChatPage() {
     const submitReport = async () => {
         if (!reportReason || !targetMessage) return;
         try {
-            await fetch(`${API_BASE_URL}/api/reports`, {
+            await fetch(`${getApiBaseUrl()}/api/reports`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
                 body: JSON.stringify({ reportedUserId: String(targetMessage.senderId), messageId: targetMessage.id, content: targetMessage.content, reason: reportReason })
@@ -431,7 +434,7 @@ function ChatPage() {
                                                     }}
                                                 >
                                                     {friend.avatarUrl ? (
-                                                        <img src={`${API_BASE_URL}${friend.avatarUrl}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                        <img src={`${getApiBaseUrl()}${friend.avatarUrl}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                                     ) : (friend.username[0].toUpperCase())}
                                                 </div>
                                             </div>

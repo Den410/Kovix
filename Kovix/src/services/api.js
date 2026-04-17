@@ -84,11 +84,8 @@ export const watchlistAPI = {
 };
 
 export const usersAPI = {
-  getPublicProfile: (id) =>
-    api.get(`/users/${id}/profile`),
-  toggleBlock: (id) => api.post(`/users/${id}/toggle-block`),
   getPublicProfile: (id) => api.get(`/users/${id}/profile`),
-
+  toggleBlock: (id) => api.post(`/users/${id}/toggle-block`),
   follow: (id) => api.post(`/users/${id}/follow`),
   unfollow: (id) => api.delete(`/users/${id}/unfollow`),
   getFollowers: (id) => api.get(`/users/${id}/followers`),

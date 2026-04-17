@@ -39,7 +39,7 @@ function AllMoviesPage() {
   const [sortBy, setSortBy] = useState('dateDesc');
   const [viewMode, setViewMode] = useState('grid'); 
   
-  const { themeMode } = useTheme();
+  useTheme();
 
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);

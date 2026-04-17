@@ -58,7 +58,7 @@ function ActorsPage() {
             try {
                 await actorsAPI.delete(id);
                 loadActors();
-            } catch (err) {
+            } catch {
                 alert("Помилка видалення");
             }
         }

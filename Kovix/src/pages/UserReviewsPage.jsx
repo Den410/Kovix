@@ -36,7 +36,7 @@ function UserReviewsPage() {
       try {
         await reviewsAPI.delete(reviewId);
         setReviews(prev => prev.filter(r => r.id !== reviewId));
-      } catch (error) {
+      } catch {
         alert('Помилка видалення');
       }
     }

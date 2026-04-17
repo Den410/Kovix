@@ -177,7 +177,7 @@ function UserPublicProfilePage() {
         try {
             await usersAPI.toggleBlock(id);
             await loadData();
-        } catch (e) {
+        } catch {
             alert("Помилка блокування");
         }
     };

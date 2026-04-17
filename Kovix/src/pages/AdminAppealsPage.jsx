@@ -36,9 +36,9 @@ function AdminAppealsPage() {
                 )
             );
             alert("Рішення прийнято!");
-        } catch (err) {
-            alert("Помилка при обробці апеляції");
-        }
+            } catch {
+                alert("Помилка обробки апеляції");
+            }
     };
 
     if (loading) return <Container className="text-center mt-5"><Spinner animation="border" variant="primary" /></Container>;

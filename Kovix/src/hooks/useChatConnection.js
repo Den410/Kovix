@@ -23,6 +23,7 @@ export const useChatConnection = (onConnectedCallback) => {
             .withAutomaticReconnect()
             .build();
 
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setConnection(newConnection);
     }, []);
 

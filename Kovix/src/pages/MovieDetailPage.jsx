@@ -221,7 +221,7 @@ function MovieDetailPage() {
       try {
         await moviesAPI.delete(movie.id);
         navigate('/');
-      } catch (error) { alert('Помилка видалення'); }
+      } catch { alert('Помилка видалення'); }
     }
   };
 

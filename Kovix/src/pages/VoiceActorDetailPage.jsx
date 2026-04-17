@@ -62,10 +62,12 @@ function VoiceActorDetailPage() {
                                 }
                             }
                         }
-                    } catch (e) {}
-                }
+                    } catch {
+                        // Silent catch
+                    }
                 
-                setVoiceRoles(allVoiceRoles);
+                    setVoiceRoles(allVoiceRoles);
+                }
             }
         } catch (error) {
             console.error(error);

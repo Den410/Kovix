@@ -22,7 +22,7 @@ const ImportMalCharacters = ({ movieId, onImportSuccess }) => {
             } else {
                 setMessage('❌ Помилка імпорту. Перевірте ID.');
             }
-        } catch (error) {
+        } catch {
             setMessage('❌ Помилка мережі.');
         } finally {
             setIsLoading(false);

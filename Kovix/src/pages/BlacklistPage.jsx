@@ -28,7 +28,7 @@ function BlacklistPage() {
         try {
             await contentFilterAPI.unblockActor(id);
             setBlockedActors(prev => prev.filter(a => a.actorId !== id));
-        } catch (err) {
+        } catch {
             alert("Не вдалося розблокувати");
         }
     };

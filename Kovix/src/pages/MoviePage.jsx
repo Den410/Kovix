@@ -7,7 +7,7 @@ const MoviePage = () => {
     
     const [refreshKey, setRefreshKey] = useState(0);
 
-    const handleImportSuccess = () => {
+    const _handleImportSuccess = () => {
         setRefreshKey(prevKey => prevKey + 1); 
     };
 

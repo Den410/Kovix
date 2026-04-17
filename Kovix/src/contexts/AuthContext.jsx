@@ -5,6 +5,7 @@ import CustomSpinner from '../components/CustomSpinner';
 
 const AuthContext = createContext();
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   return useContext(AuthContext);
 }
@@ -34,24 +35,10 @@ export function AuthProvider({ children }) {
     try {
       const res = await authAPI.getProfile();
       setUser(prev => ({ ...prev, ...res.data }));
-    } catch (err) {
-      console.error("Помилка оновлення профілю", err);
+    } catch (_err) {
+      console.error("Помилка оновлення профілю", _err);
     }
   };
-
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      const userData = parseUserFromToken(token);
-      if (userData && userData.exp * 1000 > Date.now()) {
-        setUser(userData);
-        refreshUser();
-      } else {
-        logout();
-      }
-    }
-    setLoading(false);
-  }, []);
 
   const login = (token) => {
     localStorage.setItem('token', token);
@@ -64,6 +51,22 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('token');
     setUser(null);
   };
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      const userData = parseUserFromToken(token);
+      if (userData && userData.exp * 1000 > Date.now()) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setUser(userData);
+        refreshUser();
+      } else {
+        logout();
+      }
+    }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setLoading(false);
+  }, []);
 
   const isAdmin = () => user?.role === 'Admin';
 

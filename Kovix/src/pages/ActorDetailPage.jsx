@@ -50,7 +50,7 @@ function ActorDetailPage() {
                 await contentFilterAPI.blockActor(id);
                 setIsBlocked(true);
             }
-        } catch (error) {
+        } catch {
             alert("Помилка при зміні статусу фільтра");
         }
     };

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Button, Card, Container, Badge, Alert, Nav } from 'react-bootstrap'; 
 import { useNavigate } from 'react-router-dom';
 import { reportsAPI } from '../services/api'; 
@@ -9,17 +9,17 @@ function AdminReportsPage() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  useEffect(() => {
-    loadReports();
-  }, []);
-
-  const loadReports = () => {
+  const loadReports = useCallback(() => {
     reportsAPI.getAll()
       .then(res => setAllReports(res.data))
-      .catch(err => {
+      .catch(() => {
         setError('Не вдалося завантажити скарги.');
       });
-  };
+  }, []);
+
+  useEffect(() => {
+    loadReports();
+  }, [loadReports]);
 
   const displayedReports = allReports.filter(r => 
     activeTab === 'pending' ? !r.isResolved : r.isResolved
@@ -37,7 +37,7 @@ function AdminReportsPage() {
       
       alert("Опрацьовано!");
       loadReports(); 
-    } catch (err) {
+    } catch {
       alert("Помилка при опрацюванні.");
     }
   };

@@ -3,6 +3,7 @@ import { THEMES as PRESETS } from '../constants/themePresets';
 
 const ThemeContext = createContext();
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useTheme = () => useContext(ThemeContext);
 
 export const ThemeProvider = ({ children }) => {

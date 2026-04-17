@@ -4,6 +4,7 @@ import { getWebSocketUrl } from '../utils/apiConfig';
 
 const SignalRContext = createContext();
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useSignalR = () => useContext(SignalRContext);
 
 export const SignalRProvider = ({ children }) => {
@@ -22,6 +23,7 @@ export const SignalRProvider = ({ children }) => {
             .then(() => console.log("✅ SignalR connected"))
             .catch(console.error);
 
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setConnection(conn);
 
         return () => conn.stop();
