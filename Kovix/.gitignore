@@ -12,6 +12,12 @@ dist
 dist-ssr
 *.local
 
+# Test reports and artifacts
+playwright-report/
+test-results/
+.nyc_output/
+coverage/
+
 # Environment variables
 .env.local
 .env.development.local
