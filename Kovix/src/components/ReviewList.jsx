@@ -3,8 +3,7 @@ import { Card, Badge, Button, Form } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { reviewsAPI } from '../services/api';
-
-const API_BASE_URL = 'http://localhost:5096';
+import { API_BASE_URL } from '../utils/apiConfig';
 
 function ReviewList({ reviews, onReviewUpdated }) {
   const { user } = useAuth();

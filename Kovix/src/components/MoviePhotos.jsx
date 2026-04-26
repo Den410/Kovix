@@ -4,14 +4,14 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { moviePhotosAPI } from '../services/api';
 import { FaPlus, FaTrash, FaCloudUploadAlt, FaTimes, FaShareAlt, FaChevronLeft, FaChevronRight, FaChevronDown } from 'react-icons/fa';
-
-const API_BASE_URL = 'http://localhost:5096';
+import { API_BASE_URL } from '../utils/apiConfig';
 
 const PhotoLightbox = ({ show, onHide, photos, initialIndex, movieTitle, movieId, isAdmin, onDeletePhoto }) => {
     const [currentIndex, setCurrentIndex] = useState(initialIndex || 0);
 
     useEffect(() => {
         if (show && initialIndex !== null && initialIndex !== undefined) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setCurrentIndex(initialIndex);
         }
     }, [show, initialIndex]);
@@ -21,6 +21,7 @@ const PhotoLightbox = ({ show, onHide, photos, initialIndex, movieTitle, movieId
             if (photos.length === 0 && show) {
                 onHide(); 
             } else {
+                // eslint-disable-next-line react-hooks/set-state-in-effect
                 setCurrentIndex(Math.max(0, photos.length - 1)); 
             }
         }
@@ -35,11 +36,6 @@ const PhotoLightbox = ({ show, onHide, photos, initialIndex, movieTitle, movieId
         return `${API_BASE_URL}${url}`;
     };
 
-    if (!photos || photos.length === 0 || currentIndex === null || currentIndex === undefined) return null;
-
-    const currentPhoto = photos[currentIndex];
-    if (!currentPhoto) return null;
-
     useEffect(() => {
         const handleKeyDown = (e) => {
             if (!show) return;
@@ -49,7 +45,12 @@ const PhotoLightbox = ({ show, onHide, photos, initialIndex, movieTitle, movieId
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [show]);
+    }, [show, goToPrev, goToNext, onHide]);
+
+    if (!photos || photos.length === 0 || currentIndex === null || currentIndex === undefined) return null;
+
+    const currentPhoto = photos[currentIndex];
+    if (!currentPhoto) return null;
 
     const handleShare = async () => {
         const imageUrl = getImageUrl(currentPhoto.imageUrl);
@@ -61,14 +62,14 @@ const PhotoLightbox = ({ show, onHide, photos, initialIndex, movieTitle, movieId
                     text: `Дивіться кадр з ${movieTitle} на Kovix!`,
                     url: imageUrl,
                 });
-            } catch (err) {
-                console.log('Помилка або скасування поширення:', err);
+            } catch {
+                console.log('Помилка або скасування поширення');
             }
         } else {
             try {
                 await navigator.clipboard.writeText(imageUrl);
                 alert('Посилання на світлину скопійовано в буфер обміну!');
-            } catch (err) {
+            } catch {
                 alert('Не вдалося скопіювати посилання.');
             }
         }

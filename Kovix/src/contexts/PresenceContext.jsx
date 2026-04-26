@@ -1,6 +1,7 @@
-import { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, useMemo } from 'react';
 import { HubConnectionBuilder } from '@microsoft/signalr';
 import { useAuth } from './AuthContext';
+import { getWebSocketUrl } from '../utils/apiConfig';
 
 const PresenceContext = createContext(null);
 
@@ -12,8 +13,9 @@ export const PresenceProvider = ({ children }) => {
     useEffect(() => {
         if (!user || !token) return;
 
+        const wsUrl = getWebSocketUrl();
         const connection = new HubConnectionBuilder()
-            .withUrl("http://localhost:5096/chatHub", { 
+            .withUrl(`${wsUrl}/chatHub`, { 
                 accessTokenFactory: () => token
             })
             .withAutomaticReconnect()
@@ -24,6 +26,7 @@ export const PresenceProvider = ({ children }) => {
         connection.start()
             .then(() => {
                 console.log('🟢 Presence connected');
+                // eslint-disable-next-line react-hooks/set-state-in-effect
                 setConnected(true);
             })
             .catch(err => {
@@ -37,17 +40,25 @@ export const PresenceProvider = ({ children }) => {
                     .catch(err => console.error("Error stopping connection:", err))
                     .finally(() => {
                         connectionRef.current = null;
+                        // eslint-disable-next-line react-hooks/set-state-in-effect
                         setConnected(false);
                     });
             }
         };
     }, [user, token]);
 
+    const contextValue = useMemo(() => ({
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        connection: connected ? connectionRef.current : null,
+        connected
+    }), [connected]);
+
     return (
-        <PresenceContext.Provider value={{ connection: connectionRef.current, connected }}>
+        <PresenceContext.Provider value={contextValue}>
             {children}
         </PresenceContext.Provider>
     );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const usePresence = () => useContext(PresenceContext);

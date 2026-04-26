@@ -18,11 +18,13 @@ const NewsBanner = () => {
     };
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         fetchNews();
         window.addEventListener('newsChanged', fetchNews);
         
         const updateTheme = () => {
             const dataTheme = document.documentElement.getAttribute('data-theme') || 'light';
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setTheme(dataTheme);
         };
         

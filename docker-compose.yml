@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: mssql_kovix
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=KovixStrongPass123!
+    ports:
+      - "1433:1433"
+    volumes:                     
+      - mssql_data:/var/opt/mssql      
+
+  backend:
+    build:
+      context: ./Movie.API
+    container_name: backend
+    ports:
+      - "8080:8080"
+    environment:
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Server=db,1433;Database=KovixDb;User Id=sa;Password=KovixStrongPass123!;TrustServerCertificate=True;
+    volumes:
+      - "C:/Навчання/Курсова (Моделювання)/Kovix/Movie.API/wwwroot/uploads:/app/wwwroot/uploads"
+    depends_on:
+      - db
+
+  frontend:
+    build:
+      context: ./Kovix
+    container_name: frontend
+    ports:
+      - "3000:80"
+    environment:
+      - VITE_API_BASE_URL=http://backend:8080
+    depends_on:
+      - backend
+
+volumes:                               
+  mssql_data:                          

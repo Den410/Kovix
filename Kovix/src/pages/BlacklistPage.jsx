@@ -3,6 +3,7 @@ import { Container, Row, Col, Card, Button, Spinner, Alert } from 'react-bootstr
 import { Link } from 'react-router-dom';
 import { contentFilterAPI } from '../services/api';
 import { FaUserSlash, FaTrashAlt } from 'react-icons/fa';
+import { API_BASE_URL } from '../utils/apiConfig';
 
 function BlacklistPage() {
     const [blockedActors, setBlockedActors] = useState([]);
@@ -27,7 +28,7 @@ function BlacklistPage() {
         try {
             await contentFilterAPI.unblockActor(id);
             setBlockedActors(prev => prev.filter(a => a.actorId !== id));
-        } catch (err) {
+        } catch {
             alert("Не вдалося розблокувати");
         }
     };
@@ -57,7 +58,7 @@ function BlacklistPage() {
                             <Card className="bg-card border-0 shadow-sm h-100 overflow-hidden">
                                 <Card.Body className="d-flex align-items-center gap-3 p-3">
                                     <img 
-                                        src={item.photoUrl ? `http://localhost:5096${item.photoUrl}` : '/NotFoundAvatar.png'} 
+                                        src={item.photoUrl ? `${API_BASE_URL}${item.photoUrl}` : '/NotFoundAvatar.png'} 
                                         alt={item.name}
                                         style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '50%' }}
                                     />

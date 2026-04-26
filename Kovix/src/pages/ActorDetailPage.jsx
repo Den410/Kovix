@@ -6,9 +6,8 @@ import { useAuth } from '../contexts/AuthContext';
 import defaultPosterImg from '../assets/NotFoundPoster.webp';
 import { Link } from 'react-router-dom';
 import { FaEdit, FaTrash } from 'react-icons/fa'; 
-import AdminActorModal from '../components/AdminActorModal'; 
-
-const API_BASE_URL = 'http://localhost:5096';
+import AdminActorModal from '../components/AdminActorModal';
+import { API_BASE_URL } from '../utils/apiConfig';
 
 function ActorDetailPage() {
     const { id } = useParams();
@@ -51,7 +50,7 @@ function ActorDetailPage() {
                 await contentFilterAPI.blockActor(id);
                 setIsBlocked(true);
             }
-        } catch (error) {
+        } catch {
             alert("Помилка при зміні статусу фільтра");
         }
     };

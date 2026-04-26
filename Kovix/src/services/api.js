@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:5096/api';
+const API_BASE_URL = '/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -84,11 +84,8 @@ export const watchlistAPI = {
 };
 
 export const usersAPI = {
-  getPublicProfile: (id) =>
-    api.get(`/users/${id}/profile`),
-  toggleBlock: (id) => api.post(`/users/${id}/toggle-block`),
   getPublicProfile: (id) => api.get(`/users/${id}/profile`),
-
+  toggleBlock: (id) => api.post(`/users/${id}/toggle-block`),
   follow: (id) => api.post(`/users/${id}/follow`),
   unfollow: (id) => api.delete(`/users/${id}/unfollow`),
   getFollowers: (id) => api.get(`/users/${id}/followers`),

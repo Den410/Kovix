@@ -5,6 +5,7 @@ import { useChatConnection } from '../hooks/useChatConnection';
 
 const FriendsContext = createContext();
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useFriends() {
     return useContext(FriendsContext);
 }
@@ -17,7 +18,7 @@ export function FriendsProvider({ children }) {
     const [incomingRequests, setIncomingRequests] = useState([]);
     const [requestCount, setRequestCount] = useState(0);
 
-    const loadFriends = useCallback(async () => {
+   const loadFriends = useCallback(async () => {
         if (!user) {
             setFriends([]);
             setIncomingRequests([]);
@@ -27,7 +28,9 @@ export function FriendsProvider({ children }) {
 
         try {
             const res = await friendsAPI.getMyFriends();
-            setFriends(res.data.map(f => ({
+            const dataArray = Array.isArray(res.data) ? res.data : [];
+
+            setFriends(dataArray.map(f => ({
                 id: f.userId,
                 username: f.username,
                 avatarUrl: f.avatarUrl,
@@ -36,9 +39,10 @@ export function FriendsProvider({ children }) {
                 status: f.status 
             })));
 
-            const incoming = res.data.filter(f => f.status === 'PendingIncoming');
+            const incoming = dataArray.filter(f => f.status === 'PendingIncoming');
             setIncomingRequests(incoming);
             setRequestCount(incoming.length);
+            
         } catch (error) {
             console.error("Failed to load friends", error);
         }
@@ -67,6 +71,7 @@ export function FriendsProvider({ children }) {
     }, [connection, updateFriendStatus]);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         loadFriends();
     }, [loadFriends]);
 

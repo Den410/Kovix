@@ -9,6 +9,8 @@ import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import '../style/HomePage.css';
 import closeIcon from '../assets/closeIcon.png';
+import { getApiBaseUrl } from '../utils/apiConfig';
+import defaultPosterImg from '../assets/NotFoundPoster.webp';
 
 const Slider = SlickSlider.default ? SlickSlider.default : SlickSlider;
 
@@ -189,6 +191,7 @@ function HomePage() {
           <Slider {...trailerSliderSettings}>
             {trendingMovies.map((movie) => {
               const embedUrl = getYouTubeEmbedUrl(movie.trailerUrl);
+              const API_BASE_URL = getApiBaseUrl();
               const thumbnailUrl = getYouTubeThumbnail(movie.trailerUrl) || (
                 movie.posterUrl?.startsWith('http') ? movie.posterUrl : `${API_BASE_URL}${movie.posterUrl}`
               );

@@ -161,6 +161,7 @@ C:\Навчання\Курсова (Моделювання)\Kovix\Movie.API\bin\
 C:\Навчання\Курсова (Моделювання)\Kovix\Movie.API\bin\Debug\net8.0\Azure.Core.dll
 C:\Навчання\Курсова (Моделювання)\Kovix\Movie.API\bin\Debug\net8.0\Azure.Identity.dll
 C:\Навчання\Курсова (Моделювання)\Kovix\Movie.API\bin\Debug\net8.0\BCrypt.Net-Next.dll
+C:\Навчання\Курсова (Моделювання)\Kovix\Movie.API\bin\Debug\net8.0\Bogus.dll
 C:\Навчання\Курсова (Моделювання)\Kovix\Movie.API\bin\Debug\net8.0\Google.Apis.dll
 C:\Навчання\Курсова (Моделювання)\Kovix\Movie.API\bin\Debug\net8.0\Google.Apis.Auth.dll
 C:\Навчання\Курсова (Моделювання)\Kovix\Movie.API\bin\Debug\net8.0\Google.Apis.Core.dll
@@ -304,11 +305,10 @@ C:\Навчання\Курсова (Моделювання)\Kovix\Movie.API\obj\
 C:\Навчання\Курсова (Моделювання)\Kovix\Movie.API\obj\Debug\net8.0\staticwebassets.build.json.cache
 C:\Навчання\Курсова (Моделювання)\Kovix\Movie.API\obj\Debug\net8.0\staticwebassets.development.json
 C:\Навчання\Курсова (Моделювання)\Kovix\Movie.API\obj\Debug\net8.0\staticwebassets.build.endpoints.json
-C:\Навчання\Курсова (Моделювання)\Kovix\Movie.API\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
 C:\Навчання\Курсова (Моделювання)\Kovix\Movie.API\obj\Debug\net8.0\Movie.API.csproj.Up2Date
 C:\Навчання\Курсова (Моделювання)\Kovix\Movie.API\obj\Debug\net8.0\Movie.API.dll
 C:\Навчання\Курсова (Моделювання)\Kovix\Movie.API\obj\Debug\net8.0\refint\Movie.API.dll
 C:\Навчання\Курсова (Моделювання)\Kovix\Movie.API\obj\Debug\net8.0\Movie.API.pdb
 C:\Навчання\Курсова (Моделювання)\Kovix\Movie.API\obj\Debug\net8.0\Movie.API.genruntimeconfig.cache
 C:\Навчання\Курсова (Моделювання)\Kovix\Movie.API\obj\Debug\net8.0\ref\Movie.API.dll
-C:\Навчання\Курсова (Моделювання)\Kovix\Movie.API\bin\Debug\net8.0\Bogus.dll
+C:\Навчання\Курсова (Моделювання)\Kovix\Movie.API\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt

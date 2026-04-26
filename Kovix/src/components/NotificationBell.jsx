@@ -1,53 +1,43 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { HubConnectionBuilder, HubConnectionState } from '@microsoft/signalr';
 import { useAuth } from '../contexts/AuthContext';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useFriends } from '../contexts/FriendsContext';
 import { notificationsAPI, friendsAPI } from '../services/api';
 import { FiBell, FiTrash2, FiCheck, FiX } from 'react-icons/fi';
 import { Button } from 'react-bootstrap';
 import '../style/NotificationBell.css';
-
-const API_BASE_URL = 'http://localhost:5096';
+import { getWebSocketUrl } from '../utils/apiConfig';
 
 function NotificationBell() {
     const { user } = useAuth();
     const { incomingRequests, requestCount, refreshRequests } = useFriends();
 
     const [simpleNotifications, setSimpleNotifications] = useState([]);
-    const [connection, setConnection] = useState(null);
     const [isOpen, setIsOpen] = useState(false);
 
     const navigate = useNavigate();
 
-    useEffect(() => {
-        if (user) {
-            refreshRequests();
-            loadNotifications();
-        }
-    }, [user, requestCount]);
-
-    const loadNotifications = async () => {
+    const loadNotifications = useCallback(async () => {
         try {
             const res = await notificationsAPI.getAll();
             setSimpleNotifications(res.data);
         } catch (e) { console.error(e); }
-    };
+    }, []);
+
+    useEffect(() => {
+        if (user) {
+            refreshRequests();
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            loadNotifications();
+        }
+    }, [user, requestCount, loadNotifications, refreshRequests]);
 
     useEffect(() => {
         if (!user) return;
-        const newConnection = new HubConnectionBuilder()
-            .withUrl(`${API_BASE_URL}/notificationHub`, { accessTokenFactory: () => localStorage.getItem('token') })
-            .withAutomaticReconnect()
-            .build();
-        setConnection(newConnection);
-    }, [user]);
-
-    useEffect(() => {
-        if (!user) return;
-
+        const wsUrl = getWebSocketUrl();
         const connection = new HubConnectionBuilder()
-            .withUrl(`${API_BASE_URL}/notificationHub`, {
+            .withUrl(`${wsUrl}/notificationHub`, {
                 accessTokenFactory: () => localStorage.getItem('token')
             })
             .withAutomaticReconnect()

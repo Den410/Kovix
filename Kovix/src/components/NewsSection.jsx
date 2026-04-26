@@ -32,7 +32,7 @@ const NewsSection = () => {
             await newsAPI.delete(id);
             loadNews();
             window.dispatchEvent(new Event('newsChanged'));
-        } catch (e) { alert("Помилка при видаленні"); }
+        } catch { alert("Помилка при видаленні"); }
     };
 
     const handleShowCreate = () => {
@@ -64,7 +64,7 @@ const NewsSection = () => {
             setShowModal(false);
             loadNews();
             window.dispatchEvent(new Event('newsChanged'));
-        } catch (e) {
+        } catch {
             alert("Помилка при збереженні новини");
         } finally {
             setIsSaving(false);

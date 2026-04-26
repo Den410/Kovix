@@ -11,81 +11,53 @@ namespace Movie.API.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "IsResolved",
-                table: "Reports");
+            migrationBuilder.CreateTable(
+                name: "Reports",
+                columns: table => new
+                {
+                    Id = table.Column<int>(nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ReporterId = table.Column<int>(nullable: false),
+                    TargetUserId = table.Column<int>(nullable: true),
+                    TargetReviewId = table.Column<int>(nullable: true),
+                    Reason = table.Column<string>(nullable: true),
+                    CreatedAt = table.Column<DateTime>(nullable: false),
+                    AdminComment = table.Column<string>(nullable: true),
+                    Resolution = table.Column<int>(nullable: false, defaultValue: 0),
+                    ResolvedAt = table.Column<DateTime>(nullable: true),
+                    ResolvedByAdminId = table.Column<int>(nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Reports", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Reports_Users_ReporterId",
+                        column: x => x.ReporterId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Reports_Users_ResolvedByAdminId",
+                        column: x => x.ResolvedByAdminId,
+                        principalTable: "Users",
+                        principalColumn: "Id");
+                });
 
-            migrationBuilder.AddColumn<string>(
-                name: "AdminComment",
+            migrationBuilder.CreateIndex(
+                name: "IX_Reports_ReporterId",
                 table: "Reports",
-                type: "nvarchar(max)",
-                nullable: true);
-
-            migrationBuilder.AddColumn<int>(
-                name: "Resolution",
-                table: "Reports",
-                type: "int",
-                nullable: false,
-                defaultValue: 0);
-
-            migrationBuilder.AddColumn<DateTime>(
-                name: "ResolvedAt",
-                table: "Reports",
-                type: "datetime2",
-                nullable: true);
-
-            migrationBuilder.AddColumn<int>(
-                name: "ResolvedByAdminId",
-                table: "Reports",
-                type: "int",
-                nullable: true);
+                column: "ReporterId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Reports_ResolvedByAdminId",
                 table: "Reports",
                 column: "ResolvedByAdminId");
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_Reports_Users_ResolvedByAdminId",
-                table: "Reports",
-                column: "ResolvedByAdminId",
-                principalTable: "Users",
-                principalColumn: "Id");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropForeignKey(
-                name: "FK_Reports_Users_ResolvedByAdminId",
-                table: "Reports");
-
-            migrationBuilder.DropIndex(
-                name: "IX_Reports_ResolvedByAdminId",
-                table: "Reports");
-
-            migrationBuilder.DropColumn(
-                name: "AdminComment",
-                table: "Reports");
-
-            migrationBuilder.DropColumn(
-                name: "Resolution",
-                table: "Reports");
-
-            migrationBuilder.DropColumn(
-                name: "ResolvedAt",
-                table: "Reports");
-
-            migrationBuilder.DropColumn(
-                name: "ResolvedByAdminId",
-                table: "Reports");
-
-            migrationBuilder.AddColumn<bool>(
-                name: "IsResolved",
-                table: "Reports",
-                type: "bit",
-                nullable: false,
-                defaultValue: false);
+            migrationBuilder.DropTable(name: "Reports");
         }
     }
 }

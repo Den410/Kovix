@@ -327,54 +327,15 @@ namespace Movie.API.Data
                 }
             );
 
-            modelBuilder.Entity<Review>().HasData(
-                new Review
+            modelBuilder.Entity<User>().HasData(
+                new User
                 {
                     Id = 1,
-                    UserId = 1,
-                    MovieId = 1,
-                    Rating = 10,
-                    Comment = "Masterpiece! Nolan is a genius.",
-                    CreatedAt = new DateTime(2023, 6, 1, 14, 30, 0, DateTimeKind.Utc)
-                },
-                new Review
-                {
-                    Id = 2,
-                    UserId = 2,
-                    MovieId = 1,
-                    Rating = 8,
-                    Comment = "Great visuals, but a bit confusing.",
-                    CreatedAt = new DateTime(2023, 6, 2, 10, 0, 0, DateTimeKind.Utc)
-                },
-                new Review
-                {
-                    Id = 3,
-                    UserId = 1,
-                    MovieId = 2,
-                    Rating = 10,
-                    Comment = "The best movie ever made.",
-                    CreatedAt = new DateTime(2023, 6, 5, 9, 15, 0, DateTimeKind.Utc)
-                },
-                new Review
-                {
-                    Id = 4,
-                    UserId = 2,
-                    MovieId = 3,
-                    Rating = 8,
-                    Comment = "Amazing sound design.",
-                    CreatedAt = new DateTime(2024, 3, 5, 18, 20, 0, DateTimeKind.Utc)
-                }
-            );
-
-            modelBuilder.Entity<Watchlist>().HasData(
-                new Watchlist
-                {
-                    Id = 1,
-                    UserId = 1,
-                    MovieId = 3,
-                    IsFavorite = true,
-                    Status = WatchStatus.None,
-                    AddedAt = new DateTime(2024, 3, 1, 10, 0, 0, DateTimeKind.Utc)
+                    Username = "admin",
+                    Email = "admin@gmail.com",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin"),
+                    Role = "Admin",
+                    CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
                 }
             );
         }

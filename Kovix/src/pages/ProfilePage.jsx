@@ -10,8 +10,7 @@ import MovieStats from '../components/MovieStats';
 import { formatLastSeen } from '../utils/dateUtils';
 import { useTheme } from '../contexts/ThemeContext';
 import defaultAvatarImg from '../assets/NotFoundAvatar.png';
-
-const API_BASE_URL = 'http://localhost:5096';
+import { API_BASE_URL } from '../utils/apiConfig';
 const DEFAULT_AVATAR = defaultAvatarImg
 
 function ProfilePage() {

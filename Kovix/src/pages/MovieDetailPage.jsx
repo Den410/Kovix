@@ -10,9 +10,9 @@ import AdminEpisodeModal from '../components/AdminEpisodeModal';
 import CharactersList from '../components/CharactersList';
 import MoviePhotos from '../components/MoviePhotos';
 import defaultPosterImg from '../assets/NotFoundPoster.webp';
+import defaultAvatarImg from '../assets/NotFoundAvatar.png';
 import '../style/App.css';
-
-const API_BASE_URL = 'http://localhost:5096';
+import { API_BASE_URL } from '../utils/apiConfig';
 const LIKE_ID = 6;
 const DISLIKE_ID = 7;
 
@@ -111,7 +111,7 @@ function MovieDetailPage() {
     if (movie && !movie.castImported && (movie.tmdbId || movie.malId)) {
       const autoImportCast = async () => {
         try {
-          const response = await fetch(`http://localhost:5096/api/movies/${movie.id}/auto-import-cast`, {
+          const response = await fetch(`${API_BASE_URL}/api/movies/${movie.id}/auto-import-cast`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' }
           });
@@ -221,7 +221,7 @@ function MovieDetailPage() {
       try {
         await moviesAPI.delete(movie.id);
         navigate('/');
-      } catch (error) { alert('Помилка видалення'); }
+      } catch { alert('Помилка видалення'); }
     }
   };
 

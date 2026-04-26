@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Container, Row, Col, Card, Button, Spinner } from 'react-bootstrap';
 import { moviesAPI, actorsAPI } from '../services/api';
@@ -6,8 +6,7 @@ import { FaArrowLeft, FaEdit, FaTrash } from 'react-icons/fa';
 import defaultAvatarImg from '../assets/NotFoundAvatar.png';
 import { useAuth } from '../contexts/AuthContext';
 import AdminActorModal from '../components/AdminActorModal';
-
-const API_BASE_URL = 'http://localhost:5096';
+import { API_BASE_URL } from '../utils/apiConfig';
 
 function MovieCastPage() {
     const { id } = useParams();
@@ -20,21 +19,21 @@ function MovieCastPage() {
     const [showEditModal, setShowEditModal] = useState(false);
     const [selectedActor, setSelectedActor] = useState(null);
 
-    useEffect(() => {
-        loadMovieData();
-    }, [id]);
-
-    const loadMovieData = () => {
+    const loadMovieData = useCallback(() => {
         moviesAPI.getById(id)
             .then(res => {
                 setMovie(res.data);
                 setLoading(false);
             })
-            .catch(err => {
-                console.error("Error loading cast:", err);
+            .catch(_err => {
+                console.error("Error loading cast:", _err);
                 setLoading(false);
             });
-    };
+    }, [id]);
+
+    useEffect(() => {
+        loadMovieData();
+    }, [loadMovieData]);
 
     const handleEditClick = (e, actor) => {
         e.preventDefault();
@@ -53,7 +52,7 @@ function MovieCastPage() {
             try {
                 await actorsAPI.delete(actorId);
                 loadMovieData(); 
-            } catch (err) {
+            } catch {
                 alert("Помилка видалення");
             }
         }

@@ -6,8 +6,7 @@ import MovieCard from '../components/MovieCard';
 import LazyImage from '../components/LazyImage';
 import defaultPosterImg from '../assets/NotFoundPoster.webp';
 import { useTheme } from '../contexts/ThemeContext';
-
-const API_BASE_URL = 'http://localhost:5096'; 
+import { API_BASE_URL } from '../utils/apiConfig'; 
 const PLACEHOLDER_IMG = defaultPosterImg;
 
 const SORT_OPTIONS = [
@@ -40,7 +39,7 @@ function AllMoviesPage() {
   const [sortBy, setSortBy] = useState('dateDesc');
   const [viewMode, setViewMode] = useState('grid'); 
   
-  const { themeMode } = useTheme();
+  useTheme();
 
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);

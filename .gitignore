@@ -37,8 +37,18 @@ coverage/
 *.tmp
 *.lock
 
+# Test reports
+playwright-report/
+test-results/
+.nyc_output/
 
 # Ignore bin and obj folders
 bin/
 obj/
 .env.*
+
+[Oo]bj/
+[Bb]in/
+
+Movie.API/obj/
+Movie.API/bin/

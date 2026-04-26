@@ -15,7 +15,7 @@ const NewsDetailsPage = () => {
             try {
                 const res = await newsAPI.getById(id);
                 setItem(res.data);
-            } catch (e) { navigate('/'); }
+            } catch { navigate('/'); }
             finally { setLoading(false); }
         };
         load();

@@ -5,8 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { charactersAPI, actorsAPI } from '../services/api';
 import { FaEdit, FaTrash, FaPlus, FaSearch, FaChevronDown } from 'react-icons/fa';
 import defaultPosterImg from '../assets/NotFoundPoster.webp';
-
-const API_BASE_URL = 'http://localhost:5096';
+import { API_BASE_URL } from '../utils/apiConfig';
 
 const CharactersList = ({ movieId, refreshKey = 0 }) => {
     const { isAdmin } = useAuth();
