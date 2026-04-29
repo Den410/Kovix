@@ -1,0 +1,16 @@
+FROM mcr.microsoft.com/dotnet/sdk:8.0
+
+WORKDIR /app/src
+
+RUN dotnet tool install -g dotnet-watch
+
+ENV PATH="${PATH}:/root/.dotnet/tools"
+
+COPY Movie.API.csproj ./
+RUN dotnet restore
+
+COPY . .
+
+EXPOSE 8080
+
+CMD ["dotnet", "watch", "run", "--urls", "http://+:8080"]

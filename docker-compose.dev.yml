@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: mssql_kovix_dev
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=KovixStrongPass123!
+    ports:
+      - "1433:1433"
+    volumes:                     
+      - mssql_data_dev:/var/opt/mssql
+      - C:\backups:/var/opt/mssql/backups      
+
+  backend:
+    build:
+      context: ./Movie.API
+      dockerfile: Dockerfile.dev
+    container_name: backend_dev
+    ports:
+      - "8080:8080"
+    environment:
+      - ASPNETCORE_URLS=http://+:8080
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=db,1433;Database=KovixDb;User Id=sa;Password=KovixStrongPass123!;TrustServerCertificate=True;
+    volumes:
+      - ./Movie.API/:/app/src/
+      - ./Movie.API/wwwroot/uploads:/app/src/wwwroot/uploads
+    depends_on:
+      - db
+
+  frontend:
+    build:
+      context: ./Kovix
+      dockerfile: Dockerfile.dev
+    container_name: frontend_dev
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_BASE_URL=http://backend:8080
+    volumes:
+      - ./Kovix/src:/app/src
+      - ./Kovix/public:/app/public
+      - ./Kovix/index.html:/app/index.html
+      - ./Kovix/vite.config.js:/app/vite.config.js
+      - ./Kovix/node_modules:/app/node_modules
+    depends_on:
+      - backend
+
+volumes:                               
+  mssql_data_dev:
