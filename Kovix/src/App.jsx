@@ -36,6 +36,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import BlacklistPage from './pages/BlacklistPage';
 import AppealPage from './pages/AppealPage';
 import AdminAppealsPage from './pages/AdminAppealsPage';
+import AdminCriticApplicationsPage from './pages/AdminCriticApplicationsPage';
 import MoviePage from './pages/MoviePage';
 import CharacterDetailPage from './pages/CharacterDetailPage';
 import VoiceActorDetailPage from './pages/VoiceActorDetailPage';
@@ -115,6 +116,11 @@ function App() {
                   <Route path="/admin/appeals" element={
                     <ProtectedRoute>
                       <AdminAppealsPage />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/admin/critic-applications" element={
+                    <ProtectedRoute>
+                      <AdminCriticApplicationsPage />
                     </ProtectedRoute>
                   } />
                   <Route path="/appeal" element={

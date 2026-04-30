@@ -37,6 +37,8 @@ namespace Movie.API.Data
         public DbSet<VoiceActingRole> VoiceActingRoles { get; set; }
         public DbSet<MoviePhoto> MoviePhotos { get; set; }
         public DbSet<NewsItem> News { get; set; }
+        public DbSet<CriticReview> CriticReviews { get; set; }
+        public DbSet<ReviewerApplication> ReviewerApplications { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -265,6 +267,24 @@ namespace Movie.API.Data
                 .HasOne(mp => mp.Movie)
                 .WithMany(m => m.Photos)
                 .HasForeignKey(mp => mp.MovieId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<CriticReview>()
+              .HasOne(cr => cr.Movie)
+              .WithMany(m => m.CriticReviews)
+              .HasForeignKey(cr => cr.MovieId)
+              .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<CriticReview>()
+                .HasOne(cr => cr.User)
+                .WithMany(u => u.CriticReviews)
+                .HasForeignKey(cr => cr.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ReviewerApplication>()
+                .HasOne(ra => ra.User)
+                .WithMany()
+                .HasForeignKey(ra => ra.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
 

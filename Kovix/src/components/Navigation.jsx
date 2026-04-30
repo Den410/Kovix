@@ -202,6 +202,10 @@ function Navigation() {
                           🛡️ Скарги
                         </NavDropdown.Item>
 
+                        <NavDropdown.Item as={Link} to="/admin/critic-applications" className="text-success">
+                          📝 Заявки Критиків
+                        </NavDropdown.Item>
+
                         <NavDropdown.Item as={Link} to="/admin/appeals" className="text-info">
                           ⚖️ Апеляції
                         </NavDropdown.Item>

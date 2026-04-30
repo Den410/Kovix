@@ -9,6 +9,7 @@ import AdminMovieModal from '../components/AdminMovieModal';
 import AdminEpisodeModal from '../components/AdminEpisodeModal';
 import CharactersList from '../components/CharactersList';
 import MoviePhotos from '../components/MoviePhotos';
+import CriticReviewsSection from '../components/CriticReviewsSection';
 import defaultPosterImg from '../assets/NotFoundPoster.webp';
 import defaultAvatarImg from '../assets/NotFoundAvatar.png';
 import '../style/App.css';
@@ -727,6 +728,8 @@ function MovieDetailPage() {
       })()}
 
       {movie?.id && <MoviePhotos movieId={movie.id} movieTitle={movie.title} />}
+
+      <CriticReviewsSection movieId={id} />
 
       <Row>
         <Col>

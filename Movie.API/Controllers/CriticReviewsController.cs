@@ -1,0 +1,78 @@
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Movie.API.Data;
+using Movie.API.DTOs;
+using Movie.API.Models;
+using System.Security.Claims;
+
+namespace Movie.API.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class CriticReviewsController : ControllerBase
+    {
+        private readonly ApplicationDbContext _context;
+
+        public CriticReviewsController(ApplicationDbContext context)
+        {
+            _context = context;
+        }
+
+        [HttpGet("movie/{movieId}")]
+        public async Task<IActionResult> GetReviewsForMovie(int movieId)
+        {
+            var reviews = await _context.CriticReviews
+                .Include(cr => cr.User)
+                .Where(cr => cr.MovieId == movieId)
+                .OrderByDescending(cr => cr.CreatedAt)
+                .Select(cr => new
+                {
+                    cr.Id,
+                    cr.StoryScore,
+                    cr.ActingScore,
+                    cr.VisualsScore,
+                    cr.AudioScore,
+                    cr.OverallScore,
+                    cr.Verdict,
+                    cr.FullText,
+                    cr.CreatedAt,
+                    User = new { cr.User.Id, cr.User.Username, cr.User.AvatarUrl }
+                })
+                .ToListAsync();
+
+            return Ok(reviews);
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "Reviewer,Admin")]
+        public async Task<IActionResult> CreateReview([FromBody] CriticReviewCreateDto dto)
+        {
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdString, out int userId)) return Unauthorized();
+
+            var exists = await _context.CriticReviews
+                .AnyAsync(cr => cr.MovieId == dto.MovieId && cr.UserId == userId);
+
+            if (exists) return BadRequest("Ви вже написали професійну рецензію на цей фільм.");
+
+            var review = new CriticReview
+            {
+                MovieId = dto.MovieId,
+                UserId = userId,
+                StoryScore = dto.StoryScore,
+                ActingScore = dto.ActingScore,
+                VisualsScore = dto.VisualsScore,
+                AudioScore = dto.AudioScore,
+                Verdict = dto.Verdict,
+                FullText = dto.FullText,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.CriticReviews.Add(review);
+            await _context.SaveChangesAsync();
+
+            return Ok(review);
+        }
+    }
+}

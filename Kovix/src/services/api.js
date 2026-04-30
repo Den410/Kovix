@@ -120,10 +120,10 @@ export const reportsAPI = {
   getAll: () => api.get('/reports'),
   create: (data) => api.post('/reports', data),
   resolve: (id, data) => api.put(`/reports/${id}/resolve`, JSON.stringify(data), {
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    }),
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  }),
 };
 
 export const notificationsAPI = {
@@ -176,13 +176,13 @@ export const statsAPI = {
 
 export const moviePhotosAPI = {
   getByMovie: (movieId) => api.get(`/movies/${movieId}/photos`),
-  
+
   addUrl: (movieId, imageUrl) => api.post(`/movies/${movieId}/photos/url`, `"${imageUrl}"`, {
-      headers: { 'Content-Type': 'application/json' }
+    headers: { 'Content-Type': 'application/json' }
   }),
-  
+
   uploadMultiple: (movieId, formData) => api.post(`/movies/${movieId}/photos/upload`, formData),
-  
+
   delete: (movieId, photoId) => api.delete(`/movies/${movieId}/photos/${photoId}`)
 };
 
@@ -192,6 +192,18 @@ export const newsAPI = {
   update: (id, data) => api.put(`/news/${id}`, data),
   create: (data) => api.post('/news', data),
   delete: (id) => api.delete(`/news/${id}`)
+};
+
+export const criticReviewsAPI = {
+  getByMovie: (movieId) => api.get(`/criticreviews/movie/${movieId}`),
+  create: (data) => api.post('/criticreviews', data)
+};
+
+export const applicationsAPI = {
+    submit: (data) => api.post('/reviewerapplications', data),
+    getPending: () => api.get('/reviewerapplications/pending'),
+    approve: (id) => api.post(`/reviewerapplications/${id}/approve`),
+    reject: (id) => api.post(`/reviewerapplications/${id}/reject`)
 };
 
 export default api;

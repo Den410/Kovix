@@ -11,6 +11,7 @@ import { formatLastSeen } from '../utils/dateUtils';
 import { useTheme } from '../contexts/ThemeContext';
 import defaultAvatarImg from '../assets/NotFoundAvatar.png';
 import { API_BASE_URL } from '../utils/apiConfig';
+import BecomeCriticBanner from '../components/BecomeCriticBanner';
 const DEFAULT_AVATAR = defaultAvatarImg
 
 function ProfilePage() {
@@ -459,6 +460,8 @@ function ProfilePage() {
           )}
         </Col>
       </Row>
+
+      <BecomeCriticBanner />
 
       <Modal show={showEdit} onHide={() => setShowEdit(false)} centered>
         <Modal.Header closeButton style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-main)', borderColor: 'var(--border-color)' }}>

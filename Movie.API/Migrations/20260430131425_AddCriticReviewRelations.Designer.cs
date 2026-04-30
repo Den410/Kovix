@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Movie.API.Data;
 
@@ -11,9 +12,11 @@ using Movie.API.Data;
 namespace Movie.API.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260430131425_AddCriticReviewRelations")]
+    partial class AddCriticReviewRelations
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -668,35 +671,6 @@ namespace Movie.API.Migrations
                     b.ToTable("Reviews");
                 });
 
-            modelBuilder.Entity("Movie.API.Models.ReviewerApplication", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("MotivationText")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("ReviewerApplications");
-                });
-
             modelBuilder.Entity("Movie.API.Models.User", b =>
                 {
                     b.Property<int>("Id")
@@ -767,7 +741,7 @@ namespace Movie.API.Migrations
                             Email = "admin@gmail.com",
                             IsBlocked = false,
                             IsOnline = false,
-                            PasswordHash = "$2a$11$VUuOQyLHFtjxQBVaX5LMX.jo7iXk3aDm3QrbKHqKpGZmZ9.XI3KOC",
+                            PasswordHash = "$2a$11$Gte2aOZLPlDyqCbPjz2XNeJ29MzrVPbaVJ6dUL15ib4e8V8V6EnJK",
                             Role = "Admin",
                             Username = "admin"
                         });
@@ -1208,17 +1182,6 @@ namespace Movie.API.Migrations
                         .IsRequired();
 
                     b.Navigation("Movie");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Movie.API.Models.ReviewerApplication", b =>
-                {
-                    b.HasOne("Movie.API.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
 
                     b.Navigation("User");
                 });
