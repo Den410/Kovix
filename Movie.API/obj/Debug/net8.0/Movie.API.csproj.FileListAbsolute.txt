@@ -161,7 +161,6 @@ C:/Навчання/Курсова (Моделювання)/Kovix/Movie.API/obj/
 C:/Навчання/Курсова (Моделювання)/Kovix/Movie.API/obj/Debug/net8.0/Movie.API.pdb
 C:/Навчання/Курсова (Моделювання)/Kovix/Movie.API/obj/Debug/net8.0/Movie.API.genruntimeconfig.cache
 C:/Навчання/Курсова (Моделювання)/Kovix/Movie.API/obj/Debug/net8.0/ref/Movie.API.dll
-C:/Навчання/Курсова (Моделювання)/Kovix/Movie.API/obj/Debug/net8.0/staticwebassets.upToDateCheck.txt
 /app/src/bin/Debug/net8.0/appsettings.Development.json
 /app/src/bin/Debug/net8.0/appsettings.json
 /app/src/bin/Debug/net8.0/Movie.API.staticwebassets.runtime.json

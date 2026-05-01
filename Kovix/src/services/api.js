@@ -196,7 +196,12 @@ export const newsAPI = {
 
 export const criticReviewsAPI = {
   getByMovie: (movieId) => api.get(`/criticreviews/movie/${movieId}`),
-  create: (data) => api.post('/criticreviews', data)
+  create: (data) => api.post('/criticreviews', data, {
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  }),
+  delete: (id) => api.delete(`/criticreviews/${id}`)
 };
 
 export const applicationsAPI = {
@@ -204,6 +209,12 @@ export const applicationsAPI = {
     getPending: () => api.get('/reviewerapplications/pending'),
     approve: (id) => api.post(`/reviewerapplications/${id}/approve`),
     reject: (id) => api.post(`/reviewerapplications/${id}/reject`)
+};
+
+export const adminUsersAPI = {
+    getAll: () => api.get(`/adminUsers`),
+    changeRole: (id, newRole) => api.put(`/adminUsers/${id}/role`, { newRole: newRole }),
+    delete: (id) => api.delete(`/criticreviews/${id}`)
 };
 
 export default api;

@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "0Bf/BLN997U=",
+  "dgSpecHash": "ud62tCgA0l0=",
   "success": true,
   "projectFilePath": "C:\\Навчання\\Курсова (Моделювання)\\Kovix\\Movie.API\\Movie.API.csproj",
   "expectedPackageFiles": [
@@ -26,9 +26,9 @@
     "C:\\Users\\Lenovo Legion 5\\.nuget\\packages\\microsoft.codeanalysis.workspaces.common\\4.5.0\\microsoft.codeanalysis.workspaces.common.4.5.0.nupkg.sha512",
     "C:\\Users\\Lenovo Legion 5\\.nuget\\packages\\microsoft.data.sqlclient\\5.1.6\\microsoft.data.sqlclient.5.1.6.nupkg.sha512",
     "C:\\Users\\Lenovo Legion 5\\.nuget\\packages\\microsoft.data.sqlclient.sni.runtime\\5.1.1\\microsoft.data.sqlclient.sni.runtime.5.1.1.nupkg.sha512",
-    "C:\\Users\\Lenovo Legion 5\\.nuget\\packages\\microsoft.entityframeworkcore\\8.0.23\\microsoft.entityframeworkcore.8.0.23.nupkg.sha512",
-    "C:\\Users\\Lenovo Legion 5\\.nuget\\packages\\microsoft.entityframeworkcore.abstractions\\8.0.23\\microsoft.entityframeworkcore.abstractions.8.0.23.nupkg.sha512",
-    "C:\\Users\\Lenovo Legion 5\\.nuget\\packages\\microsoft.entityframeworkcore.analyzers\\8.0.23\\microsoft.entityframeworkcore.analyzers.8.0.23.nupkg.sha512",
+    "C:\\Users\\Lenovo Legion 5\\.nuget\\packages\\microsoft.entityframeworkcore\\8.0.22\\microsoft.entityframeworkcore.8.0.22.nupkg.sha512",
+    "C:\\Users\\Lenovo Legion 5\\.nuget\\packages\\microsoft.entityframeworkcore.abstractions\\8.0.22\\microsoft.entityframeworkcore.abstractions.8.0.22.nupkg.sha512",
+    "C:\\Users\\Lenovo Legion 5\\.nuget\\packages\\microsoft.entityframeworkcore.analyzers\\8.0.22\\microsoft.entityframeworkcore.analyzers.8.0.22.nupkg.sha512",
     "C:\\Users\\Lenovo Legion 5\\.nuget\\packages\\microsoft.entityframeworkcore.design\\8.0.22\\microsoft.entityframeworkcore.design.8.0.22.nupkg.sha512",
     "C:\\Users\\Lenovo Legion 5\\.nuget\\packages\\microsoft.entityframeworkcore.inmemory\\8.0.22\\microsoft.entityframeworkcore.inmemory.8.0.22.nupkg.sha512",
     "C:\\Users\\Lenovo Legion 5\\.nuget\\packages\\microsoft.entityframeworkcore.relational\\8.0.22\\microsoft.entityframeworkcore.relational.8.0.22.nupkg.sha512",

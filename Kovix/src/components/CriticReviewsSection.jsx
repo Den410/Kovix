@@ -29,12 +29,30 @@ const CriticReviewsSection = ({ movieId }) => {
 
     const handleSubmitReview = async (reviewData) => {
         try {
-            await criticReviewsAPI.create(reviewData);
+            const res = await criticReviewsAPI.create(reviewData);
+            setReviews([res.data, ...reviews]);
             setShowForm(false);
-            loadReviews();
             alert("Вашу рецензію успішно опубліковано!");
         } catch (error) {
-            alert(error.response?.data || "Помилка публікації рецензії");
+            const errorMessage = typeof error.response?.data === 'string' 
+                ? error.response.data 
+                : error.response?.data?.message || "Помилка публікації рецензії";
+            alert(errorMessage);
+        }
+    };
+
+    const handleDeleteReview = async (reviewId) => {
+        if (!window.confirm('Ви впевнені, що хочете видалити цю рецензію?')) return;
+
+        try {
+            await criticReviewsAPI.delete(reviewId);
+            setReviews(reviews.filter(r => r.id !== reviewId));
+            alert("Рецензія успішно видалена!");
+        } catch (error) {
+            const errorMessage = typeof error.response?.data === 'string' 
+                ? error.response.data 
+                : error.response?.data?.message || "Помилка видалення рецензії";
+            alert(errorMessage);
         }
     };
 
@@ -94,8 +112,19 @@ const CriticReviewsSection = ({ movieId }) => {
                                         />
                                         <div>
                                             <div className="fw-bold fs-5 text-main">{review.user.username}</div>
-                                            <div className="text-muted small">
-                                                {new Date(review.createdAt).toLocaleDateString('uk-UA')}
+                                            <div className="d-flex align-items-center gap-3 text-muted small">
+                                                <span>{new Date(review.createdAt).toLocaleDateString('uk-UA')}</span>
+
+                                                {user && (user.role === 'Admin' || user.id === review.user.id) && (
+                                                    <span
+                                                        className="text-danger"
+                                                        style={{ cursor: 'pointer' }}
+                                                        onClick={() => handleDeleteReview(review.id)}
+                                                        title="Видалити рецензію"
+                                                    >
+                                                        <i className="bi bi-trash-fill"></i> Видалити
+                                                    </span>
+                                                )}
                                             </div>
                                         </div>
                                     </div>

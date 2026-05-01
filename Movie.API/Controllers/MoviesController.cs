@@ -336,7 +336,9 @@ namespace Movie.API.Controllers
                     Year = m.Year,
                     AverageRating = m.AverageRating,
                     Genre = m.Genre,
-                    CreatedAt = m.CreatedAt
+                    CreatedAt = m.CreatedAt,
+                    ViewsCount = m.ViewsCount,
+                    TotalReviews = m.TotalReviews
                 })
                 .ToListAsync();
 
@@ -598,7 +600,9 @@ namespace Movie.API.Controllers
                     Year = m.Year,
                     AverageRating = m.AverageRating,
                     Genre = m.Genre,
-                    CreatedAt = m.CreatedAt
+                    CreatedAt = m.CreatedAt,
+                    ViewsCount = m.ViewsCount,
+                    TotalReviews = m.TotalReviews
                 })
                 .ToListAsync();
 

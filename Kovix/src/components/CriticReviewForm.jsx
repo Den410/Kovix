@@ -27,15 +27,19 @@ function CriticReviewForm({ movieId, onSubmit }) {
     setError('');
 
     try {
-      await criticReviewsAPI.create({
-        movieId,
-        storyScore: parseInt(storyScore),
-        actingScore: parseInt(actingScore),
-        visualsScore: parseInt(visualsScore),
-        audioScore: parseInt(audioScore),
-        verdict: verdict.trim(),
-        fullText: fullText.trim()
-      });
+      const reviewData = {
+        MovieId: movieId,
+        StoryScore: parseInt(storyScore),
+        ActingScore: parseInt(actingScore),
+        VisualsScore: parseInt(visualsScore),
+        AudioScore: parseInt(audioScore),
+        Verdict: verdict.trim(),
+        FullText: fullText.trim()
+      };
+
+      if (onSubmit) {
+        onSubmit(reviewData);
+      }
 
       setStoryScore(8);
       setActingScore(8);
@@ -43,15 +47,14 @@ function CriticReviewForm({ movieId, onSubmit }) {
       setAudioScore(8);
       setVerdict('');
       setFullText('');
-
-      if (onSubmit) {
-        onSubmit();
-      }
     } catch (err) {
       console.error(err);
 
       if (err.response && err.response.data) {
-        setError(typeof err.response.data === 'string' ? err.response.data : 'Помилка збереження рецензії');
+        const errorMsg = typeof err.response.data === 'string' 
+          ? err.response.data 
+          : err.response.data?.message || 'Помилка збереження рецензії';
+        setError(errorMsg);
       } else {
         setError('Не вдалося опублікувати рецензію. Спробуйте пізніше.');
       }

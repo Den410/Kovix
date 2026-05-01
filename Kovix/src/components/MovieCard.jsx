@@ -69,21 +69,33 @@ function MovieCard({ movie, disableLink = false, hideMeta = false, isNew = false
           placeholder={defaultPosterImg}
           className="movie-card-img"
         />
-
-        {!hideMeta && (
-          <Badge
-            bg={getRatingColor(ratingValue)}
-            className="movie-rating-badge"
-          >
-            ⭐ {ratingValue.toFixed(1)}
-          </Badge>
-        )}
       </div>
 
       <Card.Body className="d-flex flex-column p-3">
         <Card.Title className="movie-title text-truncate" title={movie.title}>
           {movie.title}
         </Card.Title>
+
+        {!hideMeta && (
+          <div className="d-flex align-items-center gap-2 mb-2">
+            <Badge
+              bg={getRatingColor(ratingValue)}
+              className="movie-rating-badge"
+            >
+              ⭐ {ratingValue.toFixed(1)}
+            </Badge>
+            {(movie.viewsCount || movie.ViewsCount) && (
+              <Badge className="movie-meta-badge">
+                👁️ {movie.viewsCount || movie.ViewsCount}
+              </Badge>
+            )}
+            {(movie.totalReviews || movie.TotalReviews) && (
+              <Badge bg="secondary" className="movie-meta-badge">
+                💬 {movie.totalReviews || movie.TotalReviews}
+              </Badge>
+            )}
+          </div>
+        )}
 
         {!hideMeta && (
           <Card.Text className="movie-meta text-muted small" title={`${movie.year} • ${genresValue}`}>

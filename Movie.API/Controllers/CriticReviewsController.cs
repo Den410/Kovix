@@ -72,7 +72,42 @@ namespace Movie.API.Controllers
             _context.CriticReviews.Add(review);
             await _context.SaveChangesAsync();
 
-            return Ok(review);
+            await _context.Entry(review).Reference(cr => cr.User).LoadAsync();
+
+            return Ok(new
+            {
+                review.Id,
+                review.StoryScore,
+                review.ActingScore,
+                review.VisualsScore,
+                review.AudioScore,
+                review.OverallScore,
+                review.Verdict,
+                review.FullText,
+                review.CreatedAt,
+                User = new { review.User.Id, review.User.Username, review.User.AvatarUrl }
+            });
+        }
+
+        [HttpDelete("{id}")]
+        [Authorize]
+        public async Task<IActionResult> DeleteReview(int id)
+        {
+            var review = await _context.CriticReviews.FindAsync(id);
+            if (review == null) return NotFound("Рецензію не знайдено.");
+
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userRole = User.FindFirstValue(ClaimTypes.Role);
+
+            if (userRole != "Admin" && review.UserId.ToString() != userIdString)
+            {
+                return StatusCode(403, "У вас немає прав для видалення цієї рецензії.");
+            }
+
+            _context.CriticReviews.Remove(review);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Рецензію успішно видалено." });
         }
     }
 }

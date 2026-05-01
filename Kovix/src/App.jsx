@@ -43,6 +43,7 @@ import VoiceActorDetailPage from './pages/VoiceActorDetailPage';
 import NewsBanner from './components/NewsBanner';
 import NewsDetailsPage from './pages/NewsDetailsPage';
 import NewsPage from './pages/NewsPage';
+import AdminRolesPage from './pages/AdminRolesPage';
 
 import { useEffect } from 'react';
 
@@ -126,6 +127,11 @@ function App() {
                   <Route path="/appeal" element={
                     <ProtectedRoute>
                       <AppealPage />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/admin/roles" element={
+                    <ProtectedRoute>
+                      <AdminRolesPage />
                     </ProtectedRoute>
                   } />
                   <Route path="*" element={<NotFoundPage />} />

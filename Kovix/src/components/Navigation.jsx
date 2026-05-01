@@ -89,7 +89,7 @@ function Navigation() {
               <Nav.Link as={Link} to="/top" className="fw-bold text-warning">
                 🏆 Топ-100
               </Nav.Link>
-              
+
               <Nav.Link as={Link} to="/news" className="fw-semibold d-flex align-items-center gap-1">
                 <FaNewspaper /> Новини
               </Nav.Link>
@@ -204,6 +204,10 @@ function Navigation() {
 
                         <NavDropdown.Item as={Link} to="/admin/critic-applications" className="text-success">
                           📝 Заявки Критиків
+                        </NavDropdown.Item>
+
+                        <NavDropdown.Item as={Link} to="/admin/roles" className="text-info">
+                          🕒 Керування ролями
                         </NavDropdown.Item>
 
                         <NavDropdown.Item as={Link} to="/admin/appeals" className="text-info">
