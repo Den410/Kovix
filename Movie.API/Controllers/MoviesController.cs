@@ -143,6 +143,7 @@ namespace Movie.API.Controllers
                     .ThenInclude(ma => ma.Actor)
                 .Include(m => m.Franchise)
                     .ThenInclude(f => f.Movies)
+                .Include(m => m.Awards)
                 .FirstOrDefaultAsync(m => m.Id == id);
 
             if (movie == null) return NotFound();
@@ -212,6 +213,12 @@ namespace Movie.API.Controllers
                     Role = ma.Role,
                     IsMainRole = ma.IsMainRole,
                     PhotoUrl = ma.Actor.PhotoUrl
+                }).ToList(),
+                Awards = movie.Awards.Select(a => new AwardDto 
+                { 
+                    Id = a.Id, 
+                    Name = a.Name, 
+                    Icon = a.Icon 
                 }).ToList(),
                 MalId = movie.MalId,
                 TmdbId = movie.TmdbId,

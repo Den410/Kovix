@@ -12,6 +12,8 @@ import { useTheme } from '../contexts/ThemeContext';
 import defaultAvatarImg from '../assets/NotFoundAvatar.png';
 import { API_BASE_URL } from '../utils/apiConfig';
 import BecomeCriticBanner from '../components/BecomeCriticBanner';
+import AdminUserAwardModal from '../components/AdminUserAwardModal';
+import { adminUserAwardsAPI } from '../services/api';
 const DEFAULT_AVATAR = defaultAvatarImg
 
 function ProfilePage() {
@@ -44,6 +46,20 @@ function ProfilePage() {
 
   const { themeMode } = useTheme();
   const isDark = themeMode === 'dark';
+
+  const [showAwardModal, setShowAwardModal] = useState(false);
+  const [awardToEdit, setAwardToEdit] = useState(null);
+
+  const handleAddAward = () => { setAwardToEdit(null); setShowAwardModal(true); };
+  const handleEditAward = (award) => { setAwardToEdit(award); setShowAwardModal(true); };
+
+  const handleDeleteAward = async (id) => {
+    if (!window.confirm("Видалити цю ачівку?")) return;
+    try {
+      await adminUserAwardsAPI.removeAward(id);
+      loadProfile();
+    } catch (e) { alert("Помилка видалення"); }
+  };
 
   useEffect(() => {
     loadProfile();
@@ -92,7 +108,7 @@ function ProfilePage() {
       const res = await authAPI.getProfile();
       setProfile(res.data);
     } catch (e) {
-      console.error(e);
+      console.error('❌ Помилка завантаження профіля:', e);
     } finally {
       setLoading(false);
     }
@@ -479,7 +495,7 @@ function ProfilePage() {
             </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>Аватар</Form.Label>
-              
+
               <div
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
@@ -643,6 +659,77 @@ function ProfilePage() {
           <Button variant="warning" onClick={handleSubmitPasswordChange}>Змінити</Button>
         </Modal.Footer>
       </Modal>
+
+      <div className="mb-4">
+        <h5 className="fw-bold mb-3 text-muted">Досягнення ({profile.awards?.length || 0})</h5>
+
+        <div className="d-flex flex-wrap gap-2">
+          {profile.awards?.map(award => (
+            <div
+              key={award.id}
+              className="d-flex align-items-center p-2 rounded shadow-sm position-relative"
+              style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                minWidth: '150px'
+              }}
+            >
+              <div className="fs-2 me-3" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
+                {award.icon}
+              </div>
+              <div>
+                <div className="fw-bold text-main" style={{ fontSize: '0.95rem' }}>{award.name}</div>
+                {award.description && (
+                  <div className="text-muted" style={{ fontSize: '0.75rem', lineHeight: '1.2' }}>
+                    {award.description}
+                  </div>
+                )}
+              </div>
+
+              {currentUser?.role === 'Admin' && (
+                <div className="position-absolute top-0 end-0 p-1 d-flex gap-2" style={{ background: 'var(--bg-card)', borderRadius: '0 8px 0 8px', zIndex: 2 }}>
+                  <span
+                    style={{ cursor: 'pointer', fontSize: '0.9rem', opacity: 0.8, transition: 'opacity 0.2s' }}
+                    onClick={() => handleEditAward(award)}
+                    onMouseEnter={(e) => e.target.style.opacity = '1'}
+                    onMouseLeave={(e) => e.target.style.opacity = '0.8'}
+                    title="Редагувати"
+                  >
+                    ✏️
+                  </span>
+                  <span
+                    style={{ cursor: 'pointer', fontSize: '0.9rem', opacity: 0.8, transition: 'opacity 0.2s' }}
+                    onClick={() => handleDeleteAward(award.id)}
+                    onMouseEnter={(e) => e.target.style.opacity = '1'}
+                    onMouseLeave={(e) => e.target.style.opacity = '0.8'}
+                    title="Видалити"
+                  >
+                    ❌
+                  </span>
+                </div>
+              )}
+            </div>
+          ))}
+
+          {currentUser?.role === 'Admin' && (
+            <div
+              className="d-flex align-items-center justify-content-center rounded p-3"
+              style={{ border: '2px dashed rgba(255,255,255,0.2)', cursor: 'pointer', minWidth: '150px' }}
+              onClick={handleAddAward}
+            >
+              <span className="text-muted fw-bold"><i className="bi bi-plus-lg"></i> Видати ачівку</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <AdminUserAwardModal
+        show={showAwardModal}
+        onHide={() => setShowAwardModal(false)}
+        targetUserId={profile.id}
+        onAwardAdded={loadProfile}
+        awardToEdit={awardToEdit}
+      />
 
     </Container>
   );

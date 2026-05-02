@@ -1,6 +1,5 @@
 ﻿using Google.Apis.Auth;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -142,6 +141,7 @@ namespace Movie.API.Controllers
             var user = await _context.Users
                 .Include(u => u.Reviews!)
                     .ThenInclude(r => r.Movie)
+                .Include(u => u.Awards)
                 .FirstOrDefaultAsync(u => u.Id == userId);
 
             if (user == null) return NotFound();
@@ -191,6 +191,7 @@ namespace Movie.API.Controllers
             var fullUser = await _context.Users
                 .Include(u => u.Reviews)
                     .ThenInclude(r => r.Movie)
+                .Include(u => u.Awards)
                 .FirstOrDefaultAsync(u => u.Id == userId);
 
             fullUser!.PasswordHash = "";

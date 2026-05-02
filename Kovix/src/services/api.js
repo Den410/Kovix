@@ -217,4 +217,16 @@ export const adminUsersAPI = {
     delete: (id) => api.delete(`/criticreviews/${id}`)
 };
 
+export const adminMovieAwardsAPI = {
+    issueAward: (data) => api.post('/adminMovieAwards', data),
+    editAward: (id, data) => api.put(`/adminMovieAwards/${id}`, data),
+    removeAward: (id) => api.delete(`/adminMovieAwards/${id}`)
+};
+
+export const adminUserAwardsAPI = {
+    issueAward: (data) => api.post('/adminUserAwards', data),
+    editAward: (id, data) => api.put(`/adminUserAwards/${id}`, data),
+    removeAward: (id) => api.delete(`/adminUserAwards/${id}`)
+};
+
 export default api;

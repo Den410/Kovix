@@ -33,5 +33,6 @@ namespace Movie.API.Models
         public ICollection<UserFollow> Followers { get; set; } = new List<UserFollow>();
         public ICollection<Appeal> Appeals { get; set; } = new List<Appeal>();
         public ICollection<CriticReview> CriticReviews { get; set; } = new List<CriticReview>();
+        public List<UserAward> Awards { get; set; } = new List<UserAward>();
     }
 }

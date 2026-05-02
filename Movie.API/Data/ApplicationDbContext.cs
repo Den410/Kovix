@@ -39,6 +39,8 @@ namespace Movie.API.Data
         public DbSet<NewsItem> News { get; set; }
         public DbSet<CriticReview> CriticReviews { get; set; }
         public DbSet<ReviewerApplication> ReviewerApplications { get; set; }
+        public DbSet<UserAward> UserAwards { get; set; }
+        public DbSet<MovieAward> MovieAwards { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -285,6 +287,18 @@ namespace Movie.API.Data
                 .HasOne(ra => ra.User)
                 .WithMany()
                 .HasForeignKey(ra => ra.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<UserAward>()
+                .HasOne(ua => ua.User)
+                .WithMany(u => u.Awards)
+                .HasForeignKey(ua => ua.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<MovieAward>()
+                .HasOne(ma => ma.Movie)
+                .WithMany(m => m.Awards)
+                .HasForeignKey(ma => ma.MovieId)
                 .OnDelete(DeleteBehavior.Cascade);
 
 

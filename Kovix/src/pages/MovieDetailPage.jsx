@@ -14,6 +14,9 @@ import defaultPosterImg from '../assets/NotFoundPoster.webp';
 import defaultAvatarImg from '../assets/NotFoundAvatar.png';
 import '../style/App.css';
 import { API_BASE_URL } from '../utils/apiConfig';
+import AdminMovieAwardModal from '../components/AdminMovieAwardModal';
+import { adminMovieAwardsAPI } from '../services/api';
+
 const LIKE_ID = 6;
 const DISLIKE_ID = 7;
 
@@ -56,6 +59,8 @@ function MovieDetailPage() {
   const [charactersRefreshKey, setCharactersRefreshKey] = useState(0);
   const popupRef = useRef(null);
   const userReview = user ? reviews.find(r => r.userId === user.id) : null;
+  const [showAwardModal, setShowAwardModal] = useState(false);
+  const [awardToEdit, setAwardToEdit] = useState(null);
 
   useEffect(() => {
     loadMovieData();
@@ -279,6 +284,26 @@ function MovieDetailPage() {
       console.error("Помилка оцінки:", error);
       alert("Не вдалося зберегти оцінку");
     }
+  };
+
+  const handleDeleteAward = async (awardId) => {
+    if (!window.confirm('Видалити цю нагороду?')) return;
+    try {
+      await adminMovieAwardsAPI.removeAward(awardId);
+      loadMovieData();
+    } catch (e) {
+      alert("Помилка видалення нагороди");
+    }
+  };
+
+  const handleAddAwardClick = () => {
+    setAwardToEdit(null);
+    setShowAwardModal(true);
+  };
+
+  const handleEditAwardClick = (award) => {
+    setAwardToEdit(award);
+    setShowAwardModal(true);
   };
 
   const getRatingColor = (rating) => {
@@ -633,6 +658,88 @@ function MovieDetailPage() {
             </div>
           )}
 
+          {(movie.awards?.length > 0 || user?.role === 'Admin') && (
+            <div className="mb-5">
+              {movie.awards?.length > 0 && (
+                <>
+                  <h3 className="border-start border-4 border-warning ps-2 mb-3">
+                    Нагороди
+                  </h3>
+                  <div className="mb-4 d-flex flex-wrap align-items-center gap-2">
+                    {movie.awards.map(award => (
+                      <div
+                        key={award.id}
+                        className="d-flex align-items-center px-3 py-1 rounded-pill"
+                        style={{
+                          background: 'linear-gradient(45deg, #FFD700 0%, #FDB931 100%)',
+                          color: '#4A3B00',
+                          fontWeight: '700',
+                          fontSize: '0.9rem',
+                          boxShadow: '0 4px 10px rgba(255, 215, 0, 0.3)'
+                        }}
+                        title={award.name}
+                      >
+                        <span className="me-2 fs-5">{award.icon}</span>
+                        <span>{award.name}</span>
+
+                        {user?.role === 'Admin' && (
+                          <div className="d-flex align-items-center gap-2 ms-3 ps-2" style={{ borderLeft: '1px solid rgba(0,0,0,0.3)' }}>
+                            <span
+                              onClick={() => handleEditAwardClick(award)}
+                              title="Редагувати нагороду"
+                              style={{ cursor: 'pointer', fontSize: '1.1rem', opacity: 0.7, transition: 'opacity 0.2s' }}
+                              onMouseEnter={(e) => e.target.style.opacity = '1'}
+                              onMouseLeave={(e) => e.target.style.opacity = '0.7'}
+                            >
+                              ✏️
+                            </span>
+                            <span
+                              onClick={() => handleDeleteAward(award.id)}
+                              title="Видалити нагороду"
+                              style={{ cursor: 'pointer', fontSize: '1.1rem', opacity: 0.7, transition: 'opacity 0.2s' }}
+                              onMouseEnter={(e) => e.target.style.opacity = '1'}
+                              onMouseLeave={(e) => e.target.style.opacity = '0.7'}
+                            >
+                              ❌
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+
+                    {user?.role === 'Admin' && (
+                      <Button
+                        variant="outline-warning"
+                        size="sm"
+                        className="rounded-pill px-3 fw-bold d-flex align-items-center gap-1"
+                        onClick={handleAddAwardClick}
+                      >
+                        <i className="bi bi-plus-lg"></i> Додати
+                      </Button>
+                    )}
+                  </div>
+                </>
+              )}
+
+              {movie.awards?.length === 0 && user?.role === 'Admin' && (
+                <div className="mb-4">
+                  <h3 className="border-start border-4 border-warning ps-2 mb-3">
+                    Нагороди
+                  </h3>
+                  <p className="text-muted mb-3">Нагород ще не додано</p>
+                  <Button
+                    variant="outline-warning"
+                    size="sm"
+                    className="rounded-pill px-3 fw-bold d-flex align-items-center gap-1"
+                    onClick={() => setShowAwardModal(true)}
+                  >
+                    <i className="bi bi-plus-lg"></i> Додати нагороду
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+
           {movie?.cast?.length > 0 && (
             <div className="mb-5">
               <div className="d-flex justify-content-between align-items-center mb-3">
@@ -753,14 +860,22 @@ function MovieDetailPage() {
         onSuccess={loadMovieData}
       />
 
-      <AdminMovieModal 
-        show={showEditModal} 
-        onHide={() => setShowEditModal(false)} 
-        movieToEdit={movie} 
+      <AdminMovieModal
+        show={showEditModal}
+        onHide={() => setShowEditModal(false)}
+        movieToEdit={movie}
         onSuccess={() => {
           loadMovieData();
           setCharactersRefreshKey(prev => prev + 1);
-        }} 
+        }}
+      />
+
+      <AdminMovieAwardModal
+        show={showAwardModal}
+        onHide={() => setShowAwardModal(false)}
+        movieId={movie.id}
+        onAwardAdded={loadMovieData}
+        awardToEdit={awardToEdit}
       />
     </Container>
   );

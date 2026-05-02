@@ -34,7 +34,10 @@ Write-Host ""
 Write-Host "Виконуємо BACKUP..."
 
 try {
-    $result = docker exec -i mssql_kovix_dev /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P KovixStrongPass123! -C -Q $backupQuery 2>&1
+    # Спочатку переконаємось, що папка для бекапів існує
+    docker exec mssql_kovix mkdir -p /var/opt/mssql/backups 2>&1 | Out-Null
+    
+    $result = docker exec -i mssql_kovix /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P KovixStrongPass123! -C -Q $backupQuery 2>&1
     
     if ($LASTEXITCODE -eq 0) {
         Write-Host ""
@@ -42,7 +45,7 @@ try {
         Write-Host "Статистика:"
         
         Start-Sleep -Seconds 2
-        $fileInfo = docker exec mssql_kovix_dev ls -lh /var/opt/mssql/backups/$backupFileName 2>&1 | findstr $backupFileName
+        $fileInfo = docker exec mssql_kovix ls -lh /var/opt/mssql/backups/$backupFileName 2>&1 | findstr $backupFileName
         Write-Host "Розмір: $fileInfo"
         
         Write-Host ""

@@ -84,10 +84,19 @@ namespace Movie.API.Controllers
             if (app.User != null)
             {
                 app.User.Role = "Reviewer";
+
+                var award = new UserAward
+                {
+                    UserId = app.User.Id,
+                    Name = "Офіційний критик",
+                    Icon = "✍️",
+                    Description = "Отримав статус професійного рецензента платформи"
+                };
+                _context.UserAwards.Add(award);
             }
 
             await _context.SaveChangesAsync();
-            return Ok(new { message = "Заявку схвалено, користувач став Рецензентом!" });
+            return Ok(new { message = "Заявку схвалено! Користувач отримав роль та нагороду." });
         }
 
         [HttpPost("{id}/reject")]

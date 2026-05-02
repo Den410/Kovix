@@ -35,5 +35,6 @@ namespace Movie.API.DTOs
 
         [MaxLength(200)]
         public string? NewFranchiseName { get; set; }
+        public List<AwardDto> Awards { get; set; } = new List<AwardDto>();
     }
 }

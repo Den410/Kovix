@@ -29,5 +29,6 @@ namespace Movie.API.Models
         public List<VoiceActingRole> VoiceActingRoles { get; set; } = new List<VoiceActingRole>();
         public ICollection<MoviePhoto> Photos { get; set; } = new List<MoviePhoto>();
         public ICollection<CriticReview> CriticReviews { get; set; } = new List<CriticReview>();
+        public List<MovieAward> Awards { get; set; } = new List<MovieAward>();
     }
 }
