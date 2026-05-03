@@ -68,6 +68,18 @@ namespace Movie.API.Controllers
                 }
             }
 
+            bool hasWatchlistAward = await _context.UserAwards.AnyAsync(ua => ua.UserId == userId && ua.Name == "Колекціонер");
+            if (!hasWatchlistAward)
+            {
+                _context.UserAwards.Add(new UserAward
+                {
+                    UserId = userId,
+                    Name = "Колекціонер",
+                    Icon = "🍿",
+                    Description = "За перший доданий фільм до списку переглядів"
+                });
+                await _context.SaveChangesAsync();
+            }
             await _context.SaveChangesAsync();
             return Ok(entry);
         }

@@ -33,6 +33,7 @@ namespace Movie.API.Controllers
                 .Where(r => r.MovieId == movieId)
                 .Include(r => r.User)
                 .Include(r => r.Votes)
+                .Include(r => r.User).ThenInclude(u => u.SelectedAward)
                 .OrderByDescending(r => r.CreatedAt)
                 .ToListAsync();
 
@@ -46,6 +47,13 @@ namespace Movie.API.Controllers
                 UserId = r.UserId,
                 UserName = r.User?.Username ?? "Unknown",
                 UserAvatar = r.User?.AvatarUrl ?? "",
+                Role = r.User?.Role,
+                SelectedAward = r.User?.SelectedAward != null ? new AwardDto
+                {
+                    Id = r.User.SelectedAward.Id,
+                    Name = r.User.SelectedAward.Name,
+                    Icon = r.User.SelectedAward.Icon
+                } : null,
 
                 LikesCount = r.Votes?.Count(v => v.IsLike) ?? 0,
                 DislikesCount = r.Votes?.Count(v => !v.IsLike) ?? 0,
@@ -136,6 +144,19 @@ namespace Movie.API.Controllers
                 Comment = dto.Comment,
                 CreatedAt = DateTime.UtcNow
             };
+
+            bool hasReviewAward = await _context.UserAwards.AnyAsync(ua => ua.UserId == userId && ua.Name == "Перше слово");
+            if (!hasReviewAward)
+            {
+                _context.UserAwards.Add(new UserAward
+                {
+                    UserId = userId,
+                    Name = "Перше слово",
+                    Icon = "✍️",
+                    Description = "За першу написану рецензію на сайті"
+                });
+                await _context.SaveChangesAsync();
+            }
 
             _context.Reviews.Add(review);
 
@@ -235,7 +256,8 @@ namespace Movie.API.Controllers
             var reviews = await _context.Reviews
                 .Where(r => r.UserId == userId)
                 .Include(r => r.User)
-                .Include(r => r.Movie) 
+                    .ThenInclude(u => u.SelectedAward) 
+                .Include(r => r.Movie)
                 .Include(r => r.Votes)
                 .OrderByDescending(r => r.CreatedAt)
                 .ToListAsync();
@@ -252,6 +274,15 @@ namespace Movie.API.Controllers
                 MovieTitle = r.Movie.Title,
                 MoviePosterUrl = r.Movie.PosterUrl,
                 UserId = r.UserId,
+
+                Role = r.User.Role,
+                SelectedAward = r.User.SelectedAward != null ? new AwardDto
+                {
+                    Id = r.User.SelectedAward.Id,
+                    Name = r.User.SelectedAward.Name,
+                    Icon = r.User.SelectedAward.Icon
+                } : null,
+
                 LikesCount = r.Votes.Count(v => v.IsLike),
                 DislikesCount = r.Votes.Count(v => !v.IsLike),
                 CurrentUserVote = currentViewerId.HasValue

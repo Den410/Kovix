@@ -5,6 +5,7 @@ import { criticReviewsAPI } from '../services/api';
 import CriticReviewForm from './CriticReviewForm';
 import defaultAvatarImg from '../assets/NotFoundAvatar.png';
 import { API_BASE_URL } from '../utils/apiConfig';
+import UserTitleBadge from './UserTitleBadge';
 
 const CriticReviewsSection = ({ movieId }) => {
     const { user } = useAuth();
@@ -111,7 +112,13 @@ const CriticReviewsSection = ({ movieId }) => {
                                             style={{ width: '50px', height: '50px', objectFit: 'cover' }}
                                         />
                                         <div>
-                                            <div className="fw-bold fs-5 text-main">{review.user.username}</div>
+                                            <div className="d-flex align-items-center gap-2">
+                                                <div className="fw-bold fs-5 text-main">{review.user.username}</div>
+                                                <UserTitleBadge
+                                                    role={review.user.role}
+                                                    selectedAward={review.user.selectedAward}
+                                                />
+                                            </div>
                                             <div className="d-flex align-items-center gap-3 text-muted small">
                                                 <span>{new Date(review.createdAt).toLocaleDateString('uk-UA')}</span>
 

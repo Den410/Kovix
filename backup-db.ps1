@@ -1,6 +1,6 @@
 param(
     [string]$BackupPath = "C:\backups",
-    [string]$ServerName = "localhost,1433",
+    [string]$ContainerName = "mssql_kovix",
     [string]$Username = "sa",
     [string]$Password = "KovixStrongPass123!",
     [string]$Database = "KovixDb"
@@ -8,64 +8,64 @@ param(
 
 $timestamp = Get-Date -Format "yyyy-MM-dd_HH-mm-ss"
 $backupFileName = "KovixDb_backup_$timestamp.bak"
-$backupFilePath = Join-Path $BackupPath $backupFileName
+
+$containerPath = "/var/opt/mssql/backups/$backupFileName"
+$localFilePath = Join-Path $BackupPath $backupFileName
 
 Write-Host "================================"
-Write-Host "Розпочинаємо бекап БД..."
+Write-Host "Starting database backup..."
 Write-Host "================================"
-Write-Host "Папка: $BackupPath"
-Write-Host "Файл: $backupFileName"
-Write-Host "БД: $Database"
-Write-Host "Сервер: $ServerName"
 
 if (-not (Test-Path $BackupPath)) {
-    Write-Host "Папка не існує: $BackupPath"
-    Write-Host "Створюємо папку..."
     New-Item -ItemType Directory -Path $BackupPath -Force | Out-Null
+    Write-Host "Created folder: $BackupPath"
 }
+
+docker exec $ContainerName mkdir -p /var/opt/mssql/backups | Out-Null
 
 $backupQuery = @"
 BACKUP DATABASE [$Database]
-TO DISK = '/var/opt/mssql/backups/$backupFileName'
-WITH FORMAT, INIT, SKIP, NOREWIND, NOUNLOAD, COMPRESSION;
+TO DISK = '$containerPath'
+WITH FORMAT, INIT, COMPRESSION, STATS = 10;
 "@
 
 Write-Host ""
-Write-Host "Виконуємо BACKUP..."
+Write-Host "Executing BACKUP..."
 
 try {
-    # Спочатку переконаємось, що папка для бекапів існує
-    docker exec mssql_kovix mkdir -p /var/opt/mssql/backups 2>&1 | Out-Null
-    
-    $result = docker exec -i mssql_kovix /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P KovixStrongPass123! -C -Q $backupQuery 2>&1
-    
-    if ($LASTEXITCODE -eq 0) {
-        Write-Host ""
-        Write-Host "БЕКАП УСПІШНО СТВОРЕНИЙ!"
-        Write-Host "Статистика:"
-        
-        Start-Sleep -Seconds 2
-        $fileInfo = docker exec mssql_kovix ls -lh /var/opt/mssql/backups/$backupFileName 2>&1 | findstr $backupFileName
-        Write-Host "Розмір: $fileInfo"
-        
-        Write-Host ""
-        Write-Host "Файл: $backupFilePath"
-        Write-Host "Час: $(Get-Date -Format 'dd.MM.yyyy HH:mm:ss')"
-        Write-Host "================================"
-    }
-    else {
-        Write-Host ""
-        Write-Host "ПОМИЛКА при бекапу:"
+    $result = docker exec -i $ContainerName /opt/mssql-tools18/bin/sqlcmd `
+        -S localhost `
+        -U $Username `
+        -P $Password `
+        -C `
+        -Q $backupQuery 2>&1
+
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "❌ BACKUP ERROR:"
         Write-Host $result
         exit 1
     }
+
+    Write-Host "Copying backup to Windows..."
+
+    docker cp "${ContainerName}:${containerPath}" "$localFilePath"
+
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "❌ COPY ERROR"
+        exit 1
+    }
+    
+    Write-Host "✔ File copied successfully"
+    Write-Host ""
+    Write-Host "================================"
+    Write-Host "✔ BACKUP SUCCESSFUL"
+    Write-Host "File: $localFilePath"
+    Write-Host "Time: $(Get-Date -Format 'dd.MM.yyyy HH:mm:ss')"
+    Write-Host "================================"
 }
 catch {
-    Write-Host ""
-    Write-Host "ПОМИЛКА: $_"
+    Write-Host "❌ EXCEPTION: $_"
     exit 1
 }
 
-Write-Host ""
-Write-Host "Завдання завершено успішно!"
-Write-Host "================================"
+Write-Host "Done!"

@@ -34,19 +34,19 @@ namespace Movie.API.Controllers
 
             _context.UserAwards.Add(award);
             await _context.SaveChangesAsync();
-            return Ok(new { message = "Ачівку успішно видано!" });
+            return Ok(new { message = "Досягнення успішно видано!" });
         }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> EditAward(int id, [FromBody] UserAwardCreateDto dto)
         {
-            Console.WriteLine($"Редагування ачівки: ID={id}, Name={dto.Name}");
+            Console.WriteLine($"Редагування досягнення: ID={id}, Name={dto.Name}");
 
             var award = await _context.UserAwards.FindAsync(id);
             if (award == null)
             {
-                Console.WriteLine($"Ачівку не знайдено: {id}");
-                return NotFound("Нагороду не знайдено.");
+                Console.WriteLine($"Досягнення не знайдено: {id}");
+                return NotFound("Досягнення не знайдено.");
             }
 
             award.Name = dto.Name;
@@ -55,27 +55,27 @@ namespace Movie.API.Controllers
 
             await _context.SaveChangesAsync();
             
-            Console.WriteLine($"Ачівку оновлено: {id}");
-            return Ok(new { message = "Ачівку оновлено!" });
+            Console.WriteLine($"Досягнення оновлено: {id}");
+            return Ok(new { message = "Досягнення оновлено!" });
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> RemoveAward(int id)
         {
-            Console.WriteLine($"Видалення ачівки: ID={id}");
+            Console.WriteLine($"Видалення досягнення: ID={id}");
 
             var award = await _context.UserAwards.FindAsync(id);
             if (award == null)
             {
-                Console.WriteLine($"Ачівку не знайдено: {id}");
-                return NotFound("Нагороду не знайдено.");
+                Console.WriteLine($"Досягнення не знайдено: {id}");
+                return NotFound("Досягнення не знайдено.");
             }
 
             _context.UserAwards.Remove(award);
             await _context.SaveChangesAsync();
             
-            Console.WriteLine($"Ачівку видалено: {id}");
-            return Ok(new { message = "Ачівку видалено." });
+            Console.WriteLine($"Досягнення видалено: {id}");
+            return Ok(new { message = "Досягнення видалено." });
         }
     }
 }

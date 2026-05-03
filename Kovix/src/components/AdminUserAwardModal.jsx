@@ -46,7 +46,7 @@ const AdminUserAwardModal = ({ show, onHide, targetUserId, onAwardAdded, awardTo
         <Modal show={show} onHide={onHide} centered contentClassName="bg-card text-main border-secondary">
             <Modal.Header closeButton style={{ borderColor: 'var(--border-color)' }}>
                 <Modal.Title className="fw-bold" style={{ color: 'var(--primary-color)' }}>
-                    {awardToEdit ? '✏️ Редагувати ачівку' : '🎖️ Видати ачівку користувачу'}
+                    {awardToEdit ? '✏️ Редагувати досягнення' : '🎖️ Видати досягнення користувачу'}
                 </Modal.Title>
             </Modal.Header>
             <Modal.Body>

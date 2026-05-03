@@ -280,6 +280,19 @@ namespace Movie.API.Controllers
                 });
             }
 
+            bool hasReactionAward = await _context.UserAwards.AnyAsync(ua => ua.UserId == userId && ua.Name == "Емоційний глядач");
+            if (!hasReactionAward)
+            {
+                _context.UserAwards.Add(new UserAward
+                {
+                    UserId = userId,
+                    Name = "Емоційний глядач",
+                    Icon = "🎭",
+                    Description = "За першу залишену реакцію на фільм"
+                });
+                await _context.SaveChangesAsync();
+            }
+
             await _context.SaveChangesAsync();
             return Ok();
         }

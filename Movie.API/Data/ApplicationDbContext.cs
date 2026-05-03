@@ -90,6 +90,10 @@ namespace Movie.API.Data
                 entity.Property(e => e.Username).IsRequired().HasMaxLength(50);
                 entity.Property(e => e.Email).IsRequired().HasMaxLength(100);
                 entity.HasIndex(e => e.Email).IsUnique();
+                entity.HasOne(u => u.SelectedAward)
+                    .WithMany()
+                    .HasForeignKey(u => u.SelectedAwardId)
+                    .OnDelete(DeleteBehavior.NoAction);
             });
 
             modelBuilder.Entity<Watchlist>(entity =>

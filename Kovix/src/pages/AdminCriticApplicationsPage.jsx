@@ -3,6 +3,7 @@ import { Container, Card, Button, Spinner, Badge } from 'react-bootstrap';
 import { applicationsAPI } from '../services/api';
 import { API_BASE_URL } from '../utils/apiConfig';
 import defaultAvatarImg from '../assets/NotFoundAvatar.png';
+import UserTitleBadge from '../components/UserTitleBadge';
 
 const DEFAULT_AVATAR = defaultAvatarImg;
 
@@ -58,6 +59,10 @@ const AdminCriticApplicationsPage = () => {
                                     <div>
                                         <div className="d-flex align-items-center gap-2 mb-1">
                                             <span className="fw-bold fs-5 text-main">{app.user.username}</span>
+                                            <UserTitleBadge
+                                                role={app.user.role}
+                                                selectedAward={app.user.selectedAward}
+                                            />
                                             <span className="text-muted small">{app.user.email}</span>
                                             <Badge bg="secondary">Очікує</Badge>
                                         </div>

@@ -135,7 +135,23 @@ namespace Movie.API.Controllers
                     FollowingCount = u.Following.Count,
 
                     IsFollowingByMe = currentUserId.HasValue &&
-                                      u.Followers.Any(f => f.ObserverId == currentUserId)
+                                      u.Followers.Any(f => f.ObserverId == currentUserId),
+
+                    Awards = u.Awards.Select(a => new UserAwardDto 
+                    {
+                        Id = a.Id,
+                        Name = a.Name,
+                        Icon = a.Icon,
+                        Description = a.Description,
+                        IssuedAt = a.IssuedAt
+                    }).ToList(),
+
+                    SelectedAward = u.SelectedAward != null ? new AwardDto
+                    {
+                        Id = u.SelectedAward.Id,
+                        Name = u.SelectedAward.Name,
+                        Icon = u.SelectedAward.Icon
+                    } : null
                 })
                 .FirstOrDefaultAsync();
 

@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { reviewsAPI } from '../services/api';
 import { API_BASE_URL } from '../utils/apiConfig';
+import UserTitleBadge from './UserTitleBadge';
 
 function ReviewList({ reviews, onReviewUpdated }) {
   const { user } = useAuth();
@@ -69,12 +70,12 @@ function ReviewList({ reviews, onReviewUpdated }) {
 
   if (reviews.length === 0) {
     return (
-      <div 
+      <div
         className="text-center p-5 mt-3 rounded border"
-        style={{ 
-            backgroundColor: 'var(--bg-card)', 
-            borderColor: 'var(--border-color)', 
-            color: 'var(--text-secondary)' 
+        style={{
+          backgroundColor: 'var(--bg-card)',
+          borderColor: 'var(--border-color)',
+          color: 'var(--text-secondary)'
         }}
       >
         <p className="mb-0 fs-5">Ще немає відгуків. Будьте першим!</p>
@@ -100,13 +101,13 @@ function ReviewList({ reviews, onReviewUpdated }) {
           review.currentUserVote === -1 ? 'danger' : 'outline-secondary';
 
         return (
-          <Card 
-            key={review.id} 
+          <Card
+            key={review.id}
             className="mb-3 shadow-sm"
-            style={{ 
-                backgroundColor: 'var(--bg-card)', 
-                color: 'var(--text-main)',
-                border: '1px solid var(--border-color)'
+            style={{
+              backgroundColor: 'var(--bg-card)',
+              color: 'var(--text-main)',
+              border: '1px solid var(--border-color)'
             }}
           >
             <Card.Body>
@@ -136,14 +137,20 @@ function ReviewList({ reviews, onReviewUpdated }) {
                   </Link>
 
                   <div>
-                    <Link
-                      to={profileUrl}
-                      className="fw-bold text-decoration-none"
-                      style={{ color: 'var(--text-main)' }}
-                    >
-                      {review.userName || 'Користувач'}
-                    </Link>
-                    <br />
+                    <div className="fw-bold fs-5 text-main d-flex align-items-center">
+                      <Link
+                        to={profileUrl}
+                        className="text-decoration-none"
+                        style={{ color: 'var(--text-main)' }}
+                      >
+                        {review.user?.username || review.userName || 'Користувач'}
+                      </Link>
+
+                      <UserTitleBadge
+                        role={review.role || review.user?.role}
+                        selectedAward={review.selectedAward || review.user?.selectedAward}
+                      />
+                    </div>
                     <small style={{ color: 'var(--text-secondary)' }}>
                       {formatDate(review.createdAt)}
                     </small>
@@ -156,8 +163,8 @@ function ReviewList({ reviews, onReviewUpdated }) {
                       review.rating >= 8
                         ? 'success'
                         : review.rating >= 5
-                        ? 'warning'
-                        : 'danger'
+                          ? 'warning'
+                          : 'danger'
                     }
                   >
                     ⭐ {review.rating}/10
@@ -196,10 +203,10 @@ function ReviewList({ reviews, onReviewUpdated }) {
                           comment: e.target.value,
                         })
                       }
-                      style={{ 
-                          backgroundColor: 'var(--bg-main)', 
-                          color: 'var(--text-main)',
-                          borderColor: 'var(--border-color)'
+                      style={{
+                        backgroundColor: 'var(--bg-main)',
+                        color: 'var(--text-main)',
+                        borderColor: 'var(--border-color)'
                       }}
                     />
                   </Form.Group>

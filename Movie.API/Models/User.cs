@@ -34,5 +34,7 @@ namespace Movie.API.Models
         public ICollection<Appeal> Appeals { get; set; } = new List<Appeal>();
         public ICollection<CriticReview> CriticReviews { get; set; } = new List<CriticReview>();
         public List<UserAward> Awards { get; set; } = new List<UserAward>();
+        public int? SelectedAwardId { get; set; }
+        public UserAward? SelectedAward { get; set; }
     }
 }

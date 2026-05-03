@@ -14,6 +14,7 @@ import { API_BASE_URL } from '../utils/apiConfig';
 import BecomeCriticBanner from '../components/BecomeCriticBanner';
 import AdminUserAwardModal from '../components/AdminUserAwardModal';
 import { adminUserAwardsAPI } from '../services/api';
+import UserTitleBadge from '../components/UserTitleBadge';
 const DEFAULT_AVATAR = defaultAvatarImg
 
 function ProfilePage() {
@@ -54,7 +55,7 @@ function ProfilePage() {
   const handleEditAward = (award) => { setAwardToEdit(award); setShowAwardModal(true); };
 
   const handleDeleteAward = async (id) => {
-    if (!window.confirm("Видалити цю ачівку?")) return;
+    if (!window.confirm("Видалити цю досягнення?")) return;
     try {
       await adminUserAwardsAPI.removeAward(id);
       loadProfile();
@@ -342,7 +343,13 @@ function ProfilePage() {
               />
             </div>
 
-            <h3>{profile.username}</h3>
+            <div className="d-flex justify-content-center align-items-center mb-1">
+              <h3 className="mb-0">{profile.username}</h3>
+              <UserTitleBadge
+                role={profile.role}
+                selectedAward={profile.selectedAward}
+              />
+            </div>
             <p className="text-muted">{profile.email}</p>
 
             <div className="d-flex justify-content-center mb-3">
@@ -430,7 +437,13 @@ function ProfilePage() {
                             onError={(e) => { e.target.src = DEFAULT_AVATAR; }}
                           />
                         </div>
-                        <strong>{req.username}</strong>
+                        <div className="d-flex align-items-center gap-2">
+                          <strong>{req.username}</strong>
+                          <UserTitleBadge
+                            role={req.role}
+                            selectedAward={req.selectedAward}
+                          />
+                        </div>
                       </Link>
                       <div className="d-flex gap-2">
                         <Button size="sm" variant="success" onClick={() => handleAccept(req.id)}>✅</Button>
@@ -717,11 +730,39 @@ function ProfilePage() {
               style={{ border: '2px dashed rgba(255,255,255,0.2)', cursor: 'pointer', minWidth: '150px' }}
               onClick={handleAddAward}
             >
-              <span className="text-muted fw-bold"><i className="bi bi-plus-lg"></i> Видати ачівку</span>
+              <span className="text-muted fw-bold"><i className="bi bi-plus-lg"></i> Видати досягнення</span>
             </div>
           )}
         </div>
       </div>
+
+      <Form.Group className="mb-4">
+        <Form.Label className="fw-bold">Оберіть ваше звання для чатів і коментарів:</Form.Label>
+        <Form.Select
+          value={profile.selectedAward?.id || ""}
+          onChange={async (e) => {
+            const val = e.target.value;
+            const awardId = val ? parseInt(val) : null;
+            try {
+              const response = await authAPI.updateTitle(awardId);
+              await loadProfile();
+            } catch (error) {
+              console.error('Деталі:', {
+                status: error.response?.status,
+                data: error.response?.data,
+                message: error.message
+              });
+              alert('Помилка: ' + (error.response?.data?.message || error.message));
+              await loadProfile();
+            }
+          }}
+        >
+          <option value="">Немає звання</option>
+          {profile.awards?.map(aw => (
+            <option key={aw.id} value={aw.id}>{aw.icon} {aw.name}</option>
+          ))}
+        </Form.Select>
+      </Form.Group>
 
       <AdminUserAwardModal
         show={showAwardModal}

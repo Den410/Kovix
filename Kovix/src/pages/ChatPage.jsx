@@ -6,6 +6,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { HubConnectionState } from '@microsoft/signalr';
 import { useChatConnection } from '../hooks/useChatConnection';
 import { getApiBaseUrl } from '../utils/apiConfig';
+import UserTitleBadge from '../components/UserTitleBadge';
 import '../style/App.css';
 
 const formatMessageDate = (dateString) => {
@@ -439,7 +440,13 @@ function ChatPage() {
                                                 </div>
                                             </div>
                                             <div className="ms-3 overflow-hidden d-flex flex-column justify-content-center">
-                                                <span className="fw-bold text-truncate" style={{ fontSize: '0.95rem' }}>{friend.username}</span>
+                                                <div className="d-flex align-items-center gap-2 mb-1">
+                                                    <span className="fw-bold text-truncate" style={{ fontSize: '0.95rem' }}>{friend.username}</span>
+                                                    <UserTitleBadge
+                                                        role={friend.role}
+                                                        selectedAward={friend.selectedAward}
+                                                    />
+                                                </div>
                                                 <span
                                                     className="text-truncate small"
                                                     style={{
@@ -476,8 +483,16 @@ function ChatPage() {
 
                 <Col md={8} className="h-100">
                     <Card className="h-100 shadow-sm" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-color)', display: 'flex', flexDirection: 'column', borderRadius: '12px' }}>
-                        <Card.Header className="fw-bold py-3" style={{ backgroundColor: 'var(--bg-card)', borderBottom: '1px solid var(--border-color)', color: 'var(--text-main)', borderTopLeftRadius: '12px', borderTopRightRadius: '12px' }}>
-                            {activeChat === null ? '🌍 Загальний чат' : friends.find(f => f.id === activeChat)?.username || '💬 Чат'}
+                        <Card.Header className="fw-bold py-3 d-flex align-items-center gap-2" style={{ backgroundColor: 'var(--bg-card)', borderBottom: '1px solid var(--border-color)', color: 'var(--text-main)', borderTopLeftRadius: '12px', borderTopRightRadius: '12px' }}>
+                            <span>
+                                {activeChat === null ? '🌍 Загальний чат' : friends.find(f => f.id === activeChat)?.username || '💬 Чат'}
+                            </span>
+                            {activeChat !== null && friends.find(f => f.id === activeChat) && (
+                                <UserTitleBadge
+                                    role={friends.find(f => f.id === activeChat)?.role}
+                                    selectedAward={friends.find(f => f.id === activeChat)?.selectedAward}
+                                />
+                            )}
                         </Card.Header>
 
                         <Card.Body className="d-flex flex-column p-0" style={{ overflow: 'hidden' }}>

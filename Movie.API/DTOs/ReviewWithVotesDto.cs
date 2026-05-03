@@ -16,6 +16,8 @@
         public int CurrentUserVote { get; set; }
 
         public string? MovieTitle { get; set; }
+        public string? Role { get; set; }
+        public AwardDto? SelectedAward { get; set; }
         public string? MoviePosterUrl { get; set; }
     }
 }

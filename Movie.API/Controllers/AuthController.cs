@@ -142,6 +142,7 @@ namespace Movie.API.Controllers
                 .Include(u => u.Reviews!)
                     .ThenInclude(r => r.Movie)
                 .Include(u => u.Awards)
+                .Include(u => u.SelectedAward) 
                 .FirstOrDefaultAsync(u => u.Id == userId);
 
             if (user == null) return NotFound();
@@ -192,10 +193,37 @@ namespace Movie.API.Controllers
                 .Include(u => u.Reviews)
                     .ThenInclude(r => r.Movie)
                 .Include(u => u.Awards)
+                .Include(u => u.SelectedAward) 
                 .FirstOrDefaultAsync(u => u.Id == userId);
 
-            fullUser!.PasswordHash = "";
-            return Ok(fullUser);
+            var updatedProfile = new
+            {
+                fullUser!.Id,
+                fullUser.Username,
+                fullUser.Email,
+                fullUser.Role,
+                fullUser.AvatarUrl,
+                fullUser.IsBlocked,
+                fullUser.CreatedAt,
+                fullUser.BlockedGenres,
+                fullUser.Reviews,
+                Awards = fullUser.Awards?.Select(a => new
+                {
+                    a.Id,
+                    a.Name,
+                    a.Icon,
+                    a.Description,
+                    a.IssuedAt
+                }).ToList(),
+                SelectedAward = fullUser.SelectedAward != null ? new
+                {
+                    fullUser.SelectedAward.Id,
+                    fullUser.SelectedAward.Name,
+                    fullUser.SelectedAward.Icon
+                } : null
+            };
+
+            return Ok(updatedProfile);
         }
 
 
@@ -383,6 +411,35 @@ namespace Movie.API.Controllers
             await _context.SaveChangesAsync();
 
             return Ok(new { message = "Пароль успішно змінено! Тепер ви можете увійти." });
+        }
+
+        [HttpPut("me/title")]
+        [Authorize]
+        public async Task<IActionResult> UpdateTitle([FromBody] UpdateTitleDto dto)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            var userId = int.Parse(userIdClaim!.Value);
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null) 
+            {
+                return NotFound();
+            }
+
+            if (dto.AwardId.HasValue)
+            {
+                bool ownsAward = await _context.UserAwards
+                    .AnyAsync(a => a.Id == dto.AwardId.Value && a.UserId == userId);
+
+                if (!ownsAward)
+                {
+                    return BadRequest("У вас немає цієї нагороди.");
+                }
+            }
+
+            user.SelectedAwardId = dto.AwardId;
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Звання успішно оновлено!" });
         }
 
         private async Task<bool> VerifyCaptchaAsync(string token)

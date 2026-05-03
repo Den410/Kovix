@@ -24,6 +24,7 @@ namespace Movie.API.Controllers
         {
             var reviews = await _context.CriticReviews
                 .Include(cr => cr.User)
+                    .ThenInclude(u => u.SelectedAward) 
                 .Where(cr => cr.MovieId == movieId)
                 .OrderByDescending(cr => cr.CreatedAt)
                 .Select(cr => new
@@ -37,7 +38,19 @@ namespace Movie.API.Controllers
                     cr.Verdict,
                     cr.FullText,
                     cr.CreatedAt,
-                    User = new { cr.User.Id, cr.User.Username, cr.User.AvatarUrl }
+                    User = new
+                    {
+                        cr.User.Id,
+                        cr.User.Username,
+                        cr.User.AvatarUrl,
+                        cr.User.Role, 
+                        SelectedAward = cr.User.SelectedAward != null ? new 
+                        {
+                            cr.User.SelectedAward.Id,
+                            cr.User.SelectedAward.Name,
+                            cr.User.SelectedAward.Icon
+                        } : null
+                    }
                 })
                 .ToListAsync();
 

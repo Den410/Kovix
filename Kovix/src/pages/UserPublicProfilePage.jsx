@@ -7,6 +7,9 @@ import { useFriends } from '../contexts/FriendsContext';
 import { formatLastSeen } from '../utils/dateUtils';
 import defaultPosterImg from '../assets/NotFoundPoster.webp';
 import { API_BASE_URL } from '../utils/apiConfig';
+import AdminUserAwardModal from '../components/AdminUserAwardModal';
+import { adminUserAwardsAPI } from '../services/api';
+import UserTitleBadge from '../components/UserTitleBadge';
 
 function UserPublicProfilePage() {
     const { id } = useParams();
@@ -15,6 +18,7 @@ function UserPublicProfilePage() {
     const [userProfile, setUserProfile] = useState(null);
     const [reviews, setReviews] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [awards, setAwards] = useState([]);
 
     const { refreshRequests } = useFriends();
     const [friendStatus, setFriendStatus] = useState('None');
@@ -35,6 +39,29 @@ function UserPublicProfilePage() {
 
     const [searchQuery, setSearchQuery] = useState('');
     const [sortBy, setSortBy] = useState('date_desc');
+
+    const [showAwardModal, setShowAwardModal] = useState(false);
+    const [awardToEdit, setAwardToEdit] = useState(null);
+
+    const handleAddAward = () => {
+        setAwardToEdit(null);
+        setShowAwardModal(true);
+    };
+
+    const handleEditAward = (award) => {
+        setAwardToEdit(award);
+        setShowAwardModal(true);
+    };
+
+    const handleDeleteAward = async (awardId) => {
+        if (!window.confirm("Видалити це досягнення?")) return;
+        try {
+            await adminUserAwardsAPI.removeAward(awardId);
+            loadData();
+        } catch (e) {
+            alert("Помилка видалення нагороди");
+        }
+    };
 
     useEffect(() => {
         setVisibleReviewsCount(5);
@@ -59,6 +86,7 @@ function UserPublicProfilePage() {
             setIsBlocked(p.isBlocked);
             setIsOnline(p.isOnline);
             setLastActive(p.lastActive);
+            setAwards(p.awards || []);
 
             setFollowersCount(p.followersCount || 0);
             setFollowingCount(p.followingCount || 0);
@@ -240,7 +268,13 @@ function UserPublicProfilePage() {
                     )}
                 </div>
 
-                <h2 className="fw-bold mb-1">{userProfile.username}</h2>
+                <div className="d-flex justify-content-center align-items-center gap-2 mb-1">
+                    <h2 className="fw-bold mb-0">{userProfile.username}</h2>
+                    <UserTitleBadge
+                        role={userProfile.role}
+                        selectedAward={userProfile.selectedAward}
+                    />
+                </div>
 
                 <div className="small fw-bold mb-3" style={{ color: isOnline ? '#57cbde' : 'var(--text-secondary)' }}>
                     {formatLastSeen(lastActive, isOnline)}
@@ -313,6 +347,102 @@ function UserPublicProfilePage() {
                     На сайті з {new Date(userProfile.createdAt).toLocaleDateString('uk-UA')}
                 </p>
             </Card>
+
+            {!isBlocked && (awards.length > 0 || isAdmin) && (
+                <div className="mb-4">
+                    <h4 className="mb-3 ps-2 border-start border-4" style={{ borderColor: 'var(--primary-color)', color: 'var(--text-main)' }}>
+                        🏆 Досягнення
+                    </h4>
+                    <Row className="g-3">
+                        {awards.map(award => (
+                            <Col xs={6} sm={4} md={3} lg={2.4} key={award.id} className="text-center position-relative">
+                                <Card
+                                    className="shadow-sm border-0 h-100 d-flex align-items-center justify-content-center"
+                                    style={{
+                                        backgroundColor: 'var(--bg-card)',
+                                        color: 'var(--text-main)',
+                                        border: '1px solid var(--border-color)',
+                                        minHeight: '140px',
+                                        transition: 'transform 0.2s, box-shadow 0.2s'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.transform = 'translateY(-4px)';
+                                        e.currentTarget.style.boxShadow = '0 8px 16px rgba(0,0,0,0.2)';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.transform = 'translateY(0)';
+                                        e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+                                    }}
+                                >
+                                    <Card.Body className="d-flex flex-column align-items-center justify-content-center py-3">
+                                        <div style={{ fontSize: '2.5rem', marginBottom: '8px' }}>
+                                            {award.icon}
+                                        </div>
+                                        <div className="fw-bold small text-center" style={{ fontSize: '0.85rem' }}>
+                                            {award.name}
+                                        </div>
+                                        {award.description && (
+                                            <div className="text-muted text-center mt-1" style={{ fontSize: '0.7rem', lineHeight: '1.2' }}>
+                                                {award.description}
+                                            </div>
+                                        )}
+                                    </Card.Body>
+                                </Card>
+
+                                {isAdmin && (
+                                    <div className="position-absolute top-0 end-0 p-1 d-flex gap-2" style={{ background: 'var(--bg-card)', borderRadius: '0 8px 0 8px', zIndex: 2, border: '1px solid var(--border-color)' }}>
+                                        <span
+                                            style={{ cursor: 'pointer', fontSize: '0.9rem', opacity: 0.8, transition: 'opacity 0.2s' }}
+                                            onClick={() => handleEditAward(award)}
+                                            onMouseEnter={(e) => e.target.style.opacity = '1'}
+                                            onMouseLeave={(e) => e.target.style.opacity = '0.8'}
+                                            title="Редагувати"
+                                        >
+                                            ✏️
+                                        </span>
+                                        <span
+                                            style={{ cursor: 'pointer', fontSize: '0.9rem', opacity: 0.8, transition: 'opacity 0.2s' }}
+                                            onClick={() => handleDeleteAward(award.id)}
+                                            onMouseEnter={(e) => e.target.style.opacity = '1'}
+                                            onMouseLeave={(e) => e.target.style.opacity = '0.8'}
+                                            title="Видалити"
+                                        >
+                                            ❌
+                                        </span>
+                                    </div>
+                                )}
+                            </Col>
+                        ))}
+
+                        {isAdmin && (
+                            <Col xs={6} sm={4} md={3} lg={2.4} className="text-center">
+                                <Card
+                                    className="shadow-sm border-0 h-100 d-flex align-items-center justify-content-center"
+                                    style={{
+                                        backgroundColor: 'transparent',
+                                        color: 'var(--text-muted)',
+                                        border: '2px dashed var(--border-color)',
+                                        minHeight: '140px',
+                                        cursor: 'pointer'
+                                    }}
+                                    onClick={handleAddAward}
+                                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)'}
+                                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                >
+                                    <Card.Body className="d-flex flex-column align-items-center justify-content-center py-3">
+                                        <div style={{ fontSize: '2rem', marginBottom: '8px' }}>
+                                            ➕
+                                        </div>
+                                        <div className="fw-bold small text-center" style={{ fontSize: '0.85rem' }}>
+                                            Видати досягнення
+                                        </div>
+                                    </Card.Body>
+                                </Card>
+                            </Col>
+                        )}
+                    </Row>
+                </div>
+            )}
 
             {!isBlocked && (
                 <>
@@ -437,6 +567,10 @@ function UserPublicProfilePage() {
                                             >
                                                 {u.username}
                                             </Link>
+                                            <UserTitleBadge
+                                                role={u.role}
+                                                selectedAward={u.selectedAward}
+                                            />
                                         </div>
                                     </ListGroup.Item>
                                 ))
@@ -447,6 +581,14 @@ function UserPublicProfilePage() {
                     )}
                 </Modal.Body>
             </Modal>
+
+            <AdminUserAwardModal
+                show={showAwardModal}
+                onHide={() => setShowAwardModal(false)}
+                targetUserId={id} 
+                onAwardAdded={loadData}
+                awardToEdit={awardToEdit}
+            />
 
         </Container>
     );

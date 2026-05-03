@@ -4,6 +4,7 @@ import { adminUsersAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { API_BASE_URL } from '../utils/apiConfig';
 import defaultAvatarImg from '../assets/NotFoundAvatar.png';
+import UserTitleBadge from '../components/UserTitleBadge';
 
 
 const AdminRolesPage = () => {
@@ -76,8 +77,10 @@ const AdminRolesPage = () => {
                                             style={{ width: '40px', height: '40px', objectFit: 'cover' }}
                                             onError={(e) => { e.target.src = defaultAvatarImg; }}
                                         />
-                                        <span className="fw-bold text-main">{u.username}</span>
-                                    </div>
+                                        <span className="fw-bold text-main">{u.username}</span>                                        <UserTitleBadge
+                                            role={u.role}
+                                            selectedAward={u.selectedAward}
+                                        />                                    </div>
                                 </td>
                                 <td className="text-muted">{u.email}</td>
                                 <td>

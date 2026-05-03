@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Movie.API.Data;
 
@@ -11,9 +12,11 @@ using Movie.API.Data;
 namespace Movie.API.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260503094349_AddSelectedTitle")]
+    partial class AddSelectedTitle
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -779,6 +782,9 @@ namespace Movie.API.Migrations
                     b.Property<int?>("SelectedAwardId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("SelectedAwardId1")
+                        .HasColumnType("int");
+
                     b.Property<string>("Username")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -789,7 +795,7 @@ namespace Movie.API.Migrations
                     b.HasIndex("Email")
                         .IsUnique();
 
-                    b.HasIndex("SelectedAwardId");
+                    b.HasIndex("SelectedAwardId1");
 
                     b.ToTable("Users");
 
@@ -801,7 +807,7 @@ namespace Movie.API.Migrations
                             Email = "admin@gmail.com",
                             IsBlocked = false,
                             IsOnline = false,
-                            PasswordHash = "$2a$11$Y787TkkjDBYLOMFKvH8eQOgSgrM1f6uFNcTunHlPCiV09dPj7p5LK",
+                            PasswordHash = "$2a$11$exb95olSqkOocfTHfZ0UUuZLcb8.9Wtg4U.ArYR6EZ8FDdbckZT0W",
                             Role = "Admin",
                             Username = "admin"
                         });
@@ -1305,8 +1311,7 @@ namespace Movie.API.Migrations
                 {
                     b.HasOne("Movie.API.Models.UserAward", "SelectedAward")
                         .WithMany()
-                        .HasForeignKey("SelectedAwardId")
-                        .OnDelete(DeleteBehavior.NoAction);
+                        .HasForeignKey("SelectedAwardId1");
 
                     b.Navigation("SelectedAward");
                 });
