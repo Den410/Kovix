@@ -1,23 +1,37 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { Spinner, Card, Badge, Button } from 'react-bootstrap';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { Container, Row, Col, Card, Badge, Spinner, Button } from 'react-bootstrap';
+import { moviesAPI, criticReviewsAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
-import { criticReviewsAPI } from '../services/api';
-import CriticReviewForm from './CriticReviewForm';
+import CriticReviewForm from '../components/CriticReviewForm';
 import defaultAvatarImg from '../assets/NotFoundAvatar.png';
 import { API_BASE_URL } from '../utils/apiConfig';
-import UserTitleBadge from './UserTitleBadge';
+import UserTitleBadge from '../components/UserTitleBadge';
+import '../style/App.css';
 
-const CriticReviewsSection = ({ movieId, maxItems = null, onShowAllClick = null }) => {
+const CriticReviewsPage = () => {
+    const { id } = useParams();
+    const navigate = useNavigate();
     const { user } = useAuth();
+
+    const [movie, setMovie] = useState(null);
     const [reviews, setReviews] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
     const [editingId, setEditingId] = useState(null);
 
+    const loadMovieData = async () => {
+        try {
+            const res = await moviesAPI.getById(id);
+            setMovie(res.data);
+        } catch (error) {
+            console.error('Помилка завантаження фільму:', error);
+        }
+    };
+
     const loadReviews = async () => {
         try {
-            const res = await criticReviewsAPI.getByMovie(movieId);
+            const res = await criticReviewsAPI.getByMovie(id);
             setReviews(res.data);
         } catch (error) {
             console.error("Помилка завантаження рецензій:", error);
@@ -27,8 +41,11 @@ const CriticReviewsSection = ({ movieId, maxItems = null, onShowAllClick = null 
     };
 
     useEffect(() => {
-        if (movieId) loadReviews();
-    }, [movieId]);
+        if (id) {
+            loadMovieData();
+            loadReviews();
+        }
+    }, [id]);
 
     const handleSubmitReview = async (reviewData) => {
         try {
@@ -78,36 +95,38 @@ const CriticReviewsSection = ({ movieId, maxItems = null, onShowAllClick = null 
         return <Badge bg="danger" className="fs-5">{score}</Badge>;
     };
 
-    if (loading) return <div className="text-center p-4"><Spinner animation="border" variant="warning" /></div>;
+    if (loading) return (
+        <Container className="py-5">
+            <div className="text-center"><Spinner animation="border" variant="warning" /></div>
+        </Container>
+    );
 
     const hasReviewed = user && reviews.some(r => r.user.id === user.id);
-
     const canReview = user && (user.role === 'Reviewer' || user.role === 'Admin') && !hasReviewed;
 
     return (
-        <div className="mt-5">
-            <div className="d-flex justify-content-between align-items-center mb-4 pb-2" style={{ borderBottom: '2px solid var(--border-color)' }}>
-                <h3 className="fw-bold mb-0" style={{ color: 'var(--primary-color)' }}>
-                    📝 Рецензії критиків <span className="text-muted fs-5">({reviews.length})</span>
-                </h3>
+        <Container className="py-5">
+            <Row className="mb-4">
+                <Col>
+                    <Button variant="outline-secondary" onClick={() => navigate(-1)} className="mb-3">
+                        ← Назад
+                    </Button>
+                    {movie && (
+                        <h2 className="mb-0">
+                            📝 Рецензії критиків - <span style={{ color: 'var(--primary-color)' }}>{movie.title}</span>
+                        </h2>
+                    )}
+                    <p className="text-muted mt-2">Всього рецензій: {reviews.length}</p>
+                </Col>
+            </Row>
 
-                <div className="d-flex gap-2 align-items-center">
-                    {maxItems && reviews.length > maxItems && onShowAllClick && (
-                        <Button 
-                            variant="outline-primary" 
-                            size="sm" 
-                            onClick={onShowAllClick}
-                        >
-                            Всі рецензії ({reviews.length}) ➡
-                        </Button>
-                    )}
-                    {canReview && !showForm && (
-                        <Button variant="warning" className="fw-bold" onClick={() => setShowForm(true)}>
-                            Написати рецензію
-                        </Button>
-                    )}
+            {canReview && !showForm && (
+                <div className="mb-4">
+                    <Button variant="warning" className="fw-bold" onClick={() => setShowForm(true)}>
+                        Написати рецензію
+                    </Button>
                 </div>
-            </div>
+            )}
 
             {showForm && (
                 <div className="mb-5">
@@ -116,7 +135,7 @@ const CriticReviewsSection = ({ movieId, maxItems = null, onShowAllClick = null 
                             Скасувати
                         </Button>
                     </div>
-                    <CriticReviewForm movieId={movieId} onSubmit={handleSubmitReview} />
+                    <CriticReviewForm movieId={id} onSubmit={handleSubmitReview} />
                 </div>
             )}
 
@@ -126,7 +145,7 @@ const CriticReviewsSection = ({ movieId, maxItems = null, onShowAllClick = null 
                 </div>
             ) : (
                 <div className="d-flex flex-column gap-4">
-                    {(maxItems ? reviews.slice(0, maxItems) : reviews).map(review => (
+                    {reviews.map(review => (
                         <Card key={review.id} className="border-0 shadow-sm" style={{ backgroundColor: 'var(--bg-card)' }}>
                             <Card.Body>
                                 {editingId === review.id ? (
@@ -136,10 +155,10 @@ const CriticReviewsSection = ({ movieId, maxItems = null, onShowAllClick = null 
                                                 Скасувати редагування
                                             </Button>
                                         </div>
-                                        <CriticReviewForm
-                                            movieId={movieId}
-                                            initialData={review}
-                                            onSubmit={(data) => handleUpdateReview(review.id, data)}
+                                        <CriticReviewForm 
+                                            movieId={id} 
+                                            initialData={review} 
+                                            onSubmit={(data) => handleUpdateReview(review.id, data)} 
                                         />
                                     </div>
                                 ) : (
@@ -215,8 +234,8 @@ const CriticReviewsSection = ({ movieId, maxItems = null, onShowAllClick = null 
                     ))}
                 </div>
             )}
-        </div>
+        </Container>
     );
 };
 
-export default CriticReviewsSection;
+export default CriticReviewsPage;

@@ -82,6 +82,18 @@ namespace Movie.API.Controllers
                 CreatedAt = DateTime.UtcNow
             };
 
+            bool hasCriticAward = await _context.UserAwards.AnyAsync(ua => ua.UserId == userId && ua.Name == "Гостре перо");
+            if (!hasCriticAward)
+            {
+                _context.UserAwards.Add(new UserAward
+                {
+                    UserId = userId,
+                    Name = "Гостре перо",
+                    Icon = "🖋️",
+                    Description = "За першу написану професійну рецензію"
+                });
+            }
+
             _context.CriticReviews.Add(review);
             await _context.SaveChangesAsync();
 
@@ -121,6 +133,33 @@ namespace Movie.API.Controllers
             await _context.SaveChangesAsync();
 
             return Ok(new { message = "Рецензію успішно видалено." });
+        }
+
+        [HttpPut("{id}")]
+        [Authorize(Roles = "Reviewer,Admin")]
+        public async Task<IActionResult> Update(int id, [FromBody] CriticReviewCreateDto dto) 
+        {
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var userRole = User.FindFirstValue(ClaimTypes.Role);
+
+            var review = await _context.CriticReviews.FindAsync(id);
+            if (review == null) return NotFound("Рецензію не знайдено");
+
+            if (review.UserId != userId)
+            {
+                return Forbid();
+            }
+
+            review.StoryScore = dto.StoryScore;
+            review.ActingScore = dto.ActingScore;
+            review.VisualsScore = dto.VisualsScore;
+            review.AudioScore = dto.AudioScore;
+            review.Verdict = dto.Verdict;
+            review.FullText = dto.FullText;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Рецензію успішно оновлено!" });
         }
     }
 }

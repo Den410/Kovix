@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { moviesAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import MovieCard from '../components/MovieCard';
+import RecentlyViewed from '../components/RecentlyViewed';
 import SlickSlider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
@@ -268,6 +269,8 @@ function HomePage() {
           <Button variant="primary" size="lg">Відкрити каталог фільмів</Button>
         </Link>
       </div>
+
+      <RecentlyViewed />
 
       <Modal
         show={showTrailer}

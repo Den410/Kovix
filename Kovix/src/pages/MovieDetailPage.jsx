@@ -145,6 +145,18 @@ function MovieDetailPage() {
       setMovie(movieRes.data);
       setReviews(reviewsRes.data);
 
+      const savedHistory = JSON.parse(localStorage.getItem('kovix_recent_movies') || '[]');
+      const movieData = {
+        id: movieRes.data.id,
+        title: movieRes.data.title,
+        posterUrl: movieRes.data.posterUrl
+      };
+      
+      const filteredHistory = savedHistory.filter(m => m.id !== movieData.id);
+      
+      const newHistory = [movieData, ...filteredHistory].slice(0, 10);
+      localStorage.setItem('kovix_recent_movies', JSON.stringify(newHistory));
+
       if (user) {
         try {
           const watchlistRes = await watchlistAPI.getStatus(id);
@@ -836,9 +848,13 @@ function MovieDetailPage() {
 
       {movie?.id && <MoviePhotos movieId={movie.id} movieTitle={movie.title} />}
 
-      <CriticReviewsSection movieId={id} />
+      <CriticReviewsSection 
+        movieId={id} 
+        maxItems={2}
+        onShowAllClick={() => navigate(`/movie/${id}/critic-reviews`)}
+      />
 
-      <Row>
+      <Row className="mt-3">
         <Col>
           <h3 className="mb-4 border-bottom pb-2" style={{ borderColor: 'var(--border-color)' }}>Відгуки глядачів</h3>
           {userReview ? (

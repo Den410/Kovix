@@ -44,6 +44,7 @@ import NewsBanner from './components/NewsBanner';
 import NewsDetailsPage from './pages/NewsDetailsPage';
 import NewsPage from './pages/NewsPage';
 import AdminRolesPage from './pages/AdminRolesPage';
+import CriticReviewsPage from './pages/CriticReviewsPage';
 
 import { useEffect } from 'react';
 
@@ -86,6 +87,7 @@ function App() {
                   <Route path="/terms" element={<TermsPage />} />
                   <Route path="/news/:id" element={<NewsDetailsPage />} />
                   <Route path="/news" element={<NewsPage />} />
+                  <Route path="/movie/:id/critic-reviews" element={<CriticReviewsPage />} />
                   <Route
                     path="/movies/:movieId"
                     element={

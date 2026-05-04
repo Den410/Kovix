@@ -24,7 +24,5 @@ namespace Movie.API.DTOs
 
         [Required]
         public string FullText { get; set; } = string.Empty;
-        public string? Role { get; set; }
-        public AwardDto? SelectedAward { get; set; }
     }
 }

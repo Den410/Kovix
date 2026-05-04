@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Form, Button, Alert, Row, Col } from 'react-bootstrap';
 import { criticReviewsAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 
-function CriticReviewForm({ movieId, onSubmit }) {
+function CriticReviewForm({ movieId, onSubmit, initialData }) {
   const { user } = useAuth();
 
   const [storyScore, setStoryScore] = useState(8);
@@ -14,6 +14,17 @@ function CriticReviewForm({ movieId, onSubmit }) {
   const [fullText, setFullText] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (initialData) {
+      setStoryScore(initialData.storyScore || 8);
+      setActingScore(initialData.actingScore || 8);
+      setVisualsScore(initialData.visualsScore || 8);
+      setAudioScore(initialData.audioScore || 8);
+      setVerdict(initialData.verdict || '');
+      setFullText(initialData.fullText || '');
+    }
+  }, [initialData]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -28,7 +39,7 @@ function CriticReviewForm({ movieId, onSubmit }) {
 
     try {
       const reviewData = {
-        MovieId: movieId,
+        ...(!initialData && { MovieId: movieId }),
         StoryScore: parseInt(storyScore),
         ActingScore: parseInt(actingScore),
         VisualsScore: parseInt(visualsScore),
@@ -200,7 +211,7 @@ function CriticReviewForm({ movieId, onSubmit }) {
               disabled={loading}
               className="fw-bold"
             >
-              {loading ? 'Публікація...' : 'Опублікувати рецензію'}
+              {loading ? (initialData ? 'Оновлення...' : 'Публікація...') : (initialData ? 'Зберегти зміни' : 'Опублікувати рецензію')}
             </Button>
           </div>
         </div>

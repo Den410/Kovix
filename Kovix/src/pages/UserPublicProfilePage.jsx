@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { Container, Card, Spinner, Row, Col, Badge, Button, Modal, ListGroup, Form } from 'react-bootstrap';
 import { useAuth } from '../contexts/AuthContext';
 import { usersAPI, reviewsAPI, friendsAPI } from '../services/api';
@@ -14,6 +14,7 @@ import UserTitleBadge from '../components/UserTitleBadge';
 function UserPublicProfilePage() {
     const { id } = useParams();
     const { user } = useAuth();
+    const [searchParams] = useSearchParams();
 
     const [userProfile, setUserProfile] = useState(null);
     const [reviews, setReviews] = useState([]);
@@ -106,6 +107,21 @@ function UserPublicProfilePage() {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        const sortFromUrl = searchParams.get('sort');
+        const searchFromUrl = searchParams.get('search');
+
+        if (sortFromUrl) setSortBy(sortFromUrl);
+        if (searchFromUrl) setSearchQuery(searchFromUrl);
+    }, []);
+
+    useEffect(() => {
+        const params = new URLSearchParams();
+        if (sortBy !== 'date_desc') params.set('sort', sortBy);
+        if (searchQuery) params.set('search', searchQuery);
+        window.history.replaceState(null, '', `?${params.toString()}`);
+    }, [sortBy, searchQuery]);
 
     const getImageUrl = (url, fallback = defaultPosterImg) => {
         if (!url) return fallback;

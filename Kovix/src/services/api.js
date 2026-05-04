@@ -197,12 +197,9 @@ export const newsAPI = {
 
 export const criticReviewsAPI = {
   getByMovie: (movieId) => api.get(`/criticreviews/movie/${movieId}`),
-  create: (data) => api.post('/criticreviews', data, {
-    headers: {
-      'Content-Type': 'application/json'
-    }
-  }),
-  delete: (id) => api.delete(`/criticreviews/${id}`)
+  create: (data) => api.post('/criticreviews', data),
+  delete: (id) => api.delete(`/criticreviews/${id}`),
+  update: (id, data) => api.put(`/criticreviews/${id}`, data)
 };
 
 export const applicationsAPI = {

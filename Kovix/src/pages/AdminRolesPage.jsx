@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Container, Table, Spinner, Form, Badge, Button } from 'react-bootstrap';
+import { Link } from 'react-router-dom';
 import { adminUsersAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { API_BASE_URL } from '../utils/apiConfig';
@@ -77,10 +78,14 @@ const AdminRolesPage = () => {
                                             style={{ width: '40px', height: '40px', objectFit: 'cover' }}
                                             onError={(e) => { e.target.src = defaultAvatarImg; }}
                                         />
-                                        <span className="fw-bold text-main">{u.username}</span>                                        <UserTitleBadge
+                                        <Link to={`/users/${u.id}`} className="fw-bold text-main" style={{ textDecoration: 'none', color: 'var(--text-main)' }}>
+                                            {u.username}
+                                        </Link>
+                                        <UserTitleBadge
                                             role={u.role}
                                             selectedAward={u.selectedAward}
-                                        />                                    </div>
+                                        />
+                                    </div>
                                 </td>
                                 <td className="text-muted">{u.email}</td>
                                 <td>
