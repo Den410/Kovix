@@ -41,7 +41,7 @@ namespace Movie.API.Controllers
         [HttpPut("{id}/role")]
         public async Task<IActionResult> ChangeUserRole(int id, [FromBody] ChangeRoleDto dto)
         {
-            var validRoles = new[] { "User", "Reviewer", "Admin" };
+            var validRoles = new[] { "User", "Reviewer", "Admin", "Moderator" };
             if (!validRoles.Contains(dto.NewRole))
             {
                 return BadRequest("Невідома роль.");

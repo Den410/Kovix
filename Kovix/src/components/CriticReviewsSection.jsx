@@ -9,7 +9,7 @@ import { API_BASE_URL } from '../utils/apiConfig';
 import UserTitleBadge from './UserTitleBadge';
 
 const CriticReviewsSection = ({ movieId, maxItems = null, onShowAllClick = null }) => {
-    const { user } = useAuth();
+    const { user, refreshUser } = useAuth();
     const [reviews, setReviews] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
@@ -35,7 +35,7 @@ const CriticReviewsSection = ({ movieId, maxItems = null, onShowAllClick = null 
             const res = await criticReviewsAPI.create(reviewData);
             setReviews([res.data, ...reviews]);
             setShowForm(false);
-            alert("Вашу рецензію успішно опубліковано!");
+            await refreshUser();
         } catch (error) {
             const errorMessage = typeof error.response?.data === 'string'
                 ? error.response.data
@@ -64,6 +64,7 @@ const CriticReviewsSection = ({ movieId, maxItems = null, onShowAllClick = null 
             await criticReviewsAPI.update(reviewId, reviewData);
             setEditingId(null);
             loadReviews();
+            await refreshUser();
         } catch (error) {
             const errorMessage = typeof error.response?.data === 'string'
                 ? error.response.data
@@ -158,8 +159,8 @@ const CriticReviewsSection = ({ movieId, maxItems = null, onShowAllClick = null 
                                                             {review.user.username}
                                                         </Link>
                                                         <UserTitleBadge
-                                                            role={review.user.role}
-                                                            selectedAward={review.user.selectedAward}
+                                                            role={user?.id === review.user.id ? user.role : review.user.role}
+                                                            selectedAward={user?.id === review.user.id ? user.selectedAward : review.user.selectedAward}
                                                         />
                                                     </div>
                                                     <div className="text-muted small mt-1">

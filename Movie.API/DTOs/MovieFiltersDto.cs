@@ -4,5 +4,6 @@
     {
         public List<string>? Genres { get; set; }
         public List<int>? Years { get; set; }
+        public List<AwardDto>? Awards { get; set; }
     }
 }

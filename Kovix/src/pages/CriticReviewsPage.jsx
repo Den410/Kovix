@@ -12,7 +12,7 @@ import '../style/App.css';
 const CriticReviewsPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { user } = useAuth();
+    const { user, refreshUser } = useAuth();
 
     const [movie, setMovie] = useState(null);
     const [reviews, setReviews] = useState([]);
@@ -53,6 +53,7 @@ const CriticReviewsPage = () => {
             setReviews([res.data, ...reviews]);
             setShowForm(false);
             alert("Вашу рецензію успішно опубліковано!");
+            await refreshUser();
         } catch (error) {
             const errorMessage = typeof error.response?.data === 'string'
                 ? error.response.data
@@ -81,6 +82,7 @@ const CriticReviewsPage = () => {
             await criticReviewsAPI.update(reviewId, reviewData);
             setEditingId(null);
             loadReviews();
+            await refreshUser();
         } catch (error) {
             const errorMessage = typeof error.response?.data === 'string'
                 ? error.response.data
@@ -177,8 +179,8 @@ const CriticReviewsPage = () => {
                                                             {review.user.username}
                                                         </Link>
                                                         <UserTitleBadge
-                                                            role={review.user.role}
-                                                            selectedAward={review.user.selectedAward}
+                                                            role={user?.id === review.user.id ? user.role : review.user.role}
+                                                            selectedAward={user?.id === review.user.id ? user.selectedAward : review.user.selectedAward}
                                                         />
                                                     </div>
                                                     <div className="text-muted small mt-1">

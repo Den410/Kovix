@@ -18,8 +18,8 @@ api.interceptors.request.use((config) => {
 });
 
 export const moviesAPI = {
-  getAll: (page = 1, pageSize = 8, search = '', genres = '', year = '', sort = '') =>
-    api.get('/movies', { params: { page, pageSize, search, genres, year, sort } }),
+  getAll: (page = 1, pageSize = 8, search = '', genres = '', year = '', sort = '', awards = '') =>
+    api.get('/movies', { params: { page, pageSize, search, genres, year, sort, awards } }),
   getFilters: () => api.get('/movies/filters'),
   getNew: (days = 45, limit = 10) =>
     api.get(`/movies/new?days=${days}&limit=${limit}`),
@@ -213,6 +213,16 @@ export const adminUsersAPI = {
     getAll: () => api.get(`/adminUsers`),
     changeRole: (id, newRole) => api.put(`/adminUsers/${id}/role`, { newRole: newRole }),
     delete: (id) => api.delete(`/criticreviews/${id}`)
+};
+
+export const moderatorAPI = {
+    getReports: (status = null) => api.get('/moderator/reports', { params: { status } }),
+    getUsersForModeration: (blockedOnly = false) => api.get('/moderator/users', { params: { blockedOnly } }),
+    deleteCriticReview: (id) => api.delete(`/moderator/reviews/${id}`),
+    deleteUserReview: (id) => api.delete(`/moderator/user-reviews/${id}`),
+    blockUser: (id, reason = '') => api.put(`/moderator/users/${id}/block`, { Reason: reason }),
+    unblockUser: (id) => api.put(`/moderator/users/${id}/unblock`),
+    resolveReport: (id, status, comment) => api.put(`/moderator/reports/${id}/resolve`, { Status: status, AdminComment: comment })
 };
 
 export const adminMovieAwardsAPI = {

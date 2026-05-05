@@ -16,6 +16,12 @@ const UserTitleBadge = ({ role, selectedAward }) => {
                 </Badge>
             )}
 
+            {role === 'Moderator' && (
+                <Badge bg="secondary" className="d-flex align-items-center gap-1 px-2 flex-shrink-0" style={{ fontSize: '0.75rem', boxShadow: '0 2px 4px rgba(108,117,125,0.3)' }}>
+                    🔒 Модератор
+                </Badge>
+            )}
+
             {selectedAward && (
                 <Badge 
                     bg="dark" 

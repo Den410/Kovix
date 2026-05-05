@@ -5,6 +5,7 @@ import { moviesAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import MovieCard from '../components/MovieCard';
 import RecentlyViewed from '../components/RecentlyViewed';
+import PopularActors from '../components/PopularActors';
 import SlickSlider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
@@ -271,6 +272,8 @@ function HomePage() {
       </div>
 
       <RecentlyViewed />
+
+      <PopularActors />
 
       <Modal
         show={showTrailer}

@@ -45,6 +45,7 @@ const AdminRolesPage = () => {
     const getRoleBadgeColor = (role) => {
         if (role === 'Admin') return 'danger';
         if (role === 'Reviewer') return 'warning';
+        if (role === 'Moderator') return 'secondary';
         return 'primary';
     };
 
@@ -104,6 +105,7 @@ const AdminRolesPage = () => {
                                     >
                                         <option value="User">Глядач (User)</option>
                                         <option value="Reviewer">Критик (Reviewer)</option>
+                                        <option value="Moderator">Модератор (Moderator)</option>
                                         <option value="Admin">Адміністратор (Admin)</option>
                                     </Form.Select>
                                 </td>

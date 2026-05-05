@@ -32,9 +32,11 @@ function AllMoviesPage() {
 
   const [availableGenres, setAvailableGenres] = useState([]);
   const [availableYears, setAvailableYears] = useState([]);
+  const [availableAwards, setAvailableAwards] = useState([]);
 
   const [selectedGenres, setSelectedGenres] = useState([]);
   const [selectedYear, setSelectedYear] = useState('');
+  const [selectedAwards, setSelectedAwards] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('dateDesc');
   const [viewMode, setViewMode] = useState('grid'); 
@@ -53,6 +55,7 @@ function AllMoviesPage() {
       .then(res => {
         setAvailableGenres(res.data.genres || []);
         setAvailableYears(res.data.years || []);
+        setAvailableAwards(res.data.awards || []);
       })
       .catch(console.error);
   }, []);
@@ -60,18 +63,21 @@ function AllMoviesPage() {
   useEffect(() => {
     if (!filtersReady) return;
     const genresString = selectedGenres.join(',');
-    loadMovies(page, searchTerm, genresString, selectedYear, sortBy);
-  }, [page, selectedGenres, selectedYear, sortBy, filtersReady]); 
+    const awardsString = selectedAwards.join(',');
+    loadMovies(page, searchTerm, genresString, selectedYear, sortBy, awardsString);
+  }, [page, selectedGenres, selectedYear, selectedAwards, sortBy, filtersReady]); 
 
   useEffect(() => {
     const genresFromUrl = searchParams.get('genres');
     const yearFromUrl = searchParams.get('year');
+    const awardsFromUrl = searchParams.get('awards');
     const searchFromUrl = searchParams.get('search');
     const sortFromUrl = searchParams.get('sort');
     const viewFromUrl = searchParams.get('view');
 
     if (genresFromUrl) setSelectedGenres(genresFromUrl.split(',').map(g => g.trim()).filter(Boolean));
     if (yearFromUrl) setSelectedYear(yearFromUrl);
+    if (awardsFromUrl) setSelectedAwards(awardsFromUrl.split(',').map(a => parseInt(a.trim())).filter(a => !isNaN(a)));
     if (searchFromUrl) setSearchTerm(searchFromUrl);
     if (sortFromUrl) setSortBy(sortFromUrl);
     if (viewFromUrl) setViewMode(viewFromUrl);
@@ -80,11 +86,11 @@ function AllMoviesPage() {
     setFiltersReady(true);
   }, []);
 
-  const loadMovies = async (currentPage, currentSearch, currentGenresStr, currentYear, currentSort) => {
+  const loadMovies = async (currentPage, currentSearch, currentGenresStr, currentYear, currentSort, currentAwards = '') => {
     setLoading(true);
     setError('');
     try {
-      const response = await moviesAPI.getAll(currentPage, pageSize, currentSearch, currentGenresStr, currentYear, currentSort);
+      const response = await moviesAPI.getAll(currentPage, pageSize, currentSearch, currentGenresStr, currentYear, currentSort, currentAwards);
       
       const items = response.data.items || [];
       setMovies(items);
@@ -103,7 +109,8 @@ function AllMoviesPage() {
     e.preventDefault();
     setPage(1);
     const genresString = selectedGenres.join(',');
-    loadMovies(1, searchTerm, genresString, selectedYear, sortBy);
+    const awardsString = selectedAwards.join(',');
+    loadMovies(1, searchTerm, genresString, selectedYear, sortBy, awardsString);
   };
 
   const toggleGenre = (genre) => {
@@ -125,10 +132,20 @@ function AllMoviesPage() {
     setSortBy(e.target.value);
   };
 
+  const toggleAward = (awardId) => {
+    setPage(1);
+    if (selectedAwards.includes(awardId)) {
+      setSelectedAwards(selectedAwards.filter(a => a !== awardId));
+    } else {
+      setSelectedAwards([...selectedAwards, awardId]);
+    }
+  };
+
   const clearFilters = () => {
     setSelectedGenres([]);
     setSearchTerm('');
     setSelectedYear('');
+    setSelectedAwards([]);
     setSortBy('dateDesc');
     setPage(1);
   };
@@ -138,11 +155,12 @@ function AllMoviesPage() {
     const params = new URLSearchParams();
     if (selectedGenres.length > 0) params.set('genres', selectedGenres.join(','));
     if (selectedYear) params.set('year', selectedYear);
+    if (selectedAwards.length > 0) params.set('awards', selectedAwards.join(','));
     if (searchTerm) params.set('search', searchTerm);
     if (sortBy !== 'dateDesc') params.set('sort', sortBy);
     if (viewMode !== 'grid') params.set('view', viewMode);
     window.history.replaceState(null, '', `?${params.toString()}`);
-  }, [selectedGenres, selectedYear, searchTerm, sortBy, viewMode, filtersReady]);
+  }, [selectedGenres, selectedYear, selectedAwards, searchTerm, sortBy, viewMode, filtersReady]);
 
   let paginationItems = [];
   for (let number = 1; number <= totalPages; number++) {
@@ -273,7 +291,7 @@ function AllMoviesPage() {
 
               <Button variant="primary" type="submit">🔍 Пошук</Button>
               
-              {(searchTerm || selectedGenres.length > 0 || selectedYear || sortBy !== 'dateDesc') && (
+              {(searchTerm || selectedGenres.length > 0 || selectedYear || selectedAwards.length > 0 || sortBy !== 'dateDesc') && (
                 <Button variant="outline-danger" onClick={clearFilters}>✖ Скинути</Button>
               )}
             </InputGroup>
@@ -313,6 +331,48 @@ function AllMoviesPage() {
                   onClick={() => toggleGenre(genre)}
                 >
                   {genre.charAt(0).toUpperCase() + genre.slice(1)}
+                  {isActive && <span className="ms-2">✓</span>}
+                </Badge>
+              );
+            })}
+          </div>
+        </Col>
+      </Row>
+
+      <Row className="mb-4">
+        <Col md={12}>
+          <div 
+            className="d-flex flex-wrap gap-2 align-items-center p-3 rounded border"
+            style={{
+                backgroundColor: 'var(--bg-card)', 
+                borderColor: 'var(--border-color)' 
+            }}
+          >
+            <strong className="me-2" style={{ color: 'var(--text-secondary)' }}>Нагороди:</strong>
+            {availableAwards.length === 0 && <span className="text-muted small">Немає даних</span>}
+            
+            {availableAwards.map(award => {
+              const isActive = selectedAwards.includes(award.id);
+              return (
+                <Badge 
+                  key={award.id}
+                  bg={isActive ? "success" : ""} 
+                  
+                  className={`p-2 user-select-none border`}
+                  
+                  style={{ 
+                      cursor: 'pointer', 
+                      fontSize: '0.9rem', 
+                      fontWeight: 'normal',
+                      backgroundColor: isActive ? 'var(--success-color)' : 'transparent',
+                      color: isActive ? 'white' : 'var(--text-main)',
+                      borderColor: isActive ? 'var(--success-color)' : 'var(--border-color)'
+                  }}
+                  onClick={() => toggleAward(award.id)}
+                  title={award.name}
+                >
+                  <span>{award.icon}</span>
+                  <span className="ms-1">{award.name}</span>
                   {isActive && <span className="ms-2">✓</span>}
                 </Badge>
               );

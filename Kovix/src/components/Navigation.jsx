@@ -194,6 +194,10 @@ function Navigation() {
                           ➕ Додати фільм
                         </NavDropdown.Item>
 
+                        <NavDropdown.Item as={Link} to="/moderator" className="text-danger">
+                          🔒 Модерація
+                        </NavDropdown.Item>
+
                         <NavDropdown.Item
                           as={Link}
                           to="/admin/reports"
@@ -212,6 +216,16 @@ function Navigation() {
 
                         <NavDropdown.Item as={Link} to="/admin/appeals" className="text-info">
                           ⚖️ Апеляції
+                        </NavDropdown.Item>
+                      </>
+                    )}
+
+                    {user?.role === 'Moderator' && (
+                      <>
+                        <NavDropdown.Divider />
+
+                        <NavDropdown.Item as={Link} to="/moderator" className="text-danger">
+                          🔒 Модерація
                         </NavDropdown.Item>
                       </>
                     )}

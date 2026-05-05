@@ -33,11 +33,13 @@ namespace Movie.API.Controllers
         [FromQuery] string? genres,
         [FromQuery] string? sort,
         [FromQuery] int? year,
+        [FromQuery] string? awards,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 8)
         {
             var query = _context.Movies
                 .Include(m => m.MovieActors)
+                .Include(m => m.Awards)
                 .AsQueryable();
 
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
@@ -85,6 +87,20 @@ namespace Movie.API.Controllers
                 {
                     var g = genre.Trim();
                     query = query.Where(m => m.Genre != null && m.Genre.ToLower().Contains(g));
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(awards))
+            {
+                var awardIds = awards.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(a => int.TryParse(a.Trim(), out var id) ? (int?)id : null)
+                    .Where(a => a.HasValue)
+                    .Select(a => a.Value)
+                    .ToList();
+
+                if (awardIds.Any())
+                {
+                    query = query.Where(m => m.Awards.Any(ma => awardIds.Contains(ma.Id)));
                 }
             }
 
@@ -652,7 +668,19 @@ namespace Movie.API.Controllers
                 .OrderByDescending(y => y)
                 .ToList();
 
-            return Ok(new MovieFiltersDto { Genres = genres, Years = years });
+            var awards = await _context.MovieAwards
+                .AsNoTracking()
+                .Select(ma => new AwardDto 
+                { 
+                    Id = ma.Id,
+                    Name = ma.Name,
+                    Icon = ma.Icon
+                })
+                .Distinct()
+                .OrderBy(a => a.Name)
+                .ToListAsync();
+
+            return Ok(new MovieFiltersDto { Genres = genres, Years = years, Awards = awards });
         }
         private async Task<List<string>> GetUserBlockedGenres()
         {

@@ -45,6 +45,7 @@ import NewsDetailsPage from './pages/NewsDetailsPage';
 import NewsPage from './pages/NewsPage';
 import AdminRolesPage from './pages/AdminRolesPage';
 import CriticReviewsPage from './pages/CriticReviewsPage';
+import ModeratorPage from './pages/ModeratorPage';
 
 import { useEffect } from 'react';
 
@@ -134,6 +135,11 @@ function App() {
                   <Route path="/admin/roles" element={
                     <ProtectedRoute>
                       <AdminRolesPage />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/moderator" element={
+                    <ProtectedRoute>
+                      <ModeratorPage />
                     </ProtectedRoute>
                   } />
                   <Route path="*" element={<NotFoundPage />} />
