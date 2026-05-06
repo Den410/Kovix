@@ -237,4 +237,22 @@ export const adminUserAwardsAPI = {
     removeAward: (id) => api.delete(`/adminUserAwards/${id}`)
 };
 
+export const tierListsAPI = {
+    getAll: (userId = null, isPublic = null, page = 1, pageSize = 10) => 
+        api.get('/tierlists', { params: { userId, isPublic, page, pageSize } }),
+    getById: (id) => api.get(`/tierlists/${id}`),
+    getUserTierLists: (userId) => api.get(`/tierlists/user/${userId}`),
+    create: (data) => api.post('/tierlists', data),
+    update: (id, data) => api.put(`/tierlists/${id}`, data),
+    delete: (id) => api.delete(`/tierlists/${id}`),
+    share: (id) => api.post(`/tierlists/${id}/share`),
+    unshare: (id) => api.post(`/tierlists/${id}/unshare`),
+    getPendingForModeration: (page = 1, pageSize = 10) => 
+        api.get('/admin/tierlists/pending', { params: { page, pageSize } }),
+    getAllForModeration: (status = null, page = 1, pageSize = 10) => 
+        api.get('/admin/tierlists', { params: { status, page, pageSize } }),
+    moderate: (id, data) => api.post(`/admin/tierlists/${id}/moderate`, data),
+    adminDelete: (id) => api.delete(`/admin/tierlists/${id}`)
+};
+
 export default api;

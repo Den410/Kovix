@@ -93,6 +93,10 @@ function Navigation() {
               <Nav.Link as={Link} to="/news" className="fw-semibold d-flex align-items-center gap-1">
                 <FaNewspaper /> Новини
               </Nav.Link>
+
+              <Nav.Link as={Link} to="/tierlists" className="fw-semibold">
+                🏆 Тір Лісти
+              </Nav.Link>
             </Nav>
             <Nav className="align-items-center gap-2">
 
@@ -194,10 +198,6 @@ function Navigation() {
                           ➕ Додати фільм
                         </NavDropdown.Item>
 
-                        <NavDropdown.Item as={Link} to="/moderator" className="text-danger">
-                          🔒 Модерація
-                        </NavDropdown.Item>
-
                         <NavDropdown.Item
                           as={Link}
                           to="/admin/reports"
@@ -226,6 +226,10 @@ function Navigation() {
 
                         <NavDropdown.Item as={Link} to="/moderator" className="text-danger">
                           🔒 Модерація
+                        </NavDropdown.Item>
+
+                        <NavDropdown.Item as={Link} to="/admin/tierlists" className="text-warning">
+                          🏆 Модерація тір лістів
                         </NavDropdown.Item>
                       </>
                     )}

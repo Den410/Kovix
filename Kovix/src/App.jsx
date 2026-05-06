@@ -46,6 +46,10 @@ import NewsPage from './pages/NewsPage';
 import AdminRolesPage from './pages/AdminRolesPage';
 import CriticReviewsPage from './pages/CriticReviewsPage';
 import ModeratorPage from './pages/ModeratorPage';
+import TierListsPage from './pages/TierListsPage';
+import TierListDetailPage from './pages/TierListDetailPage';
+import EditTierListPage from './pages/EditTierListPage';
+import AdminTierListModerationPage from './pages/AdminTierListModerationPage';
 
 import { useEffect } from 'react';
 
@@ -140,6 +144,18 @@ function App() {
                   <Route path="/moderator" element={
                     <ProtectedRoute>
                       <ModeratorPage />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/tierlists" element={<TierListsPage />} />
+                  <Route path="/tierlists/:id" element={<TierListDetailPage />} />
+                  <Route path="/tierlists/:id/edit" element={
+                    <ProtectedRoute>
+                      <EditTierListPage />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/admin/tierlists" element={
+                    <ProtectedRoute>
+                      <AdminTierListModerationPage />
                     </ProtectedRoute>
                   } />
                   <Route path="*" element={<NotFoundPage />} />

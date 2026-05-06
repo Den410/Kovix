@@ -1,0 +1,247 @@
+import { useState, useEffect } from 'react';
+import { Container, Row, Col, Button, Form, Card, Alert, Spinner, Modal } from 'react-bootstrap';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { tierListsAPI, moviesAPI } from '../services/api';
+import TierListBuilder from '../components/TierListBuilder';
+import '../style/EditTierListPage.css';
+
+function EditTierListPage() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  
+  const [tierList, setTierList] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [items, setItems] = useState([]);
+  const [showShareModal, setShowShareModal] = useState(false);
+
+  useEffect(() => {
+    loadTierList();
+  }, [id]);
+
+  const loadTierList = async () => {
+    try {
+      const response = await tierListsAPI.getById(id);
+      const tl = response.data;
+      
+      if (!user || tl.userId !== user.id) {
+        setError('Ви не маєте доступу до цього тір ліста');
+        setLoading(false);
+        return;
+      }
+
+      setTierList(tl);
+      setTitle(tl.title);
+      setDescription(tl.description || '');
+      setItems(tl.items || []);
+    } catch (error) {
+      console.error('Помилка завантаження:', error);
+      setError('Не вдалося завантажити тір ліст');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!title.trim()) {
+      setError('Введіть назву тір ліста');
+      return;
+    }
+
+    setSaving(true);
+    setError('');
+    
+    try {
+      const itemsDto = items.map((item, index) => ({
+        movieId: item.movieId,
+        tier: item.tier,
+        position: index
+      }));
+
+      await tierListsAPI.update(id, {
+        title,
+        description,
+        items: itemsDto
+      });
+
+      setSuccess('Тір ліст збережено успішно!');
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (error) {
+      console.error('Помилка при збереженні:', error);
+      setError('Помилка при збереженні тір ліста');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleShare = async () => {
+    try {
+      await tierListsAPI.share(id);
+      setTierList(prev => ({ ...prev, isPublic: true, status: 'Pending' }));
+      setShowShareModal(false);
+      setSuccess('Тір ліст відправлено на модерацію!');
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (error) {
+      console.error('Помилка при діленні:', error);
+      setError('Помилка при діленні тір ліста');
+    }
+  };
+
+  const handleUnshare = async () => {
+    try {
+      await tierListsAPI.unshare(id);
+      setTierList(prev => ({ ...prev, isPublic: false }));
+      setSuccess('Тір ліст зроблено приватним!');
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (error) {
+      console.error('Помилка при зміні статусу:', error);
+      setError('Помилка при зміні статусу тір ліста');
+    }
+  };
+
+  const handleGoBack = () => {
+    navigate('/tierlists');
+  };
+
+  if (loading) {
+    return (
+      <Container className="text-center mt-5">
+        <Spinner animation="border" />
+      </Container>
+    );
+  }
+
+  if (error && !tierList) {
+    return (
+      <Container className="mt-5">
+        <Alert variant="danger">{error}</Alert>
+        <Button onClick={handleGoBack}>Повернутися</Button>
+      </Container>
+    );
+  }
+
+  return (
+    <Container className="mt-4 mb-5">
+      <Button 
+        variant="outline-secondary" 
+        className="mb-4"
+        onClick={handleGoBack}
+      >
+        ← Повернутися
+      </Button>
+
+      {error && <Alert variant="danger">{error}</Alert>}
+      {success && <Alert variant="success">{success}</Alert>}
+
+      <Row>
+        <Col lg={3}>
+          <Card className="mb-4">
+            <Card.Body>
+              <h5>Інформація</h5>
+              
+              <Form.Group className="mb-3">
+                <Form.Label>Назва</Form.Label>
+                <Form.Control
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  maxLength={200}
+                />
+                <small className="text-muted">{title.length}/200</small>
+              </Form.Group>
+
+              <Form.Group className="mb-3">
+                <Form.Label>Опис</Form.Label>
+                <Form.Control
+                  as="textarea"
+                  rows={3}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  maxLength={1000}
+                />
+                <small className="text-muted">{description.length}/1000</small>
+              </Form.Group>
+
+              <div className="mb-3">
+                <p><strong>Статус:</strong> {tierList?.isPublic ? 'Публічний' : 'Приватний'}</p>
+                {tierList?.isPublic && (
+                  <p><strong>Модерація:</strong> {tierList?.status}</p>
+                )}
+              </div>
+
+              <div className="d-grid gap-2">
+                <Button 
+                  variant="success" 
+                  onClick={handleSave}
+                  disabled={saving}
+                >
+                  {saving ? 'Збереження...' : 'Зберегти зміни'}
+                </Button>
+
+                {!tierList?.isPublic ? (
+                  <Button 
+                    variant="info"
+                    onClick={() => setShowShareModal(true)}
+                  >
+                    Поділитися
+                  </Button>
+                ) : (
+                  <Button 
+                    variant="outline-danger"
+                    onClick={handleUnshare}
+                  >
+                    Зробити приватним
+                  </Button>
+                )}
+              </div>
+            </Card.Body>
+          </Card>
+
+          <Card>
+            <Card.Body>
+              <h6>Кількість фільмів: {items.length}</h6>
+              <small className="text-muted">Додавайте фільми до тір ліста нижче</small>
+            </Card.Body>
+          </Card>
+        </Col>
+
+        <Col lg={9}>
+          <TierListBuilder 
+            items={items}
+            onItemsChange={setItems}
+            tierListId={id}
+          />
+        </Col>
+      </Row>
+
+      <Modal show={showShareModal} onHide={() => setShowShareModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Поділитися тір лістом</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p>Ви впевнені, що хочете поділитися цим тір лістом?</p>
+          <p>Тір ліст буде відправлено на модерацію перед публікацією.</p>
+          <Alert variant="info">
+            Після схвалення модератором, інші користувачі зможуть переглядати ваш тір ліст.
+          </Alert>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowShareModal(false)}>
+            Скасувати
+          </Button>
+          <Button variant="primary" onClick={handleShare}>
+            Поділитися
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    </Container>
+  );
+}
+
+export default EditTierListPage;

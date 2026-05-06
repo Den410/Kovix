@@ -1,0 +1,24 @@
+.edit-tier-list-page {
+  min-height: 70vh;
+}
+
+.tier-list-info-card {
+  position: sticky;
+  top: 20px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--text-main, #000);
+}
+
+.form-group small {
+  display: block;
+  margin-top: 4px;
+  color: var(--text-secondary, #999);
+}

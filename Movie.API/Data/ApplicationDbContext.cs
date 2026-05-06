@@ -41,6 +41,8 @@ namespace Movie.API.Data
         public DbSet<ReviewerApplication> ReviewerApplications { get; set; }
         public DbSet<UserAward> UserAwards { get; set; }
         public DbSet<MovieAward> MovieAwards { get; set; }
+        public DbSet<TierList> TierLists { get; set; }
+        public DbSet<TierListItem> TierListItems { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -299,10 +301,40 @@ namespace Movie.API.Data
                 .HasForeignKey(ua => ua.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            modelBuilder.Entity<UserAward>()
+                .HasOne(ua => ua.User)
+                .WithMany(u => u.Awards)
+                .HasForeignKey(ua => ua.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
             modelBuilder.Entity<MovieAward>()
                 .HasOne(ma => ma.Movie)
                 .WithMany(m => m.Awards)
                 .HasForeignKey(ma => ma.MovieId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<TierList>()
+                .HasOne(tl => tl.User)
+                .WithMany()
+                .HasForeignKey(tl => tl.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<TierList>()
+                .HasOne(tl => tl.ModeratedByAdmin)
+                .WithMany()
+                .HasForeignKey(tl => tl.ModeratedByAdminId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<TierListItem>()
+                .HasOne(tli => tli.TierList)
+                .WithMany(tl => tl.Items)
+                .HasForeignKey(tli => tli.TierListId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<TierListItem>()
+                .HasOne(tli => tli.Movie)
+                .WithMany()
+                .HasForeignKey(tli => tli.MovieId)
                 .OnDelete(DeleteBehavior.Cascade);
 
 
