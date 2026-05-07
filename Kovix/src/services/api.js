@@ -33,9 +33,11 @@ export const moviesAPI = {
   update: (id, movieData) => api.put(`/movies/${id}`, movieData),
   delete: (id) => api.delete(`/movies/${id}`),
   react: (movieId, type) => api.post(`/movies/${movieId}/react?type=${type}`),
+  
   rateEpisode: (episodeId, rating) => {
     return api.post(`/movies/rate-episode/${episodeId}?rating=${rating}`);
   },
+  
   addEpisode: (movieId, data) => {
     return api.post(`/movies/${movieId}/add-episode`, data);
   },
@@ -181,9 +183,7 @@ export const moviePhotosAPI = {
   addUrl: (movieId, imageUrl) => api.post(`/movies/${movieId}/photos/url`, `"${imageUrl}"`, {
     headers: { 'Content-Type': 'application/json' }
   }),
-
   uploadMultiple: (movieId, formData) => api.post(`/movies/${movieId}/photos/upload`, formData),
-
   delete: (movieId, photoId) => api.delete(`/movies/${movieId}/photos/${photoId}`)
 };
 
@@ -253,6 +253,14 @@ export const tierListsAPI = {
         api.get('/admin/tierlists', { params: { status, page, pageSize } }),
     moderate: (id, data) => api.post(`/admin/tierlists/${id}/moderate`, data),
     adminDelete: (id) => api.delete(`/admin/tierlists/${id}`)
+};
+
+export const forumAPI = {
+    getCategories: () => api.get('/forum/categories'),
+    getTopics: (categoryId) => api.get(`/forum/categories/${categoryId}/topics`),
+    getTopic: (topicId) => api.get(`/forum/topics/${topicId}`),
+    createTopic: (data) => api.post('/forum/topics', data),
+    createPost: (topicId, data) => api.post(`/forum/topics/${topicId}/posts`, data)
 };
 
 export default api;

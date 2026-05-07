@@ -96,7 +96,7 @@ builder.Services.AddControllers().AddJsonOptions(x =>
     x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
     x.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
 });
-
+builder.Services.AddMemoryCache();
 
 builder.Services.AddSignalR();
 

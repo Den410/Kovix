@@ -50,6 +50,9 @@ import TierListsPage from './pages/TierListsPage';
 import TierListDetailPage from './pages/TierListDetailPage';
 import EditTierListPage from './pages/EditTierListPage';
 import AdminTierListModerationPage from './pages/AdminTierListModerationPage';
+import ForumPage from './pages/ForumPage';
+import ForumCategoryPage from './pages/ForumCategoryPage';
+import ForumTopicPage from './pages/ForumTopicPage';
 
 import { useEffect } from 'react';
 
@@ -93,6 +96,9 @@ function App() {
                   <Route path="/news/:id" element={<NewsDetailsPage />} />
                   <Route path="/news" element={<NewsPage />} />
                   <Route path="/movie/:id/critic-reviews" element={<CriticReviewsPage />} />
+                  <Route path="/forum" element={<ForumPage />} />
+                  <Route path="/forum/category/:id" element={<ForumCategoryPage />} />
+                  <Route path="/forum/topic/:id" element={<ForumTopicPage />} />
                   <Route
                     path="/movies/:movieId"
                     element={

@@ -97,6 +97,7 @@ function Navigation() {
               <Nav.Link as={Link} to="/tierlists" className="fw-semibold">
                 🏆 Тір Лісти
               </Nav.Link>
+              <Nav.Link as={Link} to="/forum">Форум</Nav.Link>
             </Nav>
             <Nav className="align-items-center gap-2">
 

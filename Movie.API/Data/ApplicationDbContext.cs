@@ -43,6 +43,9 @@ namespace Movie.API.Data
         public DbSet<MovieAward> MovieAwards { get; set; }
         public DbSet<TierList> TierLists { get; set; }
         public DbSet<TierListItem> TierListItems { get; set; }
+        public DbSet<ForumCategory> ForumCategories { get; set; }
+        public DbSet<ForumTopic> ForumTopics { get; set; }
+        public DbSet<ForumPost> ForumPosts { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -336,6 +339,30 @@ namespace Movie.API.Data
                 .WithMany()
                 .HasForeignKey(tli => tli.MovieId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ForumTopic>()
+                .HasOne(t => t.Category)
+                .WithMany(c => c.Topics)
+                .HasForeignKey(t => t.CategoryId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ForumPost>()
+                .HasOne(p => p.Topic)
+                .WithMany(t => t.Posts)
+                .HasForeignKey(p => p.TopicId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ForumTopic>()
+                .HasOne(t => t.User)
+                .WithMany()
+                .HasForeignKey(t => t.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ForumPost>()
+                .HasOne(p => p.User)
+                .WithMany()
+                .HasForeignKey(p => p.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
 
 
             modelBuilder.Entity<MovieEntity>().HasData(
