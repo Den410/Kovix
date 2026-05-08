@@ -9,5 +9,7 @@
         public string? AuthorAvatarUrl { get; set; }
         public string? AuthorRole { get; set; }
         public DateTime CreatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
+        public int? ParentPostId { get; set; }
     }
 }

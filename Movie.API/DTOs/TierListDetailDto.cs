@@ -16,5 +16,6 @@ namespace Movie.API.DTOs
         public DateTime? ModeratedAt { get; set; }
         public string? AdminComment { get; set; }
         public List<TierListItemDto> Items { get; set; } = new List<TierListItemDto>();
+        public List<TierConfigDto>? TiersConfig { get; set; }
     }
 }

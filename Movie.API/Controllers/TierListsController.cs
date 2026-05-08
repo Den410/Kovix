@@ -87,19 +87,21 @@ namespace Movie.API.Controllers
                 return NotFound();
 
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            bool isAdminOrMod = User.IsInRole("Admin") || User.IsInRole("Moderator");
+
             if (tierList.IsPublic && tierList.Status != TierListStatus.Approved)
             {
-                if (userIdClaim == null || 
-                    (int.Parse(userIdClaim.Value) != tierList.UserId && 
-                     !User.IsInRole("Admin")))
+                if (userIdClaim == null || (int.Parse(userIdClaim.Value) != tierList.UserId && !isAdminOrMod))
                 {
                     return Forbid();
                 }
             }
             else if (!tierList.IsPublic)
             {
-                if (userIdClaim == null || int.Parse(userIdClaim.Value) != tierList.UserId)
+                if (userIdClaim == null || (int.Parse(userIdClaim.Value) != tierList.UserId && !isAdminOrMod))
+                {
                     return Forbid();
+                }
             }
 
             return Ok(MapToDetailDto(tierList));
@@ -150,6 +152,18 @@ namespace Movie.API.Controllers
 
             int userId = int.Parse(userIdClaim.Value);
 
+            if (dto.TiersConfig != null && dto.TiersConfig.Count > 0)
+            {
+                var validTierIds = dto.TiersConfig.Select(t => t.Id).ToList();
+                foreach (var item in dto.Items)
+                {
+                    if (!validTierIds.Contains(item.Tier))
+                    {
+                        return BadRequest($"Invalid tier '{item.Tier}'. Valid tiers are: {string.Join(", ", validTierIds)}");
+                    }
+                }
+            }
+
             var tierList = new TierList
             {
                 UserId = userId,
@@ -160,6 +174,15 @@ namespace Movie.API.Controllers
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
+
+            if (dto.TiersConfig != null && dto.TiersConfig.Count > 0)
+            {
+                var options = new System.Text.Json.JsonSerializerOptions 
+                { 
+                    PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase 
+                };
+                tierList.TiersConfig = System.Text.Json.JsonSerializer.Serialize(dto.TiersConfig, options);
+            }
 
             _context.TierLists.Add(tierList);
             await _context.SaveChangesAsync();
@@ -205,12 +228,60 @@ namespace Movie.API.Controllers
             if (tierList.UserId != userId)
                 return Forbid();
 
-            if (tierList.IsPublic && tierList.Status == TierListStatus.Approved)
-                return BadRequest("Cannot edit an approved public tier list");
+            bool contentChanged = tierList.Title != dto.Title || 
+                                 tierList.Description != dto.Description ||
+                                 tierList.Items.Count != dto.Items.Count;
+
+            if (!contentChanged && tierList.Items.Count == dto.Items.Count)
+            {
+                for (int i = 0; i < tierList.Items.Count; i++)
+                {
+                    var dbItem = tierList.Items.ElementAtOrDefault(i);
+                    var dtoItem = dto.Items.ElementAtOrDefault(i);
+                    if (dbItem?.MovieId != dtoItem?.MovieId || dbItem?.Tier != dtoItem?.Tier)
+                    {
+                        contentChanged = true;
+                        break;
+                    }
+                }
+            }
+
+            if (tierList.IsPublic && tierList.Status == TierListStatus.Approved && contentChanged)
+            {
+                tierList.Status = TierListStatus.Pending;
+                tierList.ModeratedAt = null;
+                tierList.ModeratedByAdminId = null;
+                tierList.AdminComment = null;
+            }
+
+            if (dto.TiersConfig != null && dto.TiersConfig.Count > 0)
+            {
+                var validTierIds = dto.TiersConfig.Select(t => t.Id).ToList();
+                foreach (var item in dto.Items)
+                {
+                    if (!validTierIds.Contains(item.Tier))
+                    {
+                        return BadRequest($"Invalid tier '{item.Tier}'. Valid tiers are: {string.Join(", ", validTierIds)}");
+                    }
+                }
+            }
 
             tierList.Title = dto.Title;
             tierList.Description = dto.Description;
             tierList.UpdatedAt = DateTime.UtcNow;
+
+            if (dto.TiersConfig != null && dto.TiersConfig.Count > 0)
+            {
+                var options = new System.Text.Json.JsonSerializerOptions 
+                { 
+                    PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase 
+                };
+                tierList.TiersConfig = System.Text.Json.JsonSerializer.Serialize(dto.TiersConfig, options);
+            }
+            else
+            {
+                tierList.TiersConfig = tierList.TiersConfig;
+            }
 
             _context.TierListItems.RemoveRange(tierList.Items);
 
@@ -314,6 +385,25 @@ namespace Movie.API.Controllers
 
         private TierListDetailDto MapToDetailDto(TierList tierList)
         {
+            List<TierConfigDto>? tiersConfig = null;
+            if (!string.IsNullOrEmpty(tierList.TiersConfig))
+            {
+                try
+                {
+                    var options = new System.Text.Json.JsonSerializerOptions 
+                    { 
+                        PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
+                        PropertyNameCaseInsensitive = true
+                    };
+                    tiersConfig = System.Text.Json.JsonSerializer.Deserialize<List<TierConfigDto>>(tierList.TiersConfig, options);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error deserializing TiersConfig: {ex.Message}");
+                    tiersConfig = null;
+                }
+            }
+
             return new TierListDetailDto
             {
                 Id = tierList.Id,
@@ -327,6 +417,7 @@ namespace Movie.API.Controllers
                 UpdatedAt = tierList.UpdatedAt,
                 ModeratedAt = tierList.ModeratedAt,
                 AdminComment = tierList.AdminComment,
+                TiersConfig = tiersConfig,
                 Items = tierList.Items.Select(tli => new TierListItemDto
                 {
                     Id = tli.Id,

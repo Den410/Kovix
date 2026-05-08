@@ -12,6 +12,7 @@ namespace Movie.API.DTOs
         public string? Description { get; set; }
 
         public List<TierListItemInputDto> Items { get; set; } = new List<TierListItemInputDto>();
+        public List<TierConfigDto>? TiersConfig { get; set; }
     }
 
     public class EditTierListDto
@@ -24,6 +25,14 @@ namespace Movie.API.DTOs
         public string? Description { get; set; }
 
         public List<TierListItemInputDto> Items { get; set; } = new List<TierListItemInputDto>();
+        public List<TierConfigDto>? TiersConfig { get; set; }
+    }
+
+    public class TierConfigDto
+    {
+        public string? Id { get; set; }
+        public string? Name { get; set; }
+        public string? Color { get; set; }
     }
 
     public class TierListItemInputDto
@@ -32,7 +41,6 @@ namespace Movie.API.DTOs
         public int MovieId { get; set; }
 
         [Required]
-        [RegularExpression("^[A-F]$|^S$", ErrorMessage = "Tier must be S, A, B, C, D, or F")]
         public string? Tier { get; set; }
 
         public int Position { get; set; }

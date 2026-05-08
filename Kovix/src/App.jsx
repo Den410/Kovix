@@ -53,6 +53,7 @@ import AdminTierListModerationPage from './pages/AdminTierListModerationPage';
 import ForumPage from './pages/ForumPage';
 import ForumCategoryPage from './pages/ForumCategoryPage';
 import ForumTopicPage from './pages/ForumTopicPage';
+import AdminForumModerationPage from './pages/AdminForumModerationPage';
 
 import { useEffect } from 'react';
 
@@ -99,6 +100,7 @@ function App() {
                   <Route path="/forum" element={<ForumPage />} />
                   <Route path="/forum/category/:id" element={<ForumCategoryPage />} />
                   <Route path="/forum/topic/:id" element={<ForumTopicPage />} />
+                  <Route path="/admin/forum-moderation" element={<AdminForumModerationPage />} />
                   <Route
                     path="/movies/:movieId"
                     element={

@@ -3,22 +3,23 @@ import { Card, Button, Form, Spinner } from 'react-bootstrap';
 import { moviesAPI } from '../services/api';
 import '../style/TierListBuilder.css';
 
-const TIERS = ['S', 'A', 'B', 'C', 'D', 'F'];
-const TIER_COLORS = {
-  'S': '#FF6B6B',
-  'A': '#4ECDC4',
-  'B': '#45B7D1',
-  'C': '#FFA502',
-  'D': '#95E1D3',
-  'F': '#C7CEEA'
-};
+const DEFAULT_TIERS = [
+  { id: 'S', name: 'S', color: '#FF6B6B' },
+  { id: 'A', name: 'A', color: '#4ECDC4' },
+  { id: 'B', name: 'B', color: '#45B7D1' },
+  { id: 'C', name: 'C', color: '#FFA502' },
+  { id: 'D', name: 'D', color: '#95E1D3' },
+  { id: 'F', name: 'F', color: '#C7CEEA' }
+];
 
-function TierListBuilder({ items, onItemsChange, tierListId }) {
+function TierListBuilder({ items, onItemsChange, tierListId, tiersConfig }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [bankMovies, setBankMovies] = useState([]);
   const [loadingBank, setLoadingBank] = useState(true);
-  
   const [draggedData, setDraggedData] = useState(null);
+  
+  const tiers = tiersConfig || DEFAULT_TIERS;
+  const tierIds = tiers.map(t => t.id);
 
   useEffect(() => {
     loadMoviesToBank('');
@@ -107,7 +108,7 @@ function TierListBuilder({ items, onItemsChange, tierListId }) {
     onItemsChange(updatedItems);
   };
 
-  const groupedByTier = TIERS.reduce((acc, tier) => {
+  const groupedByTier = tierIds.reduce((acc, tier) => {
     acc[tier] = items.filter(item => item.tier === tier);
     return acc;
   }, {});
@@ -164,8 +165,8 @@ function TierListBuilder({ items, onItemsChange, tierListId }) {
           className="mb-2 fw-bold"
           style={{ backgroundColor: 'var(--bg-input)', color: 'var(--text-main)', borderColor: 'var(--border-color)' }}
         >
-          {TIERS.map(t => (
-            <option key={t} value={t}>{t}</option>
+          {tiers.map(t => (
+            <option key={t.id} value={t.id}>{t.name}</option>
           ))}
         </Form.Select>
 
@@ -200,28 +201,28 @@ function TierListBuilder({ items, onItemsChange, tierListId }) {
 
       <Card className="tier-list-table mb-4 shadow-sm" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-color)' }}>
         <Card.Body className="p-0">
-          {TIERS.map(tier => (
-            <div key={tier} className="tier-row" style={{ borderBottom: '1px solid var(--border-color)' }}>
+          {tiers.map(tier => (
+            <div key={tier.id} className="tier-row" style={{ borderBottom: '1px solid var(--border-color)' }}>
               <div 
                 className="tier-label"
-                style={{ backgroundColor: TIER_COLORS[tier] }}
+                style={{ backgroundColor: tier.color }}
               >
-                <strong style={{ color: '#fff', fontSize: '1.5rem' }}>{tier}</strong>
+                <strong style={{ color: '#fff', fontSize: '1.5rem' }}>{tier.name}</strong>
               </div>
 
               <div 
                 className="tier-items-container"
                 onDragOver={handleDragOver}
-                onDrop={(e) => handleDropOnTier(e, tier)}
+                onDrop={(e) => handleDropOnTier(e, tier.id)}
                 style={{ backgroundColor: 'var(--bg-main)' }}
               >
-                {groupedByTier[tier].length === 0 ? (
+                {groupedByTier[tier.id].length === 0 ? (
                   <div className="tier-empty-message text-muted" style={{ opacity: 0.6 }}>
                     Перетягніть фільм сюди
                   </div>
                 ) : (
                   <div className="tier-items">
-                    {groupedByTier[tier].map(item => renderTierCard(item))}
+                    {groupedByTier[tier.id].map(item => renderTierCard(item))}
                   </div>
                 )}
               </div>

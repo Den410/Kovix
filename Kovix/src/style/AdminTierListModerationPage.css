@@ -30,13 +30,17 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 60px;
-  height: 60px;
+  min-width: 80px;
+  min-height: 80px; 
+  padding: 8px;
   flex-shrink: 0;
   border-radius: 6px;
   color: white;
   font-weight: bold;
-  font-size: 24px;
+  font-size: 18px; 
+  text-align: center; 
+  word-break: break-word; 
+  line-height: 1.2;
 }
 
 .tier-list-preview .tier-content {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Row, Col, Card } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { API_BASE_URL } from '../utils/apiConfig';
@@ -6,11 +6,33 @@ import defaultPosterImg from '../assets/NotFoundPoster.webp';
 
 const RecentlyViewed = () => {
     const [history, setHistory] = useState([]);
+    const scrollRef = useRef(null);
 
     useEffect(() => {
         const savedHistory = JSON.parse(localStorage.getItem('kovix_recent_movies') || '[]');
         setHistory(savedHistory);
     }, []);
+
+    useEffect(() => {
+        const currentRef = scrollRef.current;
+        
+        const handleWheel = (e) => {
+            if (currentRef) {
+                e.preventDefault(); 
+                currentRef.scrollLeft += e.deltaY;
+            }
+        };
+
+        if (currentRef) {
+            currentRef.addEventListener('wheel', handleWheel, { passive: false }); 
+        }
+
+        return () => {
+            if (currentRef) {
+                currentRef.removeEventListener('wheel', handleWheel);
+            }
+        };
+    }, [history]); 
 
     if (history.length === 0) return null;
 
@@ -20,7 +42,11 @@ const RecentlyViewed = () => {
                 👀 Ви переглядали раніше
             </h4>
             
-            <Row className="flex-nowrap overflow-auto pb-3" style={{ scrollbarWidth: 'thin' }}>
+            <Row 
+                ref={scrollRef} 
+                className="flex-nowrap overflow-auto pb-3" 
+                style={{ scrollbarWidth: 'thin' }}
+            >
                 {history.map((movie) => (
                     <Col key={movie.id} xs={5} sm={4} md={3} lg={2} className="flex-shrink-0">
                         <Link to={`/movie/${movie.id}`} className="text-decoration-none">

@@ -3,22 +3,26 @@ import { Container, Row, Col, Card, Button, Spinner, Alert, Form, Modal, Badge }
 import { tierListsAPI } from '../services/api';
 import '../style/AdminTierListModerationPage.css';
 
-const TIER_COLORS = {
-  'S': '#FF6B6B',
-  'A': '#4ECDC4',
-  'B': '#45B7D1',
-  'C': '#FFA502',
-  'D': '#95E1D3',
-  'F': '#C7CEEA'
-};
+const DEFAULT_TIERS = [
+  { id: 'S', name: 'S', color: '#FF6B6B' },
+  { id: 'A', name: 'A', color: '#4ECDC4' },
+  { id: 'B', name: 'B', color: '#45B7D1' },
+  { id: 'C', name: 'C', color: '#FFA502' },
+  { id: 'D', name: 'D', color: '#95E1D3' },
+  { id: 'F', name: 'F', color: '#C7CEEA' }
+];
 
 function AdminTierListModerationPage() {
   const [tierLists, setTierLists] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedTierList, setSelectedTierList] = useState(null);
+  const [currentTiersConfig, setCurrentTiersConfig] = useState(DEFAULT_TIERS);
+
   const [showModal, setShowModal] = useState(false);
+  const [modalLoadingId, setModalLoadingId] = useState(null); 
   const [moderationStatus, setModerationStatus] = useState('Approved');
   const [adminComment, setAdminComment] = useState('');
+  
   const [statusFilter, setStatusFilter] = useState('Pending');
   const [moderating, setModerating] = useState(false);
   const [page, setPage] = useState(1);
@@ -47,11 +51,36 @@ function AdminTierListModerationPage() {
     }
   };
 
-  const handleOpenModal = (tierList) => {
-    setSelectedTierList(tierList);
-    setModerationStatus(tierList.status);
-    setAdminComment(tierList.adminComment || '');
-    setShowModal(true);
+  const handleOpenModal = async (tierListPreview) => {
+    setModalLoadingId(tierListPreview.id);
+    try {
+      const response = await tierListsAPI.getById(tierListPreview.id);
+      const fullTierList = response.data;
+
+      setSelectedTierList(fullTierList);
+      setModerationStatus(fullTierList.status);
+      setAdminComment(fullTierList.adminComment || '');
+
+      let parsedTiers = DEFAULT_TIERS;
+      if (fullTierList.tiersConfig) {
+        if (typeof fullTierList.tiersConfig === 'string') {
+          try {
+            parsedTiers = JSON.parse(fullTierList.tiersConfig);
+          } catch {
+            parsedTiers = DEFAULT_TIERS;
+          }
+        } else if (Array.isArray(fullTierList.tiersConfig)) {
+          parsedTiers = fullTierList.tiersConfig;
+        }
+      }
+      setCurrentTiersConfig(parsedTiers);
+      setShowModal(true);
+    } catch (error) {
+      console.error('Помилка при завантаженні деталей тір-ліста:', error);
+      alert('Не вдалося завантажити деталі. Спробуйте ще раз.');
+    } finally {
+      setModalLoadingId(null);
+    }
   };
 
   const handleModerate = async () => {
@@ -91,30 +120,10 @@ function AdminTierListModerationPage() {
       {success && <Alert variant="success">{success}</Alert>}
 
       <div className="mb-4 d-flex gap-2 flex-wrap">
-        <Button 
-          variant={statusFilter === 'Pending' ? 'primary' : 'outline-secondary'}
-          onClick={() => { setStatusFilter('Pending'); setPage(1); }}
-        >
-          На розгляді
-        </Button>
-        <Button 
-          variant={statusFilter === 'Approved' ? 'primary' : 'outline-secondary'}
-          onClick={() => { setStatusFilter('Approved'); setPage(1); }}
-        >
-          Схвалені
-        </Button>
-        <Button 
-          variant={statusFilter === 'Rejected' ? 'primary' : 'outline-secondary'}
-          onClick={() => { setStatusFilter('Rejected'); setPage(1); }}
-        >
-          Відхилені
-        </Button>
-        <Button 
-          variant={statusFilter === 'all' ? 'primary' : 'outline-secondary'}
-          onClick={() => { setStatusFilter('all'); setPage(1); }}
-        >
-          Усі
-        </Button>
+        <Button variant={statusFilter === 'Pending' ? 'primary' : 'outline-secondary'} onClick={() => { setStatusFilter('Pending'); setPage(1); }}>На розгляді</Button>
+        <Button variant={statusFilter === 'Approved' ? 'primary' : 'outline-secondary'} onClick={() => { setStatusFilter('Approved'); setPage(1); }}>Схвалені</Button>
+        <Button variant={statusFilter === 'Rejected' ? 'primary' : 'outline-secondary'} onClick={() => { setStatusFilter('Rejected'); setPage(1); }}>Відхилені</Button>
+        <Button variant={statusFilter === 'all' ? 'primary' : 'outline-secondary'} onClick={() => { setStatusFilter('all'); setPage(1); }}>Усі</Button>
       </div>
 
       {loading ? (
@@ -136,28 +145,22 @@ function AdminTierListModerationPage() {
                   <Row>
                     <Col md={6}>
                       <h5>{tierList.title}</h5>
-                      <p className="text-muted mb-2">
-                        <strong>Автор:</strong> {tierList.username}
-                      </p>
-                      {tierList.description && (
-                        <p className="mb-2">{tierList.description.substring(0, 100)}...</p>
-                      )}
+                      <p className="text-muted mb-2"><strong>Автор:</strong> {tierList.username}</p>
+                      {tierList.description && <p className="mb-2">{tierList.description.substring(0, 100)}...</p>}
                       <p className="mb-2">
-                        <strong>Статус:</strong> <Badge bg={tierList.status === 'Approved' ? 'success' : tierList.status === 'Rejected' ? 'danger' : 'warning'}>
-                          {tierList.status}
-                        </Badge>
+                        <strong>Статус:</strong> <Badge bg={tierList.status === 'Approved' ? 'success' : tierList.status === 'Rejected' ? 'danger' : 'warning'}>{tierList.status}</Badge>
                       </p>
-                      <p className="mb-0">
-                        <strong>Фільмів:</strong> {tierList.items.length}
-                      </p>
+                      <p className="mb-0"><strong>Фільмів:</strong> {tierList.items ? tierList.items.length : tierList.itemCount}</p>
                     </Col>
-                    <Col md={6} className="text-end">
+                    <Col md={6} className="text-end d-flex align-items-center justify-content-end">
                       <Button 
-                        variant="primary"
-                        onClick={() => handleOpenModal(tierList)}
-                        className="mb-2"
+                        variant="primary" 
+                        onClick={() => handleOpenModal(tierList)} 
+                        disabled={modalLoadingId === tierList.id}
                       >
-                        Переглянути і модерувати
+                        {modalLoadingId === tierList.id ? (
+                          <><Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" /> Завантаження...</>
+                        ) : 'Переглянути і модерувати'}
                       </Button>
                     </Col>
                   </Row>
@@ -168,21 +171,9 @@ function AdminTierListModerationPage() {
 
           {totalPages > 1 && (
             <div className="d-flex justify-content-center gap-2 mt-5">
-              <Button 
-                disabled={page === 1}
-                onClick={() => setPage(page - 1)}
-              >
-                Назад
-              </Button>
-              <span className="d-flex align-items-center px-3">
-                Сторінка {page} з {totalPages}
-              </span>
-              <Button 
-                disabled={page === totalPages}
-                onClick={() => setPage(page + 1)}
-              >
-                Далі
-              </Button>
+              <Button disabled={page === 1} onClick={() => setPage(page - 1)}>Назад</Button>
+              <span className="d-flex align-items-center px-3">Сторінка {page} з {totalPages}</span>
+              <Button disabled={page === totalPages} onClick={() => setPage(page + 1)}>Далі</Button>
             </div>
           )}
         </>
@@ -201,17 +192,17 @@ function AdminTierListModerationPage() {
 
           <h6>Тір ліст:</h6>
           <div className="tier-list-preview mb-4">
-            {['S', 'A', 'B', 'C', 'D', 'F'].map(tier => {
-              const tierItems = groupedByTier[tier] || [];
+            {currentTiersConfig.map(tier => {
+              const tierItems = groupedByTier[tier.id] || [];
               if (tierItems.length === 0) return null;
 
               return (
-                <div key={tier} className="tier-row mb-3">
+                <div key={tier.id} className="tier-row mb-3">
                   <div 
                     className="tier-label"
-                    style={{ backgroundColor: TIER_COLORS[tier], minWidth: '60px' }}
+                    style={{ backgroundColor: tier.color, minWidth: '60px' }}
                   >
-                    <strong>{tier}</strong>
+                    <strong>{tier.name}</strong>
                   </div>
                   <div className="tier-content flex-grow-1">
                     <div className="d-flex flex-wrap gap-2">
@@ -225,7 +216,7 @@ function AdminTierListModerationPage() {
                               style={{ maxHeight: '80px', maxWidth: '60px', objectFit: 'cover' }}
                             />
                           ) : (
-                            <div style={{ width: '60px', height: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#ddd', fontSize: '10px' }}>
+                            <div style={{ width: '60px', height: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#ddd', fontSize: '10px', textAlign: 'center' }}>
                               {item.movieTitle}
                             </div>
                           )}
@@ -243,10 +234,7 @@ function AdminTierListModerationPage() {
           <h6>Модерація</h6>
           <Form.Group className="mb-3">
             <Form.Label>Статус</Form.Label>
-            <Form.Select
-              value={moderationStatus}
-              onChange={(e) => setModerationStatus(e.target.value)}
-            >
+            <Form.Select value={moderationStatus} onChange={(e) => setModerationStatus(e.target.value)}>
               <option value="Rejected">Відхилити</option>
               <option value="Approved">Схвалити</option>
             </Form.Select>
@@ -254,24 +242,12 @@ function AdminTierListModerationPage() {
 
           <Form.Group className="mb-3">
             <Form.Label>Коментар (опційно)</Form.Label>
-            <Form.Control
-              as="textarea"
-              rows={3}
-              value={adminComment}
-              onChange={(e) => setAdminComment(e.target.value)}
-              placeholder="Введіть коментар для користувача"
-            />
+            <Form.Control as="textarea" rows={3} value={adminComment} onChange={(e) => setAdminComment(e.target.value)} placeholder="Введіть коментар для користувача" />
           </Form.Group>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowModal(false)}>
-            Скасувати
-          </Button>
-          <Button 
-            variant={moderationStatus === 'Approved' ? 'success' : 'danger'}
-            onClick={handleModerate}
-            disabled={moderating}
-          >
+          <Button variant="secondary" onClick={() => setShowModal(false)}>Скасувати</Button>
+          <Button variant={moderationStatus === 'Approved' ? 'success' : 'danger'} onClick={handleModerate} disabled={moderating}>
             {moderating ? 'Обробка...' : moderationStatus === 'Approved' ? 'Схвалити' : 'Відхилити'}
           </Button>
         </Modal.Footer>

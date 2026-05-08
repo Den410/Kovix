@@ -260,7 +260,16 @@ export const forumAPI = {
     getTopics: (categoryId) => api.get(`/forum/categories/${categoryId}/topics`),
     getTopic: (topicId) => api.get(`/forum/topics/${topicId}`),
     createTopic: (data) => api.post('/forum/topics', data),
-    createPost: (topicId, data) => api.post(`/forum/topics/${topicId}/posts`, data)
+    createPost: (topicId, data) => api.post(`/forum/topics/${topicId}/posts`, data),
+    createCategory: (data) => api.post('/forum/categories', data),
+    getPendingCategories: () => api.get('/forum/admin/pending-categories'),
+    moderateCategory: (id, approve) => api.post(`/forum/admin/categories/${id}/moderate?approve=${approve}`),
+    deleteCategory: (id) => api.delete(`/forum/categories/${id}`),
+    deleteTopic: (id) => api.delete(`/forum/topics/${id}`),
+    deletePost: (id) => api.delete(`/forum/posts/${id}`),
+    updateCategory: (id, data) => api.put(`/forum/categories/${id}`, data),
+    updateTopic: (id, data) => api.put(`/forum/topics/${id}`, data),
+    updatePost: (id, data) => api.put(`/forum/posts/${id}`, data),
 };
 
 export default api;

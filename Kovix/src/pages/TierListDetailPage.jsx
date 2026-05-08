@@ -5,14 +5,14 @@ import { useAuth } from '../contexts/AuthContext';
 import { tierListsAPI } from '../services/api';
 import '../style/TierListDetailPage.css';
 
-const TIER_COLORS = {
-  'S': '#FF6B6B',
-  'A': '#4ECDC4',
-  'B': '#45B7D1',
-  'C': '#FFA502',
-  'D': '#95E1D3',
-  'F': '#C7CEEA'
-};
+const DEFAULT_TIERS = [
+  { id: 'S', name: 'S', color: '#FF6B6B' },
+  { id: 'A', name: 'A', color: '#4ECDC4' },
+  { id: 'B', name: 'B', color: '#45B7D1' },
+  { id: 'C', name: 'C', color: '#FFA502' },
+  { id: 'D', name: 'D', color: '#95E1D3' },
+  { id: 'F', name: 'F', color: '#C7CEEA' }
+];
 
 function TierListDetailPage() {
   const { id } = useParams();
@@ -22,6 +22,7 @@ function TierListDetailPage() {
   const [tierList, setTierList] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [tiersConfig, setTiersConfig] = useState(DEFAULT_TIERS);
 
   useEffect(() => {
     loadTierList();
@@ -31,6 +32,18 @@ function TierListDetailPage() {
     try {
       const response = await tierListsAPI.getById(id);
       setTierList(response.data);
+      
+      if (response.data.tiersConfig) {
+        if (typeof response.data.tiersConfig === 'string') {
+          try {
+            setTiersConfig(JSON.parse(response.data.tiersConfig));
+          } catch {
+            setTiersConfig(DEFAULT_TIERS);
+          }
+        } else if (Array.isArray(response.data.tiersConfig)) {
+          setTiersConfig(response.data.tiersConfig);
+        }
+      }
     } catch (error) {
       console.error('Помилка завантаження:', error);
       setError('Не вдалося завантажити тір ліст');
@@ -46,7 +59,11 @@ function TierListDetailPage() {
       return acc;
     }, {}) : {};
 
-  const sortedTiers = ['S', 'A', 'B', 'C', 'D', 'F'].filter(tier => tierList && groupedByTier[tier]?.length > 0);
+  const getTierConfig = (tierId) => {
+    return tiersConfig.find(t => t.id === tierId) || { id: tierId, name: tierId, color: '#ccc' };
+  };
+
+  const sortedTiers = tiersConfig.filter(tier => tierList && groupedByTier[tier.id]?.length > 0);
 
   if (loading) {
     return (
@@ -162,17 +179,17 @@ function TierListDetailPage() {
               </Card>
             ) : (
               sortedTiers.map(tier => (
-                <div key={tier} className="tier-row mb-4">
+                <div key={tier.id} className="tier-row mb-4">
                   <div 
                     className="tier-label"
-                    style={{ backgroundColor: TIER_COLORS[tier] }}
+                    style={{ backgroundColor: tier.color }}
                   >
-                    <strong style={{ fontSize: '24px', color: 'white' }}>{tier}</strong>
+                    <strong style={{ fontSize: '24px', color: 'white' }}>{tier.name}</strong>
                   </div>
 
                   <div className="tier-content">
                     <div className="tier-items-grid">
-                      {groupedByTier[tier]?.map(item => (
+                      {groupedByTier[tier.id]?.map(item => (
                         <Link 
                           key={item.id}
                           to={`/movie/${item.movieId}`}

@@ -235,6 +235,15 @@ function Navigation() {
                       </>
                     )}
 
+                    {user && (user.role === 'Admin' || user.role === 'Moderator') && (
+                      <>
+                        <NavDropdown.Divider />
+                        <NavDropdown.Item as={Link} to="/admin/forum-moderation">
+                          Модерація форуму
+                        </NavDropdown.Item>
+                      </>
+                    )}
+
                     <NavDropdown.Item as={Link} to="/my-reviews">📝 Мої відгуки</NavDropdown.Item>
 
                     <NavDropdown.Divider />

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Movie.API.Data;
 
@@ -11,9 +12,11 @@ using Movie.API.Data;
 namespace Movie.API.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260508062407_AddNestedPosts")]
+    partial class AddNestedPosts
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -867,9 +870,6 @@ namespace Movie.API.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
-                    b.Property<string>("TiersConfig")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Title")
                         .HasColumnType("nvarchar(max)");
 
@@ -992,7 +992,7 @@ namespace Movie.API.Migrations
                             Email = "admin@gmail.com",
                             IsBlocked = false,
                             IsOnline = false,
-                            PasswordHash = "$2a$11$CUFX1iePt6jx8nvGHfDThOEOzE4xCnFOFIICmQyKLimo7iS8ORFm2",
+                            PasswordHash = "$2a$11$DUefWIA8j.yflglUYhgCmeqf4Iz1B09KEHazxlRgKlTVRDlqCUosi",
                             Role = "Admin",
                             Username = "admin"
                         });

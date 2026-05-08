@@ -6,6 +6,15 @@ import { tierListsAPI, moviesAPI } from '../services/api';
 import TierListBuilder from '../components/TierListBuilder';
 import '../style/EditTierListPage.css';
 
+const DEFAULT_TIERS = [
+  { id: 'S', name: 'S', color: '#FF6B6B' },
+  { id: 'A', name: 'A', color: '#4ECDC4' },
+  { id: 'B', name: 'B', color: '#45B7D1' },
+  { id: 'C', name: 'C', color: '#FFA502' },
+  { id: 'D', name: 'D', color: '#95E1D3' },
+  { id: 'F', name: 'F', color: '#C7CEEA' }
+];
+
 function EditTierListPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -19,7 +28,10 @@ function EditTierListPage() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [items, setItems] = useState([]);
+  const [tiersConfig, setTiersConfig] = useState(DEFAULT_TIERS);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showTiersModal, setShowTiersModal] = useState(false);
+  const [editingTier, setEditingTier] = useState(null);
 
   useEffect(() => {
     loadTierList();
@@ -40,6 +52,18 @@ function EditTierListPage() {
       setTitle(tl.title);
       setDescription(tl.description || '');
       setItems(tl.items || []);
+      
+      if (tl.tiersConfig) {
+        if (typeof tl.tiersConfig === 'string') {
+          try {
+            setTiersConfig(JSON.parse(tl.tiersConfig));
+          } catch {
+            setTiersConfig(DEFAULT_TIERS);
+          }
+        } else if (Array.isArray(tl.tiersConfig)) {
+          setTiersConfig(tl.tiersConfig);
+        }
+      }
     } catch (error) {
       console.error('Помилка завантаження:', error);
       setError('Не вдалося завантажити тір ліст');
@@ -67,14 +91,27 @@ function EditTierListPage() {
       await tierListsAPI.update(id, {
         title,
         description,
-        items: itemsDto
+        items: itemsDto,
+        tiersConfig: tiersConfig
       });
 
-      setSuccess('Тір ліст збережено успішно!');
-      setTimeout(() => setSuccess(''), 3000);
+      const updatedResponse = await tierListsAPI.getById(id);
+      setTierList(updatedResponse.data);
+
+      if (tierList?.isPublic && tierList?.status === 'Approved' && 
+          updatedResponse.data.status === 'Pending') {
+        setSuccess('Тір ліст збережено! Зміни відправлено на модерацію.');
+      } else {
+        setSuccess('Тір ліст збережено успішно!');
+      }
+      setTimeout(() => setSuccess(''), 4000);
     } catch (error) {
       console.error('Помилка при збереженні:', error);
-      setError('Помилка при збереженні тір ліста');
+      if (error.response?.data) {
+        setError(`Помилка: ${error.response.data}`);
+      } else {
+        setError('Помилка при збереженні тір ліста');
+      }
     } finally {
       setSaving(false);
     }
@@ -107,6 +144,30 @@ function EditTierListPage() {
 
   const handleGoBack = () => {
     navigate('/tierlists');
+  };
+
+  const handleAddTier = () => {
+    const newId = String.fromCharCode(65 + tiersConfig.length); // A, B, C, ...
+    const newTier = {
+      id: newId,
+      name: newId,
+      color: '#' + Math.floor(Math.random() * 16777215).toString(16)
+    };
+    setTiersConfig([...tiersConfig, newTier]);
+  };
+
+  const handleRemoveTier = (tierId) => {
+    if (tiersConfig.length <= 1) {
+      alert('Повинен бути хоча б один рівень');
+      return;
+    }
+    setTiersConfig(tiersConfig.filter(t => t.id !== tierId));
+  };
+
+  const handleUpdateTier = (tierId, field, value) => {
+    setTiersConfig(tiersConfig.map(t =>
+      t.id === tierId ? { ...t, [field]: value } : t
+    ));
   };
 
   if (loading) {
@@ -199,6 +260,13 @@ function EditTierListPage() {
                     Зробити приватним
                   </Button>
                 )}
+
+                <Button 
+                  variant="secondary" 
+                  onClick={() => setShowTiersModal(true)}
+                >
+                  ⚙️ Редагувати рівні
+                </Button>
               </div>
             </Card.Body>
           </Card>
@@ -216,6 +284,7 @@ function EditTierListPage() {
             items={items}
             onItemsChange={setItems}
             tierListId={id}
+            tiersConfig={tiersConfig}
           />
         </Col>
       </Row>
@@ -237,6 +306,55 @@ function EditTierListPage() {
           </Button>
           <Button variant="primary" onClick={handleShare}>
             Поділитися
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      <Modal show={showTiersModal} onHide={() => setShowTiersModal(false)} size="lg">
+        <Modal.Header closeButton>
+          <Modal.Title>Редагування рівнів тір ліста</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p className="mb-3">Налаштуйте рівні для вашого тір ліста</p>
+          <div className="mb-3">
+            {tiersConfig.map((tier, index) => (
+              <div key={tier.id} className="d-flex gap-2 mb-2 align-items-center p-2 border rounded">
+                <input
+                  type="color"
+                  value={tier.color}
+                  onChange={(e) => handleUpdateTier(tier.id, 'color', e.target.value)}
+                  style={{ width: '50px', height: '40px', cursor: 'pointer' }}
+                />
+                <Form.Control
+                  type="text"
+                  value={tier.name}
+                  onChange={(e) => handleUpdateTier(tier.id, 'name', e.target.value)}
+                  placeholder="Назва рівня"
+                  maxLength={20}
+                />
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={() => handleRemoveTier(tier.id)}
+                  disabled={tiersConfig.length <= 1}
+                >
+                  Видалити
+                </Button>
+              </div>
+            ))}
+          </div>
+          <Button
+            variant="success"
+            size="sm"
+            onClick={handleAddTier}
+            className="mb-3"
+          >
+            + Додати рівень
+          </Button>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowTiersModal(false)}>
+            Закрити
           </Button>
         </Modal.Footer>
       </Modal>

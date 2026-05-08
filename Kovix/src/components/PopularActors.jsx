@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Row, Col } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { actorsAPI } from '../services/api';
@@ -8,6 +8,7 @@ import defaultAvatarImg from '../assets/NotFoundAvatar.png';
 const PopularActors = () => {
     const [actors, setActors] = useState([]);
     const [loading, setLoading] = useState(true);
+    const scrollRef = useRef(null);
 
     useEffect(() => {
         const fetchPopularActors = async () => {
@@ -27,6 +28,27 @@ const PopularActors = () => {
         fetchPopularActors();
     }, []);
 
+    useEffect(() => {
+        const currentRef = scrollRef.current;
+        
+        const handleWheel = (e) => {
+            if (currentRef) {
+                e.preventDefault(); 
+                currentRef.scrollLeft += e.deltaY; 
+            }
+        };
+
+        if (currentRef) {
+            currentRef.addEventListener('wheel', handleWheel, { passive: false }); 
+        }
+
+        return () => {
+            if (currentRef) {
+                currentRef.removeEventListener('wheel', handleWheel);
+            }
+        };
+    }, [actors]); 
+
     if (loading || actors.length === 0) return null;
 
     return (
@@ -35,7 +57,11 @@ const PopularActors = () => {
                 Найпопулярніші актори
             </h4>
             
-            <Row className="flex-nowrap overflow-auto pb-3 text-center" style={{ scrollbarWidth: 'thin' }}>
+            <Row 
+                ref={scrollRef} 
+                className="flex-nowrap overflow-auto pb-3 text-center" 
+                style={{ scrollbarWidth: 'thin' }}
+            >
                 {actors.map((actor) => (
                     <Col key={actor.id} xs={4} sm={3} md={2} className="flex-shrink-0">
                         <Link to={`/actors/${actor.id}`} className="text-decoration-none">

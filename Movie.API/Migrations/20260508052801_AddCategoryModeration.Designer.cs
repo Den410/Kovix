@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Movie.API.Data;
 
@@ -11,9 +12,11 @@ using Movie.API.Data;
 namespace Movie.API.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260508052801_AddCategoryModeration")]
+    partial class AddCategoryModeration
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -256,9 +259,6 @@ namespace Movie.API.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<int?>("ParentPostId")
-                        .HasColumnType("int");
-
                     b.Property<int>("TopicId")
                         .HasColumnType("int");
 
@@ -269,8 +269,6 @@ namespace Movie.API.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("ParentPostId");
 
                     b.HasIndex("TopicId");
 
@@ -867,9 +865,6 @@ namespace Movie.API.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
-                    b.Property<string>("TiersConfig")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Title")
                         .HasColumnType("nvarchar(max)");
 
@@ -992,7 +987,7 @@ namespace Movie.API.Migrations
                             Email = "admin@gmail.com",
                             IsBlocked = false,
                             IsOnline = false,
-                            PasswordHash = "$2a$11$CUFX1iePt6jx8nvGHfDThOEOzE4xCnFOFIICmQyKLimo7iS8ORFm2",
+                            PasswordHash = "$2a$11$o8MO1sfY2C7v4YKcCqdhSevO.WDsWPXvo9vFoFNER8lR8yjR.j/6u",
                             Role = "Admin",
                             Username = "admin"
                         });
@@ -1324,10 +1319,6 @@ namespace Movie.API.Migrations
 
             modelBuilder.Entity("Movie.API.Models.ForumPost", b =>
                 {
-                    b.HasOne("Movie.API.Models.ForumPost", "ParentPost")
-                        .WithMany("Replies")
-                        .HasForeignKey("ParentPostId");
-
                     b.HasOne("Movie.API.Models.ForumTopic", "Topic")
                         .WithMany("Posts")
                         .HasForeignKey("TopicId")
@@ -1339,8 +1330,6 @@ namespace Movie.API.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.Navigation("ParentPost");
 
                     b.Navigation("Topic");
 
@@ -1775,11 +1764,6 @@ namespace Movie.API.Migrations
             modelBuilder.Entity("Movie.API.Models.ForumCategory", b =>
                 {
                     b.Navigation("Topics");
-                });
-
-            modelBuilder.Entity("Movie.API.Models.ForumPost", b =>
-                {
-                    b.Navigation("Replies");
                 });
 
             modelBuilder.Entity("Movie.API.Models.ForumTopic", b =>
