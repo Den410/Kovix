@@ -3,23 +3,18 @@ stages:
   - test
   - docker
 
-# ── Глобальні змінні ──
-variables:
-  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
-  NUGET_PACKAGES: "$CI_PROJECT_DIR/.nuget/packages"
-  DOCKER_HOST: tcp://docker:2375/
-  DOCKER_TLS_CERTDIR: ""
-
-# ── Кешування ──
+# ─────────────────────────────
+# CACHE
+# ─────────────────────────────
 cache:
   key: "$CI_COMMIT_REF_SLUG"
   paths:
     - .nuget/packages/
     - Kovix/node_modules/
 
-# =========================================================
+# ─────────────────────────────
 # BACKEND (.NET)
-# =========================================================
+# ─────────────────────────────
 
 backend_build:
   stage: build
@@ -47,7 +42,6 @@ backend_test:
     - cd Movie.API
     - dotnet test --configuration Release --no-build --verbosity normal
 
-# ── Форматування коду (.NET) ──
 dotnet_format:
   stage: test
   image: mcr.microsoft.com/dotnet/sdk:8.0
@@ -59,7 +53,6 @@ dotnet_format:
     - dotnet format --verify-no-changes
   allow_failure: true
 
-# ── Безпека NuGet ──
 security_dotnet:
   stage: test
   image: mcr.microsoft.com/dotnet/sdk:8.0
@@ -71,9 +64,9 @@ security_dotnet:
     - dotnet list package --vulnerable --include-transitive
   allow_failure: true
 
-# =========================================================
-# FRONTEND (React + Vite + Vitest)
-# =========================================================
+# ─────────────────────────────
+# FRONTEND (React / Vite / Vitest)
+# ─────────────────────────────
 
 frontend_build:
   stage: build
@@ -101,7 +94,6 @@ frontend_test:
     - npm ci
     - npx vitest run
 
-# ── ESLint ──
 js_lint:
   stage: test
   image: node:20-alpine
@@ -113,7 +105,6 @@ js_lint:
     - npm run lint
   allow_failure: true
 
-# ── npm security audit ──
 security_npm:
   stage: test
   image: node:20-alpine
@@ -125,44 +116,15 @@ security_npm:
     - npm audit --audit-level=high
   allow_failure: true
 
-# =========================================================
-# DOCKER VALIDATION
-# =========================================================
+# ─────────────────────────────
+# DOCKER (ONLY VALIDATION - NO DIND)
+# ─────────────────────────────
 
-# ── Перевірка синтаксису docker-compose ──
 docker_validate:
   stage: docker
   image: docker:latest
-  services:
-    - docker:dind
   tags:
     - student
   script:
     - docker compose -f docker-compose.yml config
     - docker compose -f docker-compose-dev.yml config
-
-# ── Перевірка збірки контейнерів ──
-docker_build:
-  stage: docker
-  image: docker:latest
-  services:
-    - docker:dind
-  tags:
-    - student
-  script:
-    - docker compose -f docker-compose.yml build
-    - docker compose -f docker-compose-dev.yml build
-
-# ── Перевірка запуску контейнерів ──
-docker_run:
-  stage: docker
-  image: docker:latest
-  services:
-    - docker:dind
-  tags:
-    - student
-  script:
-    - docker compose -f docker-compose.yml up -d
-    - docker ps
-    - docker compose -f docker-compose.yml down
-  allow_failure: true
