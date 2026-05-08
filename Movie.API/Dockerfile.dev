@@ -2,8 +2,7 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0
 
 WORKDIR /app/src
 
-RUN dotnet tool install -g dotnet-watch
-
+RUN dotnet tool install --global dotnet-watch
 ENV PATH="${PATH}:/root/.dotnet/tools"
 
 COPY Movie.API.csproj ./
@@ -13,4 +12,4 @@ COPY . .
 
 EXPOSE 8080
 
-CMD ["dotnet", "watch", "run", "--urls", "http://+:8080"]
+CMD ["dotnet", "watch", "run", "--urls=http://0.0.0.0:8080"]

@@ -1,96 +1,168 @@
 stages:
   - build
   - test
+  - docker
 
+# ── Глобальні змінні ──
+variables:
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+  NUGET_PACKAGES: "$CI_PROJECT_DIR/.nuget/packages"
+  DOCKER_HOST: tcp://docker:2375/
+  DOCKER_TLS_CERTDIR: ""
+
+# ── Кешування ──
 cache:
   key: "$CI_COMMIT_REF_SLUG"
   paths:
     - .nuget/packages/
-    - Kovix/node_modules/ # Виправлено шлях до node_modules
+    - Kovix/node_modules/
 
-# --- БЕКЕНД (.NET) ---
+# =========================================================
+# BACKEND (.NET)
+# =========================================================
+
 backend_build:
   stage: build
   image: mcr.microsoft.com/dotnet/sdk:8.0
-  tags: [student]
+  tags:
+    - student
   script:
-    - cd Movie.API   # Виправлено на реальну папку
+    - cd Movie.API
     - dotnet restore
     - dotnet build --configuration Release --no-restore
   artifacts:
-    paths: [Movie.API/bin/, Movie.API/obj/]
+    paths:
+      - Movie.API/bin/
+      - Movie.API/obj/
     expire_in: 1 hour
 
 backend_test:
   stage: test
   image: mcr.microsoft.com/dotnet/sdk:8.0
-  tags: [student]
-  dependencies: [backend_build]
+  tags:
+    - student
+  dependencies:
+    - backend_build
   script:
-    - cd Movie.API   # Виправлено на реальну папку
-    - dotnet test --configuration Release --no-build
+    - cd Movie.API
+    - dotnet test --configuration Release --no-build --verbosity normal
 
-# --- ФРОНТЕНД (React) ---
-frontend_build:
-  stage: build
-  image: node:20
-  tags: [student]
-  script:
-    - cd Kovix   # Виправлено на реальну папку
-    - npm install
-    - npm run build
-  artifacts:
-    paths: [Kovix/dist/]  
-    expire_in: 1 hour
-
-frontend_test:
-  stage: test
-  image: node:20
-  tags: [student]
-  dependencies: [frontend_build]
-  script:
-    - cd Kovix   # Виправлено на реальну папку
-    - npm test -- --watchAll=false
-
-# ── .NET: форматування коду ──
+# ── Форматування коду (.NET) ──
 dotnet_format:
   stage: test
   image: mcr.microsoft.com/dotnet/sdk:8.0
-  tags: [student] # ДОДАНО ТЕГ
+  tags:
+    - student
   script:
     - cd Movie.API
+    - dotnet restore
     - dotnet format --verify-no-changes
-  allow_failure: true 
-
-# ── React/Vite: ESLint ──
-js_lint:
-  stage: test
-  image: node:20-alpine
-  tags: [student] # ДОДАНО ТЕГ
-  script:
-    - cd Kovix
-    - npm install
-    - npm run lint
   allow_failure: true
 
-# ── Перевірка NuGet пакетів для .NET ──
+# ── Безпека NuGet ──
 security_dotnet:
   stage: test
   image: mcr.microsoft.com/dotnet/sdk:8.0
-  tags: [student] # ДОДАНО ТЕГ
+  tags:
+    - student
   script:
     - cd Movie.API
     - dotnet restore
     - dotnet list package --vulnerable --include-transitive
   allow_failure: true
 
-# ── Перевірка npm пакетів для React ──
+# =========================================================
+# FRONTEND (React + Vite + Vitest)
+# =========================================================
+
+frontend_build:
+  stage: build
+  image: node:20
+  tags:
+    - student
+  script:
+    - cd Kovix
+    - npm ci
+    - npm run build
+  artifacts:
+    paths:
+      - Kovix/dist/
+    expire_in: 1 hour
+
+frontend_test:
+  stage: test
+  image: node:20
+  tags:
+    - student
+  dependencies:
+    - frontend_build
+  script:
+    - cd Kovix
+    - npm ci
+    - npx vitest run
+
+# ── ESLint ──
+js_lint:
+  stage: test
+  image: node:20-alpine
+  tags:
+    - student
+  script:
+    - cd Kovix
+    - npm ci
+    - npm run lint
+  allow_failure: true
+
+# ── npm security audit ──
 security_npm:
   stage: test
   image: node:20-alpine
-  tags: [student] # ДОДАНО ТЕГ
+  tags:
+    - student
   script:
     - cd Kovix
-    - npm install
+    - npm ci
     - npm audit --audit-level=high
+  allow_failure: true
+
+# =========================================================
+# DOCKER VALIDATION
+# =========================================================
+
+# ── Перевірка синтаксису docker-compose ──
+docker_validate:
+  stage: docker
+  image: docker:latest
+  services:
+    - docker:dind
+  tags:
+    - student
+  script:
+    - docker compose -f docker-compose.yml config
+    - docker compose -f docker-compose-dev.yml config
+
+# ── Перевірка збірки контейнерів ──
+docker_build:
+  stage: docker
+  image: docker:latest
+  services:
+    - docker:dind
+  tags:
+    - student
+  script:
+    - docker compose -f docker-compose.yml build
+    - docker compose -f docker-compose-dev.yml build
+
+# ── Перевірка запуску контейнерів ──
+docker_run:
+  stage: docker
+  image: docker:latest
+  services:
+    - docker:dind
+  tags:
+    - student
+  script:
+    - docker compose -f docker-compose.yml up -d
+    - docker ps
+    - docker compose -f docker-compose.yml down
   allow_failure: true
